@@ -161,8 +161,3 @@ bool MDFNI_SetSettingUI(const char *name, uint64 value)
 {
    return false;
 }
-
-bool MDFNI_DumpSettingsDef(const char *path)
-{
-   return true;
-}

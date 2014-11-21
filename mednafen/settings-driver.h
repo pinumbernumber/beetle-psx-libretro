@@ -7,8 +7,6 @@ bool MDFNI_SetSetting(const char *name, const char *value, bool NetplayOverride 
 bool MDFNI_SetSettingB(const char *name, bool value);
 bool MDFNI_SetSettingUI(const char *name, uint64 value);
 
-bool MDFNI_DumpSettingsDef(const char *path);
-
 #include <map>
 
 #endif
