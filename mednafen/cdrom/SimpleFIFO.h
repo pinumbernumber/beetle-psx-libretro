@@ -65,13 +65,6 @@ class SimpleFIFO
   return(ret);
  }
 
- INLINE uint8 ReadByte(bool peek = false)
- {
-  assert(sizeof(T) == 1);
-
-  return(ReadUnit(peek));
- }
-
  INLINE void Write(const T *happy_data, uint32 happy_count)
  {
   assert(CanWrite() >= happy_count);

@@ -1339,7 +1339,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 	 	else if(V & 0x40)	// Something CD-DA related(along with & 0x20 ???)?
 	 	{
 		 for(unsigned i = 0; i < 4 && DMABuffer.CanRead(); i++)
-		  DMABuffer.ReadByte();
+		  DMABuffer.ReadUnit(false);
 		}
 		else
 		{
@@ -1455,7 +1455,7 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
    case 0x02:
 	//PSX_WARNING("[CDC] DMA Buffer manual read");
 	if(DMABuffer.CanRead())
-	 ret = DMABuffer.ReadByte();
+	 ret = DMABuffer.ReadUnit(false);
 	else
 	{
 	 PSX_WARNING("[CDC] CD data transfer port read, but no data present!");
@@ -1491,7 +1491,7 @@ uint32 PS_CDC::DMARead(void)
  for(int i = 0; i < 4; i++)
  {
   if(DMABuffer.CanRead())
-   data |= DMABuffer.ReadByte() << (i * 8);
+   data |= DMABuffer.ReadUnit(false) << (i * 8);
   else
   {
    //assert(0);
