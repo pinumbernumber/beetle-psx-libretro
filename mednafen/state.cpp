@@ -312,7 +312,6 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
 
    {
       SFMap_t sfmap;
-      SFMap_t sfmap_found;	// Used for identifying variables that are missing in the save state.
 
       MakeSFMap(sf, sfmap);
 
@@ -358,8 +357,6 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
             }
             else
             {
-               sfmap_found[tmp->name] = tmp;
-
                smem_read(st, (uint8 *)tmp->v, expected_size);
 
                if(tmp->flags & MDFNSTATE_BOOL)
@@ -388,14 +385,6 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
                puts("Seek error");
                return(0);
             }
-         }
-      } // while(...)
-
-      for(SFMap_t::const_iterator it = sfmap.begin(); it != sfmap.end(); it++)
-      {
-         if(sfmap_found.find(it->second->name) == sfmap_found.end())
-         {
-            printf("Variable missing from save state: %s\n", it->second->name);
          }
       }
 
@@ -457,11 +446,9 @@ int MDFNSS_StateAction(void *st_p, int load, SFORMAT* sf, const char *name)
          return(0);
       }
    }
-   else
-   {
-      if(!WriteStateChunk(st, name, sf))
-         return(0);
-   }
+
+   if(!WriteStateChunk(st, name, sf))
+      return(0);
 
    return(1);
 }
