@@ -739,7 +739,7 @@ CTEntry PS_GPU::Commands[256] =
 
 void PS_GPU::ProcessFIFO(void)
 {
-   if(!BlitterFIFO.CanRead())
+   if(!BlitterFIFO.in_count)
       return;
 
    switch(InCmd)
@@ -791,7 +791,7 @@ void PS_GPU::ProcessFIFO(void)
             unsigned vl = 1 + (bool)(cc & 0x4) + (bool)(cc & 0x10);
             uint32_t CB[3];
 
-            if(BlitterFIFO.CanRead() >= vl)
+            if(BlitterFIFO.in_count >= vl)
             {
                for(unsigned i = 0; i < vl; i++)
                {
@@ -814,14 +814,14 @@ void PS_GPU::ProcessFIFO(void)
             unsigned vl = 1 + (bool)(InCmd_CC & 0x10);
             uint32_t CB[2];
 
-            if((BlitterFIFO.ReadUnit(true) & 0xF000F000) == 0x50005000)
+            if((BlitterFIFO.ReadUnitPeek() & 0xF000F000) == 0x50005000)
             {
                BlitterFIFO.ReadUnit();
                InCmd = INCMD_NONE;
                return;
             }
 
-            if(BlitterFIFO.CanRead() >= vl)
+            if(BlitterFIFO.in_count >= vl)
             {
                for(unsigned i = 0; i < vl; i++)
                {
@@ -835,13 +835,13 @@ void PS_GPU::ProcessFIFO(void)
          break;
    }
 
-   const uint32_t cc = BlitterFIFO.ReadUnit(true) >> 24;
+   const uint32_t cc = BlitterFIFO.ReadUnitPeek() >> 24;
    const CTEntry *command = &Commands[cc];
 
    if(DrawTimeAvail < 0 && !command->ss_cmd)
       return;
 
-   if(BlitterFIFO.CanRead() >= command->len)
+   if(BlitterFIFO.in_count >= command->len)
    {
       uint32_t CB[0x10];
 
@@ -890,7 +890,7 @@ void PS_GPU::ProcessFIFO(void)
 
 INLINE void PS_GPU::WriteCB(uint32_t InData)
 {
-   if(BlitterFIFO.CanRead() >= 0x10 && (InCmd != INCMD_NONE || (BlitterFIFO.CanRead() - 0x10) >= Commands[BlitterFIFO.ReadUnit(true) >> 24].fifo_fb_len))
+   if(BlitterFIFO.in_count >= 0x10 && (InCmd != INCMD_NONE || (BlitterFIFO.in_count - 0x10) >= Commands[BlitterFIFO.ReadUnitPeek() >> 24].fifo_fb_len))
    {
       PSX_DBG(PSX_DBG_WARNING, "GPU FIFO overflow!!!\n");
       return;
@@ -1060,7 +1060,7 @@ uint32_t PS_GPU::Read(const pscpu_timestamp_t timestamp, uint32_t A)
 
   ret |= DisplayOff << 23;
 
-  if(InCmd == INCMD_NONE && DrawTimeAvail >= 0 && BlitterFIFO.CanRead() == 0x00)	// GPU idle bit.
+  if(InCmd == INCMD_NONE && DrawTimeAvail >= 0 && BlitterFIFO.in_count == 0x00)	// GPU idle bit.
    ret |= 1 << 26;
 
   if(InCmd == INCMD_FBREAD)	// Might want to more accurately emulate this in the future?

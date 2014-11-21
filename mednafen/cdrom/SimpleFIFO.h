@@ -38,31 +38,27 @@ class SimpleFIFO
     in_count %= (size + 1);
  }
 
- INLINE uint32 CanRead(void)
- {
-  return(in_count);
- }
-
  INLINE uint32 CanWrite(void)
  {
   return(size - in_count);
  }
 
- INLINE T ReadUnit(bool peek = false)
+ INLINE T ReadUnitPeek()
  {
-  T ret;
+  assert(in_count > 0);
+  return data[read_pos];
+ }
+
+ INLINE T ReadUnit()
+ {
+  uint32 cur_read_pos = read_pos;
 
   assert(in_count > 0);
 
-  ret = data[read_pos];
+  read_pos = (read_pos + 1) & (size - 1);
+  in_count--;
 
-  if(!peek)
-  {
-   read_pos = (read_pos + 1) & (size - 1);
-   in_count--;
-  }
-
-  return(ret);
+  return data[cur_read_pos];
  }
 
  INLINE void Write(const T *happy_data, uint32 happy_count)
@@ -99,7 +95,6 @@ class SimpleFIFO
   in_count = 0;
  }
 
- //private:
  T* data;
  uint32 size;
  uint32 read_pos; // Read position

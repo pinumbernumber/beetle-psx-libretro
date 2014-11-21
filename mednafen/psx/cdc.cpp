@@ -1270,7 +1270,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
   const unsigned reg_index = ((RegSelector & 0x3) * 3) + (A - 1);
 
   Update(timestamp);
-  //PSX_WARNING("[CDC] Write to register 0x%02x: 0x%02x @ %d --- 0x%02x 0x%02x\n", reg_index, V, timestamp, DMABuffer.CanRead(), IRQBuffer);
+  //PSX_WARNING("[CDC] Write to register 0x%02x: 0x%02x @ %d --- 0x%02x 0x%02x\n", reg_index, V, timestamp, DMABuffer.in_count, IRQBuffer);
 
   switch(reg_index)
   {
@@ -1314,7 +1314,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 	 case 0x02:
  	 	if(V & 0x80)
 	 	{
-	  	 if(!DMABuffer.CanRead())
+	  	 if(!DMABuffer.in_count)
 	  	 {
 		  if(!SB_In)
 		  {
@@ -1333,13 +1333,13 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 	  	 }
 		 else
 		 {
-		  //PSX_WARNING("[CDC] Attempt to start data transfer via 0x80->1803 when %d bytes still in buffer", DMABuffer.CanRead());
+		  //PSX_WARNING("[CDC] Attempt to start data transfer via 0x80->1803 when %d bytes still in buffer", DMABuffer.in_count);
 		 }
 	 	}
 	 	else if(V & 0x40)	// Something CD-DA related(along with & 0x20 ???)?
 	 	{
-		 for(unsigned i = 0; i < 4 && DMABuffer.CanRead(); i++)
-		  DMABuffer.ReadUnit(false);
+		 for(unsigned i = 0; i < 4 && DMABuffer.in_count; i++)
+		  DMABuffer.ReadUnit();
 		}
 		else
 		{
@@ -1438,7 +1438,7 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
 	if(ResultsIn)
 	 ret |= 0x20;
 
-	if(DMABuffer.CanRead())
+	if(DMABuffer.in_count)
 	 ret |= 0x40;
 
         if(PendingCommandCounter > 0 && PendingCommandPhase <= 1)
@@ -1454,8 +1454,8 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
 
    case 0x02:
 	//PSX_WARNING("[CDC] DMA Buffer manual read");
-	if(DMABuffer.CanRead())
-	 ret = DMABuffer.ReadUnit(false);
+	if(DMABuffer.in_count)
+	 ret = DMABuffer.ReadUnit();
 	else
 	{
 	 PSX_WARNING("[CDC] CD data transfer port read, but no data present!");
@@ -1481,7 +1481,7 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
 
 bool PS_CDC::DMACanRead(void)
 {
- return(DMABuffer.CanRead());
+ return(DMABuffer.in_count);
 }
 
 uint32 PS_CDC::DMARead(void)
@@ -1490,8 +1490,8 @@ uint32 PS_CDC::DMARead(void)
 
  for(int i = 0; i < 4; i++)
  {
-  if(DMABuffer.CanRead())
-   data |= DMABuffer.ReadUnit(false) << (i * 8);
+  if(DMABuffer.in_count)
+   data |= DMABuffer.ReadUnit() << (i * 8);
   else
   {
    //assert(0);

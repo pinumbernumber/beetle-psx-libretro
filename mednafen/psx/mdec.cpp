@@ -539,14 +539,14 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 #define MDEC_WAIT_COND(n)  { case __COUNTER__: if(!(n)) { MDRPhase = __COUNTER__ - MDRPhaseBias - 1; return; } }
 
 #define MDEC_WRITE_FIFO(n) { MDEC_WAIT_COND(OutFIFO.CanWrite()); OutFIFO.WriteUnit(n);  }
-#define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO.CanRead()); n = InFIFO.ReadUnit(); }
+#define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO.in_count); n = InFIFO.ReadUnit(); }
 #define MDEC_EAT_CLOCKS(n) { ClockCounter -= (n); MDEC_WAIT_COND(ClockCounter > 0); }
 
 void MDEC_Run(int32 clocks)
 {
  static const unsigned MDRPhaseBias = __COUNTER__ + 1;
 
- //MDFN_DispMessage("%u", OutFIFO.CanRead());
+ //MDFN_DispMessage("%u", OutFIFO.in_count);
 
  ClockCounter += clocks;
 
@@ -699,7 +699,7 @@ uint32 MDEC_DMARead(int32* offs)
 
  *offs = 0;
 
- if(MDFN_LIKELY(OutFIFO.CanRead()))
+ if(MDFN_LIKELY(OutFIFO.in_count))
  {
   V = OutFIFO.ReadUnit();
 
@@ -733,12 +733,12 @@ bool MDEC_DMACanWrite(void)
 
 bool MDEC_DMACanRead(void)
 {
- return((OutFIFO.CanRead() >= 0x20) && (Control & (1U << 29)));
+ return((OutFIFO.in_count >= 0x20) && (Control & (1U << 29)));
 }
 
 void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
 {
- //PSX_WARNING("[MDEC] Write: 0x%08x 0x%08x, %d  --- %u %u", A, V, timestamp, InFIFO.CanRead(), OutFIFO.CanRead());
+ //PSX_WARNING("[MDEC] Write: 0x%08x 0x%08x, %d  --- %u %u", A, V, timestamp, InFIFO.in_count, OutFIFO.in_count);
  if(A & 4)
  {
   if(V & 0x80000000) // Reset?
@@ -792,7 +792,7 @@ uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
  {
   ret = 0;
 
-  ret |= (OutFIFO.CanRead() == 0) << 31;
+  ret |= (OutFIFO.in_count == 0) << 31;
   ret |= (InFIFO.CanWrite() == 0) << 30;
   ret |= InCommand << 29;
 
@@ -807,11 +807,11 @@ uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
  }
  else
  {
-  if(OutFIFO.CanRead())
+  if(OutFIFO.in_count)
    ret = OutFIFO.ReadUnit();
  }
 
- //PSX_WARNING("[MDEC] Read: 0x%08x 0x%08x -- %d %d", A, ret, InputBuffer.CanRead(), InCounter);
+ //PSX_WARNING("[MDEC] Read: 0x%08x 0x%08x -- %d %d", A, ret, InputBuffer.in_count, InCounter);
 
  return(ret);
 }

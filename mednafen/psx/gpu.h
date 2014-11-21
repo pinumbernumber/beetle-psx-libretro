@@ -61,13 +61,13 @@ class PS_GPU
   if(InCmd & (INCMD_PLINE | INCMD_QUAD))
    return(false);
 
-  if(BlitterFIFO.CanRead() == 0)
+  if(BlitterFIFO.in_count == 0)
    return(true);
 
   if(InCmd & (INCMD_FBREAD | INCMD_FBWRITE))
    return(false);
 
-  if(BlitterFIFO.CanRead() >= Commands[BlitterFIFO.ReadUnit(true) >> 24].fifo_fb_len)
+  if(BlitterFIFO.in_count >= Commands[BlitterFIFO.ReadUnitPeek() >> 24].fifo_fb_len)
    return(false);
 
   return(true);
