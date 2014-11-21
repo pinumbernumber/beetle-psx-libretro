@@ -76,15 +76,20 @@ class SimpleFIFO
   }
  }
 
- INLINE void WriteUnit(const T& wr_data)
+ INLINE void WriteUnit(const T wr_data)
  {
-  Write(&wr_data, 1);
+   assert(CanWrite() >= 1);
+   data[write_pos] = wr_data;
+   write_pos = (write_pos + 1) & (size - 1);
+   in_count++;
  }
 
- INLINE void WriteByte(const T& wr_data)
+ INLINE void WriteByte(const T wr_data)
  {
-  assert(sizeof(T) == 1);
-  Write(&wr_data, 1);
+   assert(sizeof(T) == 1);
+   assert(CanWrite() >= 1);
+   data[write_pos] = wr_data;
+   write_pos = (write_pos + 1) & (size - 1);
  }
 
 
