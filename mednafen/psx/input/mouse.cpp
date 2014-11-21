@@ -131,7 +131,7 @@ int InputDevice_Mouse::StateAction(StateMem* sm, int load, int data_only, const 
 
   SFEND
  };
- int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, section_name);
+ int ret = MDFNSS_StateAction(sm, load, StateRegs, section_name);
 
  if(load)
  {

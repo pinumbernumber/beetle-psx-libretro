@@ -1744,7 +1744,7 @@ static int StateAction(StateMem *sm, int load, int data_only)
    };
 
 
-   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "MAIN");
+   int ret = MDFNSS_StateAction(sm, load, StateRegs, "MAIN");
 
    // Call SetDisc() BEFORE we load CDC state, since SetDisc() has emulation side effects.  We might want to clean this up in the future.
    if(load)

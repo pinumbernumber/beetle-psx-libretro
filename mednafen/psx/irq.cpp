@@ -47,7 +47,7 @@ int IRQ_StateAction(StateMem *sm, int load, int data_only)
       SFVAR(Status),
       SFEND
    };
-   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "IRQ");
+   int ret = MDFNSS_StateAction(sm, load, StateRegs, "IRQ");
 
    if(load)
    {

@@ -167,7 +167,7 @@ int PS_CPU::StateAction(StateMem *sm, int load, int data_only)
 
       SFEND
    };
-   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "CPU");
+   int ret = MDFNSS_StateAction(sm, load, StateRegs, "CPU");
 
    ret &= GTE_StateAction(sm, load, data_only);
 

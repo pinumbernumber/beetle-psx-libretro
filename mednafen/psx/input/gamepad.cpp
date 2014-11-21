@@ -90,7 +90,7 @@ int InputDevice_Gamepad::StateAction(StateMem* sm, int load, int data_only, cons
 
   SFEND
  };
- int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, section_name);
+ int ret = MDFNSS_StateAction(sm, load, StateRegs, section_name);
 
  if(load)
  {

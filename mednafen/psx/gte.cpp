@@ -286,7 +286,7 @@ int GTE_StateAction(StateMem *sm, int load, int data_only)
 
       SFEND
    };
-   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "GTE");
+   int ret = MDFNSS_StateAction(sm, load, StateRegs, "GTE");
 
    if(load)
    {

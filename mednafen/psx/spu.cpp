@@ -1291,7 +1291,7 @@ int PS_SPU::StateAction(StateMem *sm, int load, int data_only)
 #undef SFSWEEP
  int ret = 1;
 
- ret &= MDFNSS_StateAction(sm, load, data_only, StateRegs, "SPU");
+ ret &= MDFNSS_StateAction(sm, load, StateRegs, "SPU");
 
  if(load)
  {

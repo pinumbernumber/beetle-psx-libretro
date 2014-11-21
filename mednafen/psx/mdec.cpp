@@ -212,7 +212,7 @@ int MDEC_StateAction(StateMem *sm, int load, int data_only)
   SFEND
  };
 
- int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "MDEC");
+ int ret = MDFNSS_StateAction(sm, load, StateRegs, "MDEC");
 
  if(load)
  {

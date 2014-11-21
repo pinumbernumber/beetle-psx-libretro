@@ -162,7 +162,7 @@ int FrontIO::StateAction(StateMem* sm, int load, int data_only)
   SFEND
  };
 
- int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "FIO");
+ int ret = MDFNSS_StateAction(sm, load, StateRegs, "FIO");
 
  for(unsigned i = 0; i < 8; i++)
  {

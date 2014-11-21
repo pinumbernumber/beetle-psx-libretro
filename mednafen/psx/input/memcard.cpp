@@ -189,14 +189,14 @@ int InputDevice_Memcard::StateAction(StateMem* sm, int load, int data_only, cons
  };
  int ret = 1;
  
- if(MDFNSS_StateAction(sm, load, data_only, StateRegs, section_name) != 0)
+ if(MDFNSS_StateAction(sm, load, StateRegs, section_name) != 0)
  {
     //printf("%s data_used=%d\n", section_name, data_used);
     if(data_used)
     {
        std::string tmp_name = std::string(section_name) + "_DT";
 
-       ret &= MDFNSS_StateAction(sm, load, data_only, CD_StateRegs, tmp_name.c_str());
+       ret &= MDFNSS_StateAction(sm, load, CD_StateRegs, tmp_name.c_str());
     }
 
     if(load)

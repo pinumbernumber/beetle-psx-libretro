@@ -325,7 +325,7 @@ int PS_CDC::StateAction(StateMem *sm, int load, int data_only)
   SFEND
  };
 
- int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "CDC");
+ int ret = MDFNSS_StateAction(sm, load, StateRegs, "CDC");
 
  if(load)
  {

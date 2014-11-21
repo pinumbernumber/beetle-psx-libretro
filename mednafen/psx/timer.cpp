@@ -476,7 +476,7 @@ int TIMER_StateAction(StateMem *sm, int load, int data_only)
       SFVAR(hretrace),
       SFEND
    };
-   ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "TIMER");
+   ret = MDFNSS_StateAction(sm, load, StateRegs, "TIMER");
 
    if(load)
    {
