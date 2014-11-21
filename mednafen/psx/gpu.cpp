@@ -1493,7 +1493,7 @@ int PS_GPU::StateAction(StateMem *sm, int load, int data_only)
       SFVAR(abr),
       SFVAR(TexMode),
 
-      SFARRAY32(&BlitterFIFO.data[0], BlitterFIFO.data.size()),
+      SFARRAY32(&BlitterFIFO.data[0], BlitterFIFO.size),
       SFVAR(BlitterFIFO.read_pos),
       SFVAR(BlitterFIFO.write_pos),
       SFVAR(BlitterFIFO.in_count),

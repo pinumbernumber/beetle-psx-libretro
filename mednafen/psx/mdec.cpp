@@ -170,7 +170,7 @@ int MDEC_StateAction(StateMem *sm, int load, int data_only)
   SFVAR(ClockCounter),
   SFVAR(MDRPhase),
 
-#define SFFIFO32(fifoobj)  SFARRAY32(&fifoobj.data[0], fifoobj.data.size()),	\
+#define SFFIFO32(fifoobj)  SFARRAY32(&fifoobj.data[0], fifoobj.size),	\
 			 SFVAR(fifoobj.read_pos),				\
 			 SFVAR(fifoobj.write_pos),				\
 			 SFVAR(fifoobj.in_count)
