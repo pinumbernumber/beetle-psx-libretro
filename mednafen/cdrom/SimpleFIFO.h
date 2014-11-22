@@ -21,10 +21,6 @@ typedef struct
 
 #define FIFO_CAN_WRITE(fifo) ((fifo)->size - (fifo)->in_count)
 
-#define SimpleFIFO_WriteByte(fifo, wr_data) \
-   (fifo)->data[(fifo)->write_pos] = wr_data; \
-   (fifo)->write_pos = ((fifo)->write_pos + 1) & ((fifo)->size - 1)
-
 #define SimpleFIFO_WriteUnit(fifo, wr_data) \
    (fifo)->data[(fifo)->write_pos] = wr_data; \
    (fifo)->write_pos = ((fifo)->write_pos + 1) & ((fifo)->size - 1); \
