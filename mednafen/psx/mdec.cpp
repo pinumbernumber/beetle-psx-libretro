@@ -250,81 +250,83 @@ static INLINE int8 Mask9ClampS8(int32 v)
  return v;
 }
 
-template<typename T>
-static void IDCT_1D_Multi(int16 *in_coeff, T *out_coeff)
+static void IDCT_1D_Multi_8(int16 *in_coeff, int8 *out_coeff)
 {
-#if defined(__SSE2__)
-{
- for(unsigned col = 0; col < 8; col++)
- {
-  __m128i c =  _mm_load_si128((__m128i *)&in_coeff[(col * 8)]);
+   unsigned x, col, u;
 
-  for(unsigned x = 0; x < 8; x++)
-  {
-   __m128i sum;
-   __m128i m;
-   int32 tmp[4] MDFN_ALIGN(16);
+   (void)u;
 
-   m = _mm_load_si128((__m128i *)&IDCTMatrix[(x * 8)]);
-   sum = _mm_madd_epi16(m, c);
-   sum = _mm_add_epi32(sum, _mm_shuffle_epi32(sum, (3 << 0) | (2 << 2) | (1 << 4) | (0 << 6)));
-   sum = _mm_add_epi32(sum, _mm_shuffle_epi32(sum, (1 << 0) | (0 << 2)));
-
-   //_mm_store_ss((float *)&tmp[0], (__m128)sum);
-   _mm_store_si128((__m128i*)tmp, sum);
-
-   if(sizeof(T) == 1)
-    out_coeff[(col * 8) + x] = Mask9ClampS8((tmp[0] + 0x4000) >> 15);
-   else
-    out_coeff[(x * 8) + col] = (tmp[0] + 0x4000) >> 15;
-  }
- }
-}
-#else
- for(unsigned col = 0; col < 8; col++)
- {
-  for(unsigned x = 0; x < 8; x++)
-  {
-   int32 sum = 0;
-
-   for(unsigned u = 0; u < 8; u++)
+   for(col = 0; col < 8; col++)
    {
-    sum += (in_coeff[(col * 8) + u] * IDCTMatrix[(x * 8) + u]);
-   }
-
-   if(sizeof(T) == 1)
-    out_coeff[(col * 8) + x] = Mask9ClampS8((sum + 0x4000) >> 15);
-   else
-    out_coeff[(x * 8) + col] = (sum + 0x4000) >> 15;
-  }
- }
+#if defined(__SSE2__)
+      __m128i c =  _mm_load_si128((__m128i *)&in_coeff[(col * 8)]);
 #endif
+
+      for(x = 0; x < 8; x++)
+      {
+         int32 sum = 0;
+#if defined(__SSE2__)
+         __m128i sum128;
+         int32 tmp[4] MDFN_ALIGN(16);
+
+         __m128i m = _mm_load_si128((__m128i *)&IDCTMatrix[(x * 8)]);
+         sum128 = _mm_madd_epi16(m, c);
+         sum128 = _mm_add_epi32(sum128, _mm_shuffle_epi32(sum128, (3 << 0) | (2 << 2) | (1 << 4) | (0 << 6)));
+         sum128 = _mm_add_epi32(sum128, _mm_shuffle_epi32(sum128, (1 << 0) | (0 << 2)));
+
+         _mm_store_si128((__m128i*)tmp, sum128);
+
+         sum = tmp[0];
+#else
+         for(u = 0; u < 8; u++)
+            sum += (in_coeff[(col * 8) + u] * IDCTMatrix[(x * 8) + u]);
+#endif
+         out_coeff[(col * 8) + x] = Mask9ClampS8((sum + 0x4000) >> 15);
+      }
+   }
 }
 
-static void IDCT(int16 *in_coeff, int8 *out_coeff) NO_INLINE;
-static void IDCT(int16 *in_coeff, int8 *out_coeff)
+static void IDCT_1D_Multi_16(int16 *in_coeff, int16 *out_coeff)
 {
- int16 tmpbuf[64] MDFN_ALIGN(16);
+   unsigned col, x, u;
+   (void)u;
 
- IDCT_1D_Multi<int16>(in_coeff, tmpbuf);
- IDCT_1D_Multi<int8>(tmpbuf, out_coeff);
+   for(col = 0; col < 8; col++)
+   {
+#if defined(__SSE2__)
+      __m128i c =  _mm_load_si128((__m128i *)&in_coeff[(col * 8)]);
+#endif
+
+      for(unsigned x = 0; x < 8; x++)
+      {
+         int32 sum = 0;
+#if defined(__SSE2__)
+         __m128i sum128;
+         int32 tmp[4] MDFN_ALIGN(16);
+
+         __m128i m = _mm_load_si128((__m128i *)&IDCTMatrix[(x * 8)]);
+         sum128 = _mm_madd_epi16(m, c);
+         sum128 = _mm_add_epi32(sum128, _mm_shuffle_epi32(sum128, (3 << 0) | (2 << 2) | (1 << 4) | (0 << 6)));
+         sum128 = _mm_add_epi32(sum128, _mm_shuffle_epi32(sum128, (1 << 0) | (0 << 2)));
+
+         _mm_store_si128((__m128i*)tmp, sum128);
+
+         sum = tmp[0];
+#else
+         for(u = 0; u < 8; u++)
+            sum += (in_coeff[(col * 8) + u] * IDCTMatrix[(x * 8) + u]);
+#endif
+         out_coeff[(x * 8) + col] = (sum + 0x4000) >> 15;
+      }
+   }
 }
 
-static INLINE void YCbCr_to_RGB(const int8 y, const int8 cb, const int8 cr, int &r, int &g, int &b)
-{
- //
- // The formula for green is still a bit off(precision/rounding issues when both cb and cr are non-zero).
- //
+/* The formula for green is still a bit off(precision/rounding issues when both cb and cr are non-zero). */
 
- r = Mask9ClampS8(y + (((359 * cr) + 0x80) >> 8));
- //g = Mask9ClampS8(y + (((-88 * cb) + (-183 * cr) + 0x80) >> 8));
- g = Mask9ClampS8(y + ((((-88 * cb) &~ 0x1F) + ((-183 * cr) &~ 0x07) + 0x80) >> 8));
- b = Mask9ClampS8(y + (((454 * cb) + 0x80) >> 8));
-
- r ^= 0x80;
- g ^= 0x80;
- b ^= 0x80;
-}
+#define YCbCr_to_RGB(y, cb, cr, r, g, b) \
+ r = Mask9ClampS8(y + (((359 * cr) + 0x80) >> 8))                                   ^ 0x80; \
+ g = Mask9ClampS8(y + ((((-88 * cb) &~ 0x1F) + ((-183 * cr) &~ 0x07) + 0x80) >> 8)) ^ 0x80; \
+ b = Mask9ClampS8(y + (((454 * cb) + 0x80) >> 8))                                   ^ 0x80
 
 static INLINE uint16 RGB_to_RGB555(uint8 r, uint8 g, uint8 b)
 {
@@ -346,203 +348,213 @@ static INLINE uint16 RGB_to_RGB555(uint8 r, uint8 g, uint8 b)
 
 static void EncodeImage(const unsigned ybn)
 {
- //printf("ENCODE, %d\n", (Command & 0x08000000) ? 256 : 384);
+   //printf("ENCODE, %d\n", (Command & 0x08000000) ? 256 : 384);
 
- PixelBufferCount32 = 0;
+   PixelBufferCount32 = 0;
 
- switch((Command >> 27) & 0x3)
- {
-  case 0:	// 4bpp
-  {
-   const uint8 us_xor = (Command & (1U << 26)) ? 0x00 : 0x88;
-   uint8* pix_out = PixelBuffer.pix8;
-
-   for(int y = 0; y < 8; y++)
+   switch((Command >> 27) & 0x3)
    {
-    for(int x = 0; x < 8; x += 2)
-    {
-     uint8 p0 = std::min<int>(127, block_y[y][x + 0] + 8);
-     uint8 p1 = std::min<int>(127, block_y[y][x + 1] + 8);
+      case 0:	// 4bpp
+         {
+            const uint8 us_xor = (Command & (1U << 26)) ? 0x00 : 0x88;
+            uint8* pix_out = PixelBuffer.pix8;
 
-     *pix_out = ((p0 >> 4) | (p1 & 0xF0)) ^ us_xor;
-     pix_out++;
-    }
+            for(int y = 0; y < 8; y++)
+            {
+               for(int x = 0; x < 8; x += 2)
+               {
+                  uint8 p0 = std::min<int>(127, block_y[y][x + 0] + 8);
+                  uint8 p1 = std::min<int>(127, block_y[y][x + 1] + 8);
+
+                  *pix_out = ((p0 >> 4) | (p1 & 0xF0)) ^ us_xor;
+                  pix_out++;
+               }
+            }
+            PixelBufferCount32 = 8;
+         }
+         break;
+
+
+      case 1:	// 8bpp
+         {
+            const uint8 us_xor = (Command & (1U << 26)) ? 0x00 : 0x80;
+            uint8* pix_out = PixelBuffer.pix8;
+
+            for(int y = 0; y < 8; y++)
+            {
+               for(int x = 0; x < 8; x++)
+               {
+                  *pix_out = (uint8)block_y[y][x] ^ us_xor;
+                  pix_out++;
+               }
+            }
+            PixelBufferCount32 = 16;
+         }
+         break;
+
+      case 2:	// 24bpp
+         {
+            const uint8 rgb_xor = (Command & (1U << 26)) ? 0x80 : 0x00;
+            uint8* pix_out = PixelBuffer.pix8;
+
+            for(int y = 0; y < 8; y++)
+            {
+               const int8* by = &block_y[y][0];
+               const int8* cb = &block_cb[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
+               const int8* cr = &block_cr[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
+
+               for(int x = 0; x < 8; x++)
+               {
+                  int r, g, b;
+
+                  YCbCr_to_RGB(by[x], cb[x >> 1], cr[x >> 1], r, g, b);
+
+                  pix_out[0] = r ^ rgb_xor;
+                  pix_out[1] = g ^ rgb_xor;
+                  pix_out[2] = b ^ rgb_xor;
+                  pix_out += 3;
+               }
+            }
+            PixelBufferCount32 = 48;
+         }
+         break;
+
+      case 3:	// 16bpp
+         {
+            uint16 pixel_xor = ((Command & 0x02000000) ? 0x8000 : 0x0000) | ((Command & (1U << 26)) ? 0x4210 : 0x0000);
+            uint16* pix_out = PixelBuffer.pix16;
+
+            for(int y = 0; y < 8; y++)
+            {
+               const int8* by = &block_y[y][0];
+               const int8* cb = &block_cb[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
+               const int8* cr = &block_cr[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
+
+               for(int x = 0; x < 8; x++)
+               {
+                  int r, g, b;
+
+                  YCbCr_to_RGB(by[x], cb[x >> 1], cr[x >> 1], r, g, b);
+
+                  StoreU16_LE(pix_out, pixel_xor ^ RGB_to_RGB555(r, g, b));
+                  pix_out++;
+               }
+            }
+            PixelBufferCount32 = 32;
+         }
+         break;
+
    }
-   PixelBufferCount32 = 8;
-  }
-  break;
-
-
-  case 1:	// 8bpp
-  {
-   const uint8 us_xor = (Command & (1U << 26)) ? 0x00 : 0x80;
-   uint8* pix_out = PixelBuffer.pix8;
-
-   for(int y = 0; y < 8; y++)
-   {
-    for(int x = 0; x < 8; x++)
-    {
-     *pix_out = (uint8)block_y[y][x] ^ us_xor;
-     pix_out++;
-    }
-   }
-   PixelBufferCount32 = 16;
-  }
-  break;
-
-  case 2:	// 24bpp
-  {
-   const uint8 rgb_xor = (Command & (1U << 26)) ? 0x80 : 0x00;
-   uint8* pix_out = PixelBuffer.pix8;
-
-   for(int y = 0; y < 8; y++)
-   {
-    const int8* by = &block_y[y][0];
-    const int8* cb = &block_cb[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
-    const int8* cr = &block_cr[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
-    
-    for(int x = 0; x < 8; x++)
-    {
-     int r, g, b;
-
-     YCbCr_to_RGB(by[x], cb[x >> 1], cr[x >> 1], r, g, b);
-
-     pix_out[0] = r ^ rgb_xor;
-     pix_out[1] = g ^ rgb_xor;
-     pix_out[2] = b ^ rgb_xor;
-     pix_out += 3;
-    }
-   }
-   PixelBufferCount32 = 48;
-  }
-  break;
-
-  case 3:	// 16bpp
-  {
-   uint16 pixel_xor = ((Command & 0x02000000) ? 0x8000 : 0x0000) | ((Command & (1U << 26)) ? 0x4210 : 0x0000);
-   uint16* pix_out = PixelBuffer.pix16;
-
-   for(int y = 0; y < 8; y++)
-   {
-    const int8* by = &block_y[y][0];
-    const int8* cb = &block_cb[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
-    const int8* cr = &block_cr[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
-
-    for(int x = 0; x < 8; x++)
-    {
-     int r, g, b;
-
-     YCbCr_to_RGB(by[x], cb[x >> 1], cr[x >> 1], r, g, b);
-
-     StoreU16_LE(pix_out, pixel_xor ^ RGB_to_RGB555(r, g, b));
-     pix_out++;
-    }
-   }
-   PixelBufferCount32 = 32;
-  }
-  break;
-
- }
 }
 
 static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 {
- const uint32 qmw = (bool)(DecodeWB < 2);
+   const uint32 qmw = (bool)(DecodeWB < 2);
 
-  //printf("MDEC DMA SubWrite: %04x, %d\n", V, CoeffIndex);
+   //printf("MDEC DMA SubWrite: %04x, %d\n", V, CoeffIndex);
 
-  if(!CoeffIndex)
-  {
-   if(V == 0xFE00)
+   if(!CoeffIndex)
    {
-    //printf("FE00 @ %u\n", DecodeWB);
-    return;
-   }
+      if(V == 0xFE00)
+         return; //printf("FE00 @ %u\n", DecodeWB);
 
-   QScale = V >> 10;
+      QScale = V >> 10;
 
-   {
-    int q = QMatrix[qmw][0];	// No QScale here!
-    int ci = sign_10_to_s16(V & 0x3FF);
-    int tmp;
+      {
+         int q   = QMatrix[qmw][0];	// No QScale here!
+         int ci  = sign_10_to_s16(V & 0x3FF);
+         int tmp = (ci * 2) << 4;
 
-    if(q != 0)
-     tmp = ((ci * q) << 4) + (ci ? ((ci < 0) ? 8 : -8) : 0);
-    else
-     tmp = (ci * 2) << 4;
+         if(q != 0)
+            tmp = ((ci * q) << 4) + (ci ? ((ci < 0) ? 8 : -8) : 0);
 
-    // Not sure if it should be 0x3FFF or 0x3FF0 or maybe 0x3FF8?
-    Coeff[ZigZag[0]] = std::min<int>(0x3FFF, std::max<int>(-0x4000, tmp));
-    CoeffIndex++;
-   }
-  }
-  else
-  {
-   if(V == 0xFE00)
-   {
-    while(CoeffIndex < 64)
-     Coeff[ZigZag[CoeffIndex++]] = 0;
+         // Not sure if it should be 0x3FFF or 0x3FF0 or maybe 0x3FF8?
+         Coeff[ZigZag[0]] = std::min<int>(0x3FFF, std::max<int>(-0x4000, tmp));
+         CoeffIndex++;
+      }
    }
    else
    {
-    uint32 rlcount = V >> 10;
+      if(V == 0xFE00)
+      {
+         while(CoeffIndex < 64)
+            Coeff[ZigZag[CoeffIndex++]] = 0;
+      }
+      else
+      {
+         uint32 rlcount = V >> 10;
 
-    for(uint32 i = 0; i < rlcount && CoeffIndex < 64; i++)
-    {
-     Coeff[ZigZag[CoeffIndex]] = 0;
-     CoeffIndex++;
-    }
+         for(uint32 i = 0; i < rlcount && CoeffIndex < 64; i++)
+         {
+            Coeff[ZigZag[CoeffIndex]] = 0;
+            CoeffIndex++;
+         }
 
-    if(CoeffIndex < 64)
-    {
-     int q = QScale * QMatrix[qmw][CoeffIndex];
-     int ci = sign_10_to_s16(V & 0x3FF);
-     int tmp;
+         if(CoeffIndex < 64)
+         {
+            int q   = QScale * QMatrix[qmw][CoeffIndex];
+            int ci  = sign_10_to_s16(V & 0x3FF);
+            int tmp = (ci * 2) << 4;
 
-     if(q != 0)
-      tmp = (((ci * q) >> 3) << 4) + (ci ? ((ci < 0) ? 8 : -8) : 0);
-     else
-      tmp = (ci * 2) << 4;
+            if(q != 0)
+               tmp = (((ci * q) >> 3) << 4) + (ci ? ((ci < 0) ? 8 : -8) : 0);
 
-     // Not sure if it should be 0x3FFF or 0x3FF0 or maybe 0x3FF8?
-     Coeff[ZigZag[CoeffIndex]] = std::min<int>(0x3FFF, std::max<int>(-0x4000, tmp));
-     CoeffIndex++;
-    }
-   }
-  }
-
-  if(CoeffIndex == 64)
-  {
-   CoeffIndex = 0;
-
-   //printf("Block %d finished\n", DecodeWB);
-
-   switch(DecodeWB)
-   {
-    case 0: IDCT(Coeff, &block_cr[0][0]); break;
-    case 1: IDCT(Coeff, &block_cb[0][0]); break;
-    case 2: IDCT(Coeff, &block_y[0][0]); break;
-    case 3: IDCT(Coeff, &block_y[0][0]); break;
-    case 4: IDCT(Coeff, &block_y[0][0]); break;
-    case 5: IDCT(Coeff, &block_y[0][0]); break;
-   }   
-
-   //
-   // Approximate, actual timing seems to be a bit complex.
-   //
-   *eat_cycles += 341;
-
-   if(DecodeWB >= 2)
-   {
-    EncodeImage((DecodeWB + 4) % 6);
+            // Not sure if it should be 0x3FFF or 0x3FF0 or maybe 0x3FF8?
+            Coeff[ZigZag[CoeffIndex]] = std::min<int>(0x3FFF, std::max<int>(-0x4000, tmp));
+            CoeffIndex++;
+         }
+      }
    }
 
-   DecodeWB++;
-   if(DecodeWB == (((Command >> 27) & 2) ? 6 : 3))
+   if(CoeffIndex != 64)
+      return;
+
    {
-    DecodeWB = ((Command >> 27) & 2) ? 0 : 2;
+      bool do_decode = false;
+      int8 *out_coeff = NULL;
+      CoeffIndex = 0;
+
+      //printf("Block %d finished\n", DecodeWB);
+
+      switch(DecodeWB)
+      {
+         case 0:
+            out_coeff = (int8*)&block_cr[0][0];
+            do_decode = true;
+            break;
+         case 1:
+            out_coeff = (int8*)&block_cb[0][0];
+            do_decode = true;
+            break;
+         case 2:
+         case 3:
+         case 4:
+         case 5:
+            out_coeff = (int8*)&block_y[0][0];
+            do_decode = true;
+            break;
+      }   
+
+      if (do_decode)
+      {
+         int16 tmpbuf[64] MDFN_ALIGN(16);
+
+         IDCT_1D_Multi_16(Coeff, tmpbuf);
+         IDCT_1D_Multi_8(tmpbuf, out_coeff);
+      }
+
+      //
+      // Approximate, actual timing seems to be a bit complex.
+      //
+      *eat_cycles += 341;
+
+      if(DecodeWB >= 2)
+         EncodeImage((DecodeWB + 4) % 6);
+
+      DecodeWB++;
+      if(DecodeWB == (((Command >> 27) & 2) ? 6 : 3))
+         DecodeWB = ((Command >> 27) & 2) ? 0 : 2;
    }
-  }
 }
 
 #if 1
