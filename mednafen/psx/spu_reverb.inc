@@ -136,24 +136,19 @@ void PS_SPU::RunReverb(int32_t in_l, int32_t in_r, int32_t &out_l, int32_t &out_
   ///
  if(SPUControl & 0x80)
  {
-  int32_t IIR_INPUT_A0;
-  int32_t IIR_INPUT_A1;
-  int32_t IIR_INPUT_B0;
-  int32_t IIR_INPUT_B1;
-  int32_t IIR_A0, IIR_A1, IIR_B0, IIR_B1;
   int32_t ACC0, ACC1;
   int32_t FB_A0, FB_A1, FB_B0, FB_B1;
 
-  IIR_INPUT_A0 = ((RD_RVB(IIR_SRC_A0) * IIR_COEF) >> 15) + ((downsampled[0] * IN_COEF_L) >> 15);
-  IIR_INPUT_A1 = ((RD_RVB(IIR_SRC_A1) * IIR_COEF) >> 15) + ((downsampled[1] * IN_COEF_R) >> 15);
-  IIR_INPUT_B0 = ((RD_RVB(IIR_SRC_B0) * IIR_COEF) >> 15) + ((downsampled[0] * IN_COEF_L) >> 15);
-  IIR_INPUT_B1 = ((RD_RVB(IIR_SRC_B1) * IIR_COEF) >> 15) + ((downsampled[1] * IN_COEF_R) >> 15);
+  int32_t IIR_INPUT_A0 = ((RD_RVB(IIR_SRC_A0) * IIR_COEF) >> 15) + ((downsampled[0] * IN_COEF_L) >> 15);
+  int32_t IIR_INPUT_A1 = ((RD_RVB(IIR_SRC_A1) * IIR_COEF) >> 15) + ((downsampled[1] * IN_COEF_R) >> 15);
+  int32_t IIR_INPUT_B0 = ((RD_RVB(IIR_SRC_B0) * IIR_COEF) >> 15) + ((downsampled[0] * IN_COEF_L) >> 15);
+  int32_t IIR_INPUT_B1 = ((RD_RVB(IIR_SRC_B1) * IIR_COEF) >> 15) + ((downsampled[1] * IN_COEF_R) >> 15);
 
 
-  IIR_A0 = (((int64)IIR_INPUT_A0 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_A0) * (32768 - IIR_ALPHA)) >> 15);
-  IIR_A1 = (((int64)IIR_INPUT_A1 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_A1) * (32768 - IIR_ALPHA)) >> 15);
-  IIR_B0 = (((int64)IIR_INPUT_B0 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_B0) * (32768 - IIR_ALPHA)) >> 15);
-  IIR_B1 = (((int64)IIR_INPUT_B1 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_B1) * (32768 - IIR_ALPHA)) >> 15);
+  int32_t IIR_A0 = (((int64)IIR_INPUT_A0 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_A0) * (32768 - IIR_ALPHA)) >> 15);
+  int32_t IIR_A1 = (((int64)IIR_INPUT_A1 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_A1) * (32768 - IIR_ALPHA)) >> 15);
+  int32_t IIR_B0 = (((int64)IIR_INPUT_B0 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_B0) * (32768 - IIR_ALPHA)) >> 15);
+  int32_t IIR_B1 = (((int64)IIR_INPUT_B1 * IIR_ALPHA) >> 15) + ((RD_RVB(IIR_DEST_B1) * (32768 - IIR_ALPHA)) >> 15);
 
   WR_RVB(IIR_DEST_A0, IIR_A0, 1);
   WR_RVB(IIR_DEST_A1, IIR_A1, 1);
@@ -204,7 +199,6 @@ void PS_SPU::RunReverb(int32_t in_l, int32_t in_r, int32_t &out_l, int32_t &out_
   RUSB[0][RUSB_WP | 0x40] = RUSB[0][RUSB_WP] = (RD_RVB(MIX_DEST_A0) + RD_RVB(MIX_DEST_B0)) >> 1;
   RUSB[1][RUSB_WP | 0x40] = RUSB[1][RUSB_WP] = (RD_RVB(MIX_DEST_A1) + RD_RVB(MIX_DEST_B1)) >> 1;
 
-  RUSB_WP = (RUSB_WP + 1) & 0x3F;
 
   ReverbCur = (ReverbCur + 1) & 0x3FFFF;
   if(!ReverbCur)
@@ -215,8 +209,8 @@ void PS_SPU::RunReverb(int32_t in_l, int32_t in_r, int32_t &out_l, int32_t &out_
   RUSB[0][RUSB_WP | 0x40] = RUSB[0][RUSB_WP] = 0;
   RUSB[1][RUSB_WP | 0x40] = RUSB[1][RUSB_WP] = 0;
 
-  RUSB_WP = (RUSB_WP + 1) & 0x3F;
  }
+ RUSB_WP = (RUSB_WP + 1) & 0x3F;
 
  for(int lr = 0; lr < 2; lr++)
   upsampled[lr] = Reverb4422(&RUSB[lr][(RUSB_WP - 40) & 0x3F]);
