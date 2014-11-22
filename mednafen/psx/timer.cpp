@@ -15,7 +15,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "psx.h"
+#include "mednafen-types.h"
+#include "../state-common.h"
 #include "timer.h"
 
 /*
@@ -97,7 +98,7 @@ struct Timer
 static bool vblank;
 static bool hretrace;
 static Timer Timers[3];
-static pscpu_timestamp_t lastts;
+static int32_t lastts;
 
 static int32_t CalcNextEvent(int32_t next_event)
 {
@@ -129,7 +130,7 @@ static int32_t CalcNextEvent(int32_t next_event)
 
       if(count_delta <= 0)
       {
-         PSX_DBG(PSX_DBG_ERROR, "timer %d count_delta <= 0!!! %d %d\n", i, target, Timers[i].Counter);
+         //PSX_DBG(PSX_DBG_ERROR, "timer %d count_delta <= 0!!! %d %d\n", i, target, Timers[i].Counter);
          continue;
       }
 
@@ -200,7 +201,7 @@ static void ClockTimer(int i, uint32_t clocks)
 
    if((before < target && Timers[i].Counter >= target) || zero_tm || Timers[i].Counter > 0xFFFF)
    {
-#if 1
+#if 0
       if(Timers[i].Mode & 0x10)
       {
          if((Timers[i].Counter - target) > 3)
@@ -297,7 +298,7 @@ void TIMER_ClockHRetrace(void)
       ClockTimer(1, 1);
 }
 
-pscpu_timestamp_t TIMER_Update(const pscpu_timestamp_t timestamp)
+int32_t TIMER_Update(const int32_t timestamp)
 {
    int32_t cpu_clocks, i;
 
@@ -339,7 +340,7 @@ static void CalcCountingStart(unsigned which)
    }
 }
 
-void TIMER_Write(const pscpu_timestamp_t timestamp, uint32_t A, uint16_t V)
+void TIMER_Write(const int32_t timestamp, uint32_t A, uint16_t V)
 {
    int which;
    TIMER_Update(timestamp);
@@ -348,7 +349,7 @@ void TIMER_Write(const pscpu_timestamp_t timestamp, uint32_t A, uint16_t V)
 
    V <<= (A & 3) * 8;
 
-   PSX_DBGINFO("[TIMER] Write: %08x %04x\n", A, V);
+   //PSX_DBGINFO("[TIMER] Write: %08x %04x\n", A, V);
 
    if(which >= 3)
       return;
@@ -403,7 +404,7 @@ void TIMER_Write(const pscpu_timestamp_t timestamp, uint32_t A, uint16_t V)
    PSX_SetEventNT(PSX_EVENT_TIMER, timestamp + CalcNextEvent(1024));
 }
 
-uint16_t TIMER_Read(const pscpu_timestamp_t timestamp, uint32_t A)
+uint16_t TIMER_Read(const int32_t timestamp, uint32_t A)
 {
    uint16_t ret;
    int which;
@@ -413,8 +414,7 @@ uint16_t TIMER_Read(const pscpu_timestamp_t timestamp, uint32_t A)
 
    if(which >= 3)
    {
-      PSX_WARNING("[TIMER] Open Bus Read: 0x%08x", A);
-
+      //PSX_WARNING("[TIMER] Open Bus Read: 0x%08x", A);
       return(ret >> ((A & 3) * 8));
    }
 
@@ -433,7 +433,7 @@ uint16_t TIMER_Read(const pscpu_timestamp_t timestamp, uint32_t A)
          ret = Timers[which].Target;
          break;
       case 0xC:
-         PSX_WARNING("[TIMER] Open Bus Read: 0x%08x", A);
+         //PSX_WARNING("[TIMER] Open Bus Read: 0x%08x", A);
          break;
    }
 
@@ -461,22 +461,22 @@ int TIMER_StateAction(StateMem *sm, int load, int data_only)
    int ret;
    SFORMAT StateRegs[] =
    {
-      { &(Timers[0].Mode), SF_IS_BOOL(&(Timers[0].Mode)) ? 1 : sizeof(Timers[0].Mode), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Mode)) ? 0x08000000 : 0), "0" "Mode" },
-      { &(Timers[0].Counter), SF_IS_BOOL(&(Timers[0].Counter)) ? 1 : sizeof(Timers[0].Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Counter)) ? 0x08000000 : 0), "0" "Counter" },
-      { &(Timers[0].Target), SF_IS_BOOL(&(Timers[0].Target)) ? 1 : sizeof(Timers[0].Target), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Target)) ? 0x08000000 : 0), "0" "Target" },
-      { &(Timers[0].Div8Counter), SF_IS_BOOL(&(Timers[0].Div8Counter)) ? 1 : sizeof(Timers[0].Div8Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Div8Counter)) ? 0x08000000 : 0), "0" "Div8Counter" },
+      { &(Timers[0].Mode), sizeof(Timers[0].Mode), 0x80000000 | 0, "0" "Mode" },
+      { &(Timers[0].Counter), sizeof(Timers[0].Counter), 0x80000000 | 0, "0" "Counter" },
+      { &(Timers[0].Target), sizeof(Timers[0].Target), 0x80000000 | 0, "0" "Target" },
+      { &(Timers[0].Div8Counter), sizeof(Timers[0].Div8Counter), 0x80000000 | 0, "0" "Div8Counter" },
       { &(Timers[0].IRQDone), 1, 0x80000000 | 0x08000000, "0" "IRQDone" },
       { &(Timers[0].DoZeCounting), sizeof(Timers[0].DoZeCounting), 0x80000000 | 0, "0" "DoZeCounting" },
-      { &(Timers[1].Mode), SF_IS_BOOL(&(Timers[1].Mode)) ? 1 : sizeof(Timers[1].Mode), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Mode)) ? 0x08000000 : 0), "1" "Mode" },
-      { &(Timers[1].Counter), SF_IS_BOOL(&(Timers[1].Counter)) ? 1 : sizeof(Timers[1].Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Counter)) ? 0x08000000 : 0), "1" "Counter" },
-      { &(Timers[1].Target), SF_IS_BOOL(&(Timers[1].Target)) ? 1 : sizeof(Timers[1].Target), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Target)) ? 0x08000000 : 0), "1" "Target" },
-      { &(Timers[1].Div8Counter), SF_IS_BOOL(&(Timers[1].Div8Counter)) ? 1 : sizeof(Timers[1].Div8Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Div8Counter)) ? 0x08000000 : 0), "1" "Div8Counter" },
+      { &(Timers[1].Mode), sizeof(Timers[1].Mode), 0x80000000 | 0, "1" "Mode" },
+      { &(Timers[1].Counter), sizeof(Timers[1].Counter), 0x80000000 | 0, "1" "Counter" },
+      { &(Timers[1].Target), sizeof(Timers[1].Target), 0x80000000 | 0, "1" "Target" },
+      { &(Timers[1].Div8Counter), sizeof(Timers[1].Div8Counter), 0x80000000 | 0, "1" "Div8Counter" },
       { &(Timers[1].IRQDone), 1, 0x80000000 | 0x08000000, "1" "IRQDone" },
       { &(Timers[1].DoZeCounting), sizeof(Timers[1].DoZeCounting), 0x80000000 | 0, "1" "DoZeCounting" },
-      { &(Timers[2].Mode), SF_IS_BOOL(&(Timers[2].Mode)) ? 1 : sizeof(Timers[2].Mode), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Mode)) ? 0x08000000 : 0), "2" "Mode" },
-      { &(Timers[2].Counter), SF_IS_BOOL(&(Timers[2].Counter)) ? 1 : sizeof(Timers[2].Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Counter)) ? 0x08000000 : 0), "2" "Counter" },
-      { &(Timers[2].Target), SF_IS_BOOL(&(Timers[2].Target)) ? 1 : sizeof(Timers[2].Target), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Target)) ? 0x08000000 : 0), "2" "Target" },
-      { &(Timers[2].Div8Counter), SF_IS_BOOL(&(Timers[2].Div8Counter)) ? 1 : sizeof(Timers[2].Div8Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Div8Counter)) ? 0x08000000 : 0), "2" "Div8Counter" },
+      { &(Timers[2].Mode), sizeof(Timers[2].Mode), 0x80000000 | 0, "2" "Mode" },
+      { &(Timers[2].Counter), sizeof(Timers[2].Counter), 0x80000000 | 0, "2" "Counter" },
+      { &(Timers[2].Target), sizeof(Timers[2].Target), 0x80000000 | 0, "2" "Target" },
+      { &(Timers[2].Div8Counter), sizeof(Timers[2].Div8Counter), 0x80000000 | 0, "2" "Div8Counter" },
       { &(Timers[2].IRQDone), 1, 0x80000000 | 0x08000000, "2" "IRQDone" },
       { &(Timers[2].DoZeCounting), sizeof(Timers[2].DoZeCounting), 0x80000000 | 0, "2" "DoZeCounting" },
       { &((vblank)), 1, 0x80000000 | 0x08000000, "vblank" },

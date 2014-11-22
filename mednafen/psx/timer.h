@@ -23,15 +23,15 @@ uint32 TIMER_GetRegister(unsigned int which, char *special, const uint32 special
 void TIMER_SetRegister(unsigned int which, uint32 value);
 
 
-void TIMER_Write(const pscpu_timestamp_t timestamp, uint32 A, uint16 V);
-uint16 TIMER_Read(const pscpu_timestamp_t timestamp, uint32 A);
+void TIMER_Write(const int32_t timestamp, uint32 A, uint16 V);
+uint16 TIMER_Read(const int32_t timestamp, uint32 A);
 
 void TIMER_AddDotClocks(uint32 count);
 void TIMER_ClockHRetrace(void);
 void TIMER_SetHRetrace(bool status);
 void TIMER_SetVBlank(bool status);
 
-pscpu_timestamp_t TIMER_Update(const pscpu_timestamp_t);
+int32_t TIMER_Update(const int32_t unused);
 void TIMER_ResetTS(void);
 
 void TIMER_Power(void);
