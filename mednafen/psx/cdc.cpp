@@ -1323,7 +1323,9 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 		   DMABuffer.Write(SB, 2340);
 
 		   while(FIFO_CAN_WRITE(DMABuffer))
-		    DMABuffer.WriteByte(0x00);
+         {
+		    SimpleFIFO_WriteByte(DMABuffer, 0x00);
+         }
 		  }
 		  else
 		  {

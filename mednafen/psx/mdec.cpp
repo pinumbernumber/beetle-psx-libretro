@@ -26,7 +26,7 @@
 
   if(FIFO_CAN_WRITE(InFIFO))
   {
-   InFIFO.WriteUnit(V);
+   SimpleFIFO_WriteUnit(InFIFO, V);
 
    if(InCommand)
    {
@@ -538,7 +538,7 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 //
 #define MDEC_WAIT_COND(n)  { case __COUNTER__: if(!(n)) { MDRPhase = __COUNTER__ - MDRPhaseBias - 1; return; } }
 
-#define MDEC_WRITE_FIFO(n) { MDEC_WAIT_COND(FIFO_CAN_WRITE(OutFIFO)); OutFIFO.WriteUnit(n);  }
+#define MDEC_WRITE_FIFO(n) { MDEC_WAIT_COND(FIFO_CAN_WRITE(OutFIFO)); SimpleFIFO_WriteUnit(OutFIFO, n);  }
 #define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO.in_count); n = InFIFO.ReadUnit(); }
 #define MDEC_EAT_CLOCKS(n) { ClockCounter -= (n); MDEC_WAIT_COND(ClockCounter > 0); }
 
@@ -684,7 +684,7 @@ void MDEC_DMAWrite(uint32 V)
 {
  if(FIFO_CAN_WRITE(InFIFO))
  {
-  InFIFO.WriteUnit(V);
+  SimpleFIFO_WriteUnit(InFIFO, V);
   MDEC_Run(0);
  }
  else
@@ -768,7 +768,7 @@ void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
  {
   if(FIFO_CAN_WRITE(InFIFO))
   {
-   InFIFO.WriteUnit(V);
+   SimpleFIFO_WriteUnit(InFIFO, V);
 
    if(!InCommand)
    {

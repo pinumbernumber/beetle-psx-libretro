@@ -9,6 +9,17 @@
 #define FIFO_CAN_WRITE_INTERNAL() (size - in_count)
 #define FIFO_CAN_WRITE(fifo) ((fifo).size - (fifo).in_count)
 
+#define SimpleFIFO_WriteUnit(fifo, wr_data) \
+   (fifo).data[(fifo).write_pos] = wr_data; \
+   (fifo).write_pos = ((fifo).write_pos + 1) & ((fifo).size - 1); \
+   (fifo).in_count++
+
+#define SimpleFIFO_WriteByte(fifo, wr_data) \
+   (fifo).data[(fifo).write_pos] = wr_data; \
+   (fifo).write_pos = ((fifo).write_pos + 1) & ((fifo).size - 1)
+
+#define SimpleFIFO_ReadUnitPeek(fifo) ((fifo).data[(fifo).read_pos])
+
 template<typename T>
 class SimpleFIFO
 {
@@ -41,11 +52,6 @@ class SimpleFIFO
     in_count %= (size + 1);
  }
 
- INLINE T ReadUnitPeek()
- {
-  assert(in_count > 0);
-  return data[read_pos];
- }
 
  INLINE T ReadUnit()
  {
@@ -74,21 +80,6 @@ class SimpleFIFO
   }
  }
 
- INLINE void WriteUnit(const T wr_data)
- {
-   assert(FIFO_CAN_WRITE_INTERNAL() >= 1);
-   data[write_pos] = wr_data;
-   write_pos = (write_pos + 1) & (size - 1);
-   in_count++;
- }
-
- INLINE void WriteByte(const T wr_data)
- {
-   assert(sizeof(T) == 1);
-   assert(FIFO_CAN_WRITE_INTERNAL() >= 1);
-   data[write_pos] = wr_data;
-   write_pos = (write_pos + 1) & (size - 1);
- }
 
 
  INLINE void Flush(void)
