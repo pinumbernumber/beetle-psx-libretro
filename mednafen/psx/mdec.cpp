@@ -129,8 +129,8 @@ void MDEC_Power(void)
  ClockCounter = 0;
  MDRPhase = 0;
 
- InFIFO.Flush();
- OutFIFO.Flush();
+ SimpleFIFO_Flush(InFIFO);
+ SimpleFIFO_Flush(OutFIFO);
 
  memset(block_y, 0, sizeof(block_y));
  memset(block_cb, 0, sizeof(block_cb));
@@ -574,8 +574,7 @@ void MDEC_Run(int32 clocks)
    if(((Command >> 29) & 0x7) == 1)
    {
     InCounter = Command & 0xFFFF;
-    OutFIFO.Flush();
-    //OutBuffer.Flush();
+    SimpleFIFO_Flush(OutFIFO);
 
     PixelBufferCount32 = 0;
     CoeffIndex = 0;
@@ -759,8 +758,8 @@ void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
    CoeffIndex = 0;
    DecodeWB = 0;
 
-   InFIFO.Flush();
-   OutFIFO.Flush();
+   SimpleFIFO_Flush(InFIFO);
+   SimpleFIFO_Flush(OutFIFO);
   }
   Control = V & 0x7FFFFFFF;
  }

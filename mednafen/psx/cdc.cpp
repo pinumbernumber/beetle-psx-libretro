@@ -155,7 +155,7 @@ void PS_CDC::SoftReset(void)
  IRQOutTestMask = 0;
  RecalcIRQ();
 
- DMABuffer.Flush();
+ SimpleFIFO_Flush(DMABuffer);
  SB_In = 0;
  SectorPipe_Pos = SectorPipe_In = 0;
 
@@ -1316,11 +1316,13 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 	 	{
 	  	 if(!DMABuffer.in_count)
 	  	 {
+          uint8 *sb_buf = (uint8*)&SB[0];
 		  if(!SB_In)
 		  {
+           uint8 sb_size = 2340;
 		   PSX_WARNING("[CDC] Data read begin when no data to read!");
 
-		   DMABuffer.Write(SB, 2340);
+		   SimpleFIFO_Write(DMABuffer, sb_buf, sb_size);
 
 		   while(FIFO_CAN_WRITE(DMABuffer))
          {
@@ -1329,7 +1331,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 		  }
 		  else
 		  {
-	   	   DMABuffer.Write(SB, SB_In);
+	   	   SimpleFIFO_Write(DMABuffer, sb_buf, SB_In);
 		   SB_In = 0;
 		  }
 	  	 }
@@ -1345,7 +1347,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 		}
 		else
 		{
-		 DMABuffer.Flush();
+		 SimpleFIFO_Flush(DMABuffer);
 		}
 
 		if(V & 0x20)

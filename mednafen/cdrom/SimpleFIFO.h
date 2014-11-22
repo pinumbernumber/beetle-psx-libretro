@@ -20,6 +20,21 @@
 
 #define SimpleFIFO_ReadUnitPeek(fifo) ((fifo).data[(fifo).read_pos])
 
+#define SimpleFIFO_Write(fifo, happy_data, happy_count) \
+  while(happy_count) \
+  { \
+   (fifo).data[(fifo).write_pos] = *happy_data; \
+   (fifo).write_pos = ((fifo).write_pos + 1) & ((fifo).size - 1); \
+   (fifo).in_count++; \
+   happy_data++; \
+   happy_count--; \
+  }
+
+#define SimpleFIFO_Flush(fifo) \
+  (fifo).read_pos = 0; \
+  (fifo).write_pos = 0; \
+  (fifo).in_count = 0
+
 template<typename T>
 class SimpleFIFO
 {
@@ -63,30 +78,6 @@ class SimpleFIFO
   in_count--;
 
   return data[cur_read_pos];
- }
-
- INLINE void Write(const T *happy_data, uint32 happy_count)
- {
-  assert(FIFO_CAN_WRITE_INTERNAL() >= happy_count);
-
-  while(happy_count)
-  {
-   data[write_pos] = *happy_data;
-
-   write_pos = (write_pos + 1) & (size - 1);
-   in_count++;
-   happy_data++;
-   happy_count--;
-  }
- }
-
-
-
- INLINE void Flush(void)
- {
-  read_pos = 0;
-  write_pos = 0;
-  in_count = 0;
  }
 
  T* data;

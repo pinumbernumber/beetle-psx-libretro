@@ -220,7 +220,7 @@ void PS_GPU::SoftReset(void) // Control command 0x00
    if(DrawTimeAvail < 0)
       DrawTimeAvail = 0;
 
-   BlitterFIFO.Flush();
+   SimpleFIFO_Flush(BlitterFIFO);
    InCmd = INCMD_NONE;
 
    DisplayOff = 1;
@@ -320,7 +320,7 @@ void PS_GPU::Power(void)
    abr = 0;
    TexMode = 0;
 
-   BlitterFIFO.Flush();
+   SimpleFIFO_Flush(BlitterFIFO);
 
    InCmd = INCMD_NONE;
    FBRW_X = 0;
@@ -928,7 +928,7 @@ void PS_GPU::Write(const pscpu_timestamp_t timestamp, uint32_t A, uint32_t V)
          case 0x01:	// Reset command buffer
             if(DrawTimeAvail < 0)
                DrawTimeAvail = 0;
-            BlitterFIFO.Flush();
+            SimpleFIFO_Flush(BlitterFIFO);
             InCmd = INCMD_NONE;
             break;
 
