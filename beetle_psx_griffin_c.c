@@ -27,3 +27,5 @@
 #include "mednafen/cdrom/mednafen_crc32.c"
 #include "mednafen/cdrom/recover-raw.c"
 #endif
+
+#include "mednafen/psx/sio.c"

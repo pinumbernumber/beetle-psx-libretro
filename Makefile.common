@@ -1,13 +1,11 @@
 ifeq ($(HAVE_GRIFFIN),1)
    CORE_SOURCES := beetle_psx_griffin.cpp \
-	$(CORE_DIR)/dma.cpp \
-	$(CORE_DIR)/sio.cpp
+	$(CORE_DIR)/dma.cpp
 else
    CORE_SOURCES := $(CORE_DIR)/irq.cpp \
 	$(CORE_DIR)/timer.cpp \
 	$(CORE_DIR)/dma.cpp \
 	$(CORE_DIR)/frontio.cpp \
-	$(CORE_DIR)/sio.cpp \
 	$(CORE_DIR)/cpu.cpp \
 	$(CORE_DIR)/gte.cpp \
 	$(CORE_DIR)/dis.cpp \
@@ -24,6 +22,7 @@ else
 	$(CORE_DIR)/input/memcard.cpp \
 	$(CORE_DIR)/input/multitap.cpp \
 	$(CORE_DIR)/input/mouse.cpp
+	CORE_SOURCES_C := $(CORE_DIR)/sio.c
 endif
 
 ifeq ($(NEED_THREADING), 1)
@@ -94,7 +93,7 @@ TRIO_SOURCES += $(MEDNAFEN_DIR)/trio/trio.c \
 ifeq ($(HAVE_GRIFFIN), 1)
 SOURCES_C := beetle_psx_griffin_c.c
 else
-SOURCES_C := 	$(TREMOR_SRC) $(LIBRETRO_SOURCES_C) $(TRIO_SOURCES) $(THREAD_SOURCES) $(CRC32_SOURCES) $(CDROM_SOURCES_C)
+SOURCES_C := 	$(TREMOR_SRC) $(LIBRETRO_SOURCES_C) $(TRIO_SOURCES) $(THREAD_SOURCES) $(CRC32_SOURCES) $(CDROM_SOURCES_C) $(CORE_SOURCES_C)
 endif
 
 SOURCES := $(LIBRETRO_SOURCES) $(CORE_SOURCES) $(MEDNAFEN_SOURCES) $(HW_CPU_SOURCES) $(HW_MISC_SOURCES) $(HW_SOUND_SOURCES) $(HW_VIDEO_SOURCES)

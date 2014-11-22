@@ -393,7 +393,9 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
    return 1;
 }
 
-static int CurrentState = 0;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* This function is called by the game driver(NES, GB, GBA) to save a state. */
 int MDFNSS_StateAction(void *st_p, int load, SFORMAT* sf, const char *name)
@@ -452,6 +454,10 @@ int MDFNSS_StateAction(void *st_p, int load, SFORMAT* sf, const char *name)
 
    return(1);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 int MDFNSS_SaveSM(void *st_p, int, int, const void*, const void*, const void*)
 {

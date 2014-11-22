@@ -3,15 +3,6 @@
 
 #include "state-common.h"
 
-typedef struct
-{
-   uint8 *data;
-   uint32 loc;
-   uint32 len;
-   uint32 malloced;
-   uint32 initial_malloc; // A setting!
-} StateMem;
-
 // Eh, we abuse the smem_* in-memory stream code
 // in a few other places. :)
 int32 smem_read(StateMem *st, void *buffer, uint32 len);
@@ -38,16 +29,6 @@ int MDFNSS_LoadSM(void *st, int, int);
 #define MDFNSTATE_RLSB64          0x10000000
 
 #define MDFNSTATE_BOOL		  0x08000000
-
-typedef struct {
-   void *v;		// Pointer to the variable/array
-   uint32 size;		// Length, in bytes, of the data to be saved EXCEPT:
-   //  In the case of MDFNSTATE_BOOL, it is the number of bool elements to save(bool is not always 1-byte).
-   // If 0, the subchunk isn't saved.
-   uint32 flags;	// Flags
-   const char *name;	// Name
-   //uint32 struct_size;	// Only used for MDFNSTATE_ARRAYOFS, sizeof(struct) that members of the linked SFORMAT struct are in.
-} SFORMAT;
 
 INLINE bool SF_IS_BOOL(bool *) { return(1); }
 INLINE bool SF_IS_BOOL(void *) { return(0); }
@@ -92,7 +73,5 @@ INLINE uint32 SF_FORCE_D(double *) { return(0); }
 #define SFEND { 0, 0, 0, 0 }
 
 #include <vector>
-
-int MDFNSS_StateAction(void *st, int load, SFORMAT *sf, const char *name);
 
 #endif

@@ -15,11 +15,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "psx.h"
+#include <stdint.h>
 #include "sio.h"
-
-namespace MDFN_IEN_PSX
-{
+#include "../state-common.h"
 
 // Dummy implementation.
 
@@ -38,14 +36,14 @@ void SIO_Power(void)
  DataBuffer = 0;
 }
 
-uint32_t SIO_Read(pscpu_timestamp_t timestamp, uint32_t A)
+uint32_t SIO_Read(int32_t timestamp, uint32_t A)
 {
    uint32_t ret = 0;
 
    switch(A & 0xE)
    {
       default:
-         PSX_WARNING("[SIO] Unknown read: 0x%08x -- %d\n", A, timestamp);
+         //PSX_WARNING("[SIO] Unknown read: 0x%08x -- %d\n", A, timestamp);
          break;
 
       case 0x0:
@@ -73,14 +71,14 @@ uint32_t SIO_Read(pscpu_timestamp_t timestamp, uint32_t A)
    return (ret >> ((A & 1) * 8));
 }
 
-void SIO_Write(pscpu_timestamp_t timestamp, uint32_t A, uint32_t V)
+void SIO_Write(int32_t timestamp, uint32_t A, uint32_t V)
 {
    V <<= (A & 1) * 8;
 
    switch(A & 0xE)
    {
       default:
-         PSX_WARNING("[SIO] Unknown write: 0x%08x 0x%08x -- %d\n", A, V, timestamp);
+         //PSX_WARNING("[SIO] Unknown write: 0x%08x 0x%08x -- %d\n", A, V, timestamp);
          break;
 
       case 0x0:
@@ -103,19 +101,19 @@ void SIO_Write(pscpu_timestamp_t timestamp, uint32_t A, uint32_t V)
    }
 }
 
-int SIO_StateAction(StateMem *sm, int load, int data_only)
+int SIO_StateAction(void *data, int load, int data_only)
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(Status),
-  SFVAR(Mode),
-  SFVAR(Control),
-  SFVAR(BaudRate),
-  SFVAR(DataBuffer),
+  { &((Status)), sizeof((Status)), 0x80000000 | 0, "Status" },
+  { &((Mode)), sizeof((Mode)), 0x80000000 | 0, "Mode" },
+  { &((Control)), sizeof((Control)), 0x80000000 | 0, "Control" },
+  { &((BaudRate)), sizeof((BaudRate)), 0x80000000 | 0, "BaudRate" },
+  { &((DataBuffer)), sizeof((DataBuffer)), 0x80000000 | 0, "DataBuffer" },
 
-  SFEND
+  { 0, 0, 0, 0 }
  };
- int ret = MDFNSS_StateAction(sm, load, StateRegs, "SIO");
+ int ret = MDFNSS_StateAction(data, load, StateRegs, "SIO");
 
  if(load)
  {
@@ -123,6 +121,4 @@ int SIO_StateAction(StateMem *sm, int load, int data_only)
  }
 
  return(ret);
-}
-
 }
