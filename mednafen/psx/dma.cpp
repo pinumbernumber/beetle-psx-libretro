@@ -147,7 +147,6 @@ static INLINE bool ChCan(const unsigned ch, const uint32_t CRModeCache)
             return(GPU->DMACanWrite());
          return(true);
       case CH_CDC:
-         return(true);
       case CH_SPU:
          return(true);
       case CH_FIVE:
@@ -561,9 +560,9 @@ static INLINE int32_t CalcNextEvent(int32_t next_event)
 
 pscpu_timestamp_t DMA_Update(const pscpu_timestamp_t timestamp)
 {
-   int32_t clocks, i;
+   int32_t i;
    //   uint32_t dc = (DMAControl >> (ch * 4)) & 0xF;
-   clocks = timestamp - lastts;
+   int32_t clocks = timestamp - lastts;
    lastts = timestamp;
 
    GPU->Update(timestamp);
@@ -580,28 +579,6 @@ pscpu_timestamp_t DMA_Update(const pscpu_timestamp_t timestamp)
 
    return (timestamp + CalcNextEvent(0x10000000));
 }
-
-#if 0
-static void CheckLinkedList(uint32_t addr)
-{
- std::map<uint32, bool> zoom;
-
- do
- {
-  if(zoom[addr])
-  {
-   printf("Bad linked list: 0x%08x\n", addr);
-   break;
-  }
-  zoom[addr] = 1;
-
-  uint32_t header = MainRAM.ReadU32(addr & 0x1FFFFC);
-
-  addr = header & 0xFFFFFF;
-
- } while(addr != 0xFFFFFF && !(addr & 0x800000));
-}
-#endif
 
 void DMA_Write(const pscpu_timestamp_t timestamp, uint32_t A, uint32_t V)
 {
