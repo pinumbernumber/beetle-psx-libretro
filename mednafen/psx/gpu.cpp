@@ -1475,42 +1475,42 @@ int PS_GPU::StateAction(StateMem *sm, int load, int data_only)
 
       { &((ClipX0)), sizeof((ClipX0)), 0x80000000 | 0, "ClipX0" },
       { &((ClipY0)), sizeof((ClipY0)), 0x80000000 | 0, "ClipY0" },
-      { &((ClipX1)), SF_IS_BOOL(&((ClipX1))) ? 1 : sizeof((ClipX1)), 0x80000000 | (SF_IS_BOOL(&((ClipX1))) ? 0x08000000 : 0), "ClipX1" },
-      { &((ClipY1)), SF_IS_BOOL(&((ClipY1))) ? 1 : sizeof((ClipY1)), 0x80000000 | (SF_IS_BOOL(&((ClipY1))) ? 0x08000000 : 0), "ClipY1" },
+      { &((ClipX1)), sizeof((ClipX1)), 0x80000000 | 0, "ClipX1" },
+      { &((ClipY1)), sizeof((ClipY1)), 0x80000000 | 0, "ClipY1" },
 
-      { &((OffsX)), SF_IS_BOOL(&((OffsX))) ? 1 : sizeof((OffsX)), 0x80000000 | (SF_IS_BOOL(&((OffsX))) ? 0x08000000 : 0), "OffsX" },
-      { &((OffsY)), SF_IS_BOOL(&((OffsY))) ? 1 : sizeof((OffsY)), 0x80000000 | (SF_IS_BOOL(&((OffsY))) ? 0x08000000 : 0), "OffsY" },
+      { &((OffsX)), sizeof((OffsX)), 0x80000000 | 0, "OffsX" },
+      { &((OffsY)), sizeof((OffsY)), 0x80000000 | 0, "OffsY" },
 
-      { &((dtd)), SF_IS_BOOL(&((dtd))) ? 1 : sizeof((dtd)), 0x80000000 | (SF_IS_BOOL(&((dtd))) ? 0x08000000 : 0), "dtd" },
-      { &((dfe)), SF_IS_BOOL(&((dfe))) ? 1 : sizeof((dfe)), 0x80000000 | (SF_IS_BOOL(&((dfe))) ? 0x08000000 : 0), "dfe" },
+      { &((dtd)), sizeof((dtd)), 0x80000000 | 0, "dtd" },
+      { &((dfe)), sizeof((dfe)), 0x80000000 | 0, "dfe" },
 
-      { &((MaskSetOR)), SF_IS_BOOL(&((MaskSetOR))) ? 1 : sizeof((MaskSetOR)), 0x80000000 | (SF_IS_BOOL(&((MaskSetOR))) ? 0x08000000 : 0), "MaskSetOR" },
-      { &((MaskEvalAND)), SF_IS_BOOL(&((MaskEvalAND))) ? 1 : sizeof((MaskEvalAND)), 0x80000000 | (SF_IS_BOOL(&((MaskEvalAND))) ? 0x08000000 : 0), "MaskEvalAND" },
+      { &((MaskSetOR)), sizeof((MaskSetOR)), 0x80000000 | 0, "MaskSetOR" },
+      { &((MaskEvalAND)), sizeof((MaskEvalAND)), 0x80000000 | 0, "MaskEvalAND" },
 
       { &((tww)), sizeof((tww)), 0x80000000 | 0, "tww" },
       { &((twh)), sizeof((twh)), 0x80000000 | 0, "twh" },
       { &((twx)), sizeof((twx)), 0x80000000 | 0, "twx" },
       { &((twy)), sizeof((twy)), 0x80000000 | 0, "twy" },
 
-      { &((TexPageX)), SF_IS_BOOL(&((TexPageX))) ? 1 : sizeof((TexPageX)), 0x80000000 | (SF_IS_BOOL(&((TexPageX))) ? 0x08000000 : 0), "TexPageX" },
-      { &((TexPageY)), SF_IS_BOOL(&((TexPageY))) ? 1 : sizeof((TexPageY)), 0x80000000 | (SF_IS_BOOL(&((TexPageY))) ? 0x08000000 : 0), "TexPageY" },
+      { &((TexPageX)), sizeof((TexPageX)), 0x80000000 | 0, "TexPageX" },
+      { &((TexPageY)), sizeof((TexPageY)), 0x80000000 | 0, "TexPageY" },
 
-      { &((SpriteFlip)), SF_IS_BOOL(&((SpriteFlip))) ? 1 : sizeof((SpriteFlip)), 0x80000000 | (SF_IS_BOOL(&((SpriteFlip))) ? 0x08000000 : 0), "SpriteFlip" },
+      { &((SpriteFlip)), sizeof((SpriteFlip)), 0x80000000 | 0, "SpriteFlip" },
 
       { &((abr)), SF_IS_BOOL(&((abr))) ? 1 : sizeof((abr)), 0x80000000 | (SF_IS_BOOL(&((abr))) ? 0x08000000 : 0), "abr" },
-      { &((TexMode)), SF_IS_BOOL(&((TexMode))) ? 1 : sizeof((TexMode)), 0x80000000 | (SF_IS_BOOL(&((TexMode))) ? 0x08000000 : 0), "TexMode" },
+      { &((TexMode)), sizeof((TexMode)), 0x80000000 | 0, "TexMode" },
 
       { ((BlitterFIFO->data)), (uint32)(((BlitterFIFO->size)) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((BlitterFIFO->data)), "&BlitterFIFO.data[0]" },
-      { &((BlitterFIFO->read_pos)), SF_IS_BOOL(&((BlitterFIFO->read_pos))) ? 1 : sizeof((BlitterFIFO->read_pos)), 0x80000000 | (SF_IS_BOOL(&((BlitterFIFO->read_pos))) ? 0x08000000 : 0), "BlitterFIFO.read_pos" },
-      { &((BlitterFIFO->write_pos)), SF_IS_BOOL(&((BlitterFIFO->write_pos))) ? 1 : sizeof((BlitterFIFO->write_pos)), 0x80000000 | (SF_IS_BOOL(&((BlitterFIFO->write_pos))) ? 0x08000000 : 0), "BlitterFIFO.write_pos" },
-      { &((BlitterFIFO->in_count)), SF_IS_BOOL(&((BlitterFIFO->in_count))) ? 1 : sizeof((BlitterFIFO->in_count)), 0x80000000 | (SF_IS_BOOL(&((BlitterFIFO->in_count))) ? 0x08000000 : 0), "BlitterFIFO.in_count" },
+      { &((BlitterFIFO->read_pos)), sizeof((BlitterFIFO->read_pos)), 0x80000000 | 0, "BlitterFIFO.read_pos" },
+      { &((BlitterFIFO->write_pos)), sizeof((BlitterFIFO->write_pos)), 0x80000000 | 0, "BlitterFIFO.write_pos" },
+      { &((BlitterFIFO->in_count)), sizeof((BlitterFIFO->in_count)), 0x80000000 | 0, "BlitterFIFO.in_count" },
 
-      { &((DataReadBuffer)), SF_IS_BOOL(&((DataReadBuffer))) ? 1 : sizeof((DataReadBuffer)), 0x80000000 | (SF_IS_BOOL(&((DataReadBuffer))) ? 0x08000000 : 0), "DataReadBuffer" },
+      { &((DataReadBuffer)), sizeof((DataReadBuffer)), 0x80000000 | 0, "DataReadBuffer" },
 
-      { &((IRQPending)), SF_IS_BOOL(&((IRQPending))) ? 1 : sizeof((IRQPending)), 0x80000000 | (SF_IS_BOOL(&((IRQPending))) ? 0x08000000 : 0), "IRQPending" },
+      { &((IRQPending)), 1, 0x80000000 | 0x08000000, "IRQPending" },
 
-      { &((InCmd)), SF_IS_BOOL(&((InCmd))) ? 1 : sizeof((InCmd)), 0x80000000 | (SF_IS_BOOL(&((InCmd))) ? 0x08000000 : 0), "InCmd" },
-      { &((InCmd_CC)), SF_IS_BOOL(&((InCmd_CC))) ? 1 : sizeof((InCmd_CC)), 0x80000000 | (SF_IS_BOOL(&((InCmd_CC))) ? 0x08000000 : 0), "InCmd_CC" },
+      { &((InCmd)), sizeof((InCmd)), 0x80000000 | 0, "InCmd" },
+      { &((InCmd_CC)), sizeof((InCmd_CC)), 0x80000000 | 0, "InCmd_CC" },
 
 
       { &((InQuad_F3Vertices[0].x)), SF_IS_BOOL(&((InQuad_F3Vertices[0].x))) ? 1 : sizeof((InQuad_F3Vertices[0].x)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].x))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].x" },
@@ -1543,12 +1543,12 @@ int PS_GPU::StateAction(StateMem *sm, int load, int data_only)
       { &((InPLine_PrevPoint.g)), SF_IS_BOOL(&((InPLine_PrevPoint.g))) ? 1 : sizeof((InPLine_PrevPoint.g)), 0x80000000 | (SF_IS_BOOL(&((InPLine_PrevPoint.g))) ? 0x08000000 : 0), "InPLine_PrevPoint.g" },
       { &((InPLine_PrevPoint.b)), SF_IS_BOOL(&((InPLine_PrevPoint.b))) ? 1 : sizeof((InPLine_PrevPoint.b)), 0x80000000 | (SF_IS_BOOL(&((InPLine_PrevPoint.b))) ? 0x08000000 : 0), "InPLine_PrevPoint.b" },
 
-      { &((FBRW_X)), SF_IS_BOOL(&((FBRW_X))) ? 1 : sizeof((FBRW_X)), 0x80000000 | (SF_IS_BOOL(&((FBRW_X))) ? 0x08000000 : 0), "FBRW_X" },
-      { &((FBRW_Y)), SF_IS_BOOL(&((FBRW_Y))) ? 1 : sizeof((FBRW_Y)), 0x80000000 | (SF_IS_BOOL(&((FBRW_Y))) ? 0x08000000 : 0), "FBRW_Y" },
-      { &((FBRW_W)), SF_IS_BOOL(&((FBRW_W))) ? 1 : sizeof((FBRW_W)), 0x80000000 | (SF_IS_BOOL(&((FBRW_W))) ? 0x08000000 : 0), "FBRW_W" },
-      { &((FBRW_H)), SF_IS_BOOL(&((FBRW_H))) ? 1 : sizeof((FBRW_H)), 0x80000000 | (SF_IS_BOOL(&((FBRW_H))) ? 0x08000000 : 0), "FBRW_H" },
-      { &((FBRW_CurY)), SF_IS_BOOL(&((FBRW_CurY))) ? 1 : sizeof((FBRW_CurY)), 0x80000000 | (SF_IS_BOOL(&((FBRW_CurY))) ? 0x08000000 : 0), "FBRW_CurY" },
-      { &((FBRW_CurX)), SF_IS_BOOL(&((FBRW_CurX))) ? 1 : sizeof((FBRW_CurX)), 0x80000000 | (SF_IS_BOOL(&((FBRW_CurX))) ? 0x08000000 : 0), "FBRW_CurX" },
+      { &((FBRW_X)), sizeof((FBRW_X)), 0x80000000 | 0, "FBRW_X" },
+      { &((FBRW_Y)), sizeof((FBRW_Y)), 0x80000000 | 0, "FBRW_Y" },
+      { &((FBRW_W)), sizeof((FBRW_W)), 0x80000000 | 0, "FBRW_W" },
+      { &((FBRW_H)), sizeof((FBRW_H)), 0x80000000 | 0, "FBRW_H" },
+      { &((FBRW_CurY)), sizeof((FBRW_CurY)), 0x80000000 | 0, "FBRW_CurY" },
+      { &((FBRW_CurX)), sizeof((FBRW_CurX)), 0x80000000 | 0, "FBRW_CurX" },
 
       { &((DisplayMode)), SF_IS_BOOL(&((DisplayMode))) ? 1 : sizeof((DisplayMode)), 0x80000000 | (SF_IS_BOOL(&((DisplayMode))) ? 0x08000000 : 0), "DisplayMode" },
       { &((DisplayOff)), SF_IS_BOOL(&((DisplayOff))) ? 1 : sizeof((DisplayOff)), 0x80000000 | (SF_IS_BOOL(&((DisplayOff))) ? 0x08000000 : 0), "DisplayOff" },
@@ -1558,15 +1558,15 @@ int PS_GPU::StateAction(StateMem *sm, int load, int data_only)
       { &((HorizStart)), SF_IS_BOOL(&((HorizStart))) ? 1 : sizeof((HorizStart)), 0x80000000 | (SF_IS_BOOL(&((HorizStart))) ? 0x08000000 : 0), "HorizStart" },
       { &((HorizEnd)), SF_IS_BOOL(&((HorizEnd))) ? 1 : sizeof((HorizEnd)), 0x80000000 | (SF_IS_BOOL(&((HorizEnd))) ? 0x08000000 : 0), "HorizEnd" },
 
-      { &((VertStart)), SF_IS_BOOL(&((VertStart))) ? 1 : sizeof((VertStart)), 0x80000000 | (SF_IS_BOOL(&((VertStart))) ? 0x08000000 : 0), "VertStart" },
-      { &((VertEnd)), SF_IS_BOOL(&((VertEnd))) ? 1 : sizeof((VertEnd)), 0x80000000 | (SF_IS_BOOL(&((VertEnd))) ? 0x08000000 : 0), "VertEnd" },
+      { &((VertStart)), sizeof((VertStart)), 0x80000000 | 0, "VertStart" },
+      { &((VertEnd)), sizeof((VertEnd)), 0x80000000 | 0, "VertEnd" },
 
       { &((DisplayFB_CurYOffset)), SF_IS_BOOL(&((DisplayFB_CurYOffset))) ? 1 : sizeof((DisplayFB_CurYOffset)), 0x80000000 | (SF_IS_BOOL(&((DisplayFB_CurYOffset))) ? 0x08000000 : 0), "DisplayFB_CurYOffset" },
-      { &((DisplayFB_CurLineYReadout)), SF_IS_BOOL(&((DisplayFB_CurLineYReadout))) ? 1 : sizeof((DisplayFB_CurLineYReadout)), 0x80000000 | (SF_IS_BOOL(&((DisplayFB_CurLineYReadout))) ? 0x08000000 : 0), "DisplayFB_CurLineYReadout" },
+      { &((DisplayFB_CurLineYReadout)), sizeof((DisplayFB_CurLineYReadout)), 0x80000000 | 0, "DisplayFB_CurLineYReadout" },
 
-      { &((InVBlank)), SF_IS_BOOL(&((InVBlank))) ? 1 : sizeof((InVBlank)), 0x80000000 | (SF_IS_BOOL(&((InVBlank))) ? 0x08000000 : 0), "InVBlank" },
+      { &((InVBlank)), 1, 0x80000000 | 0x08000000, "InVBlank" },
 
-      { &((LinesPerField)), SF_IS_BOOL(&((LinesPerField))) ? 1 : sizeof((LinesPerField)), 0x80000000 | (SF_IS_BOOL(&((LinesPerField))) ? 0x08000000 : 0), "LinesPerField" },
+      { &((LinesPerField)), sizeof((LinesPerField)), 0x80000000 | 0, "LinesPerField" },
       { &((scanline)), SF_IS_BOOL(&((scanline))) ? 1 : sizeof((scanline)), 0x80000000 | (SF_IS_BOOL(&((scanline))) ? 0x08000000 : 0), "scanline" },
       { &((field)), SF_IS_BOOL(&((field))) ? 1 : sizeof((field)), 0x80000000 | (SF_IS_BOOL(&((field))) ? 0x08000000 : 0), "field" },
       { &((field_ram_readout)), SF_IS_BOOL(&((field_ram_readout))) ? 1 : sizeof((field_ram_readout)), 0x80000000 | (SF_IS_BOOL(&((field_ram_readout))) ? 0x08000000 : 0), "field_ram_readout" },
