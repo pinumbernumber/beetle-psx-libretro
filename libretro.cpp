@@ -1734,16 +1734,16 @@ static int StateAction(StateMem *sm, int load, int data_only)
 
    SFORMAT StateRegs[] =
    {
-      SFVAR(CD_TrayOpen),
-      SFVAR(CD_SelectedDisc),
-      SFARRAY(MainRAM.data8, 1024 * 2048),
-      SFARRAY32(SysControl.Regs, 9),
-      SFVAR(PSX_PRNG.lcgo),
-      SFVAR(PSX_PRNG.x),
-      SFVAR(PSX_PRNG.y),
-      SFVAR(PSX_PRNG.z),
-      SFVAR(PSX_PRNG.c),
-      SFEND
+      { &((CD_TrayOpen)), 1, 0x80000000 | 0x08000000, "CD_TrayOpen" },
+      { &((CD_SelectedDisc)), sizeof((CD_SelectedDisc)), 0x80000000 | 0, "CD_SelectedDisc" },
+      { ((MainRAM.data8)), (uint32)((1024 * 2048)), 0 | SF_FORCE_A8((MainRAM.data8)), "MainRAM.data8" },
+      { ((SysControl.Regs)), (uint32)(((9)) * sizeof(uint32)), 0x40000000 | 0, "SysControl.Regs" },
+      { &((PSX_PRNG.lcgo)), sizeof((PSX_PRNG.lcgo)), 0x80000000 | 0, "PSX_PRNG.lcgo" },
+      { &((PSX_PRNG.x)), sizeof((PSX_PRNG.x)), 0x80000000 | 0, "PSX_PRNG.x" },
+      { &((PSX_PRNG.y)), sizeof((PSX_PRNG.y)), 0x80000000 | 0, "PSX_PRNG.y" },
+      { &((PSX_PRNG.z)), sizeof((PSX_PRNG.z)), 0x80000000 | 0, "PSX_PRNG.z" },
+      { &((PSX_PRNG.c)), sizeof((PSX_PRNG.c)), 0x80000000 | 0, "PSX_PRNG.c" },
+      { 0, 0, 0, 0 }
    };
 
 
