@@ -54,33 +54,33 @@ namespace CDUtility
  {
   INLINE TOC()
   {
-   Clear();
+     Clear();
   }
 
   INLINE void Clear(void)
   {
-   first_track = last_track = 0;
-   disc_type = 0;
+     first_track = last_track = 0;
+     disc_type = 0;
 
-   memset(tracks, 0, sizeof(tracks));	// FIXME if we change TOC_Track to non-POD type.
+     memset(tracks, 0, sizeof(tracks));	// FIXME if we change TOC_Track to non-POD type.
   }
 
   INLINE int FindTrackByLBA(uint32 LBA)
   {
-   for(int32 track = first_track; track <= (last_track + 1); track++)
-   {
-    if(track == (last_track + 1))
-    {
-     if(LBA < tracks[100].lba)
-      return(track - 1);
-    }
-    else
-    {
-     if(LBA < tracks[track].lba)
-      return(track - 1);
-    }
-   }
-   return(0);
+     for(int32 track = first_track; track <= (last_track + 1); track++)
+     {
+        if(track == (last_track + 1))
+        {
+           if(LBA < tracks[100].lba)
+              return(track - 1);
+        }
+        else
+        {
+           if(LBA < tracks[track].lba)
+              return(track - 1);
+        }
+     }
+     return(0);
   }
 
   uint8 first_track;
@@ -96,34 +96,34 @@ namespace CDUtility
  //
  static INLINE uint32 AMSF_to_ABA(int32 m_a, int32 s_a, int32 f_a)
  {
-  return(f_a + 75 * s_a + 75 * 60 * m_a);
+    return(f_a + 75 * s_a + 75 * 60 * m_a);
  }
 
  static INLINE void ABA_to_AMSF(uint32 aba, uint8 *m_a, uint8 *s_a, uint8 *f_a)
  {
-  *m_a = aba / 75 / 60;
-  *s_a = (aba - *m_a * 75 * 60) / 75;
-  *f_a = aba - (*m_a * 75 * 60) - (*s_a * 75);
+    *m_a = aba / 75 / 60;
+    *s_a = (aba - *m_a * 75 * 60) / 75;
+    *f_a = aba - (*m_a * 75 * 60) - (*s_a * 75);
  }
 
  static INLINE int32 ABA_to_LBA(uint32 aba)
  {
-  return(aba - 150);
+    return(aba - 150);
  }
 
  static INLINE uint32 LBA_to_ABA(int32 lba)
  {
-  return(lba + 150);
+    return(lba + 150);
  }
 
  static INLINE int32 AMSF_to_LBA(uint8 m_a, uint8 s_a, uint8 f_a)
  {
-  return(ABA_to_LBA(AMSF_to_ABA(m_a, s_a, f_a)));
+    return(ABA_to_LBA(AMSF_to_ABA(m_a, s_a, f_a)));
  }
 
  static INLINE void LBA_to_AMSF(int32 lba, uint8 *m_a, uint8 *s_a, uint8 *f_a)
  {
-  ABA_to_AMSF(LBA_to_ABA(lba), m_a, s_a, f_a);
+    ABA_to_AMSF(LBA_to_ABA(lba), m_a, s_a, f_a);
  }
 
  //
@@ -131,34 +131,34 @@ namespace CDUtility
  //
  static INLINE bool BCD_is_valid(uint8 bcd_number)
  {
-  if((bcd_number & 0xF0) >= 0xA0)
-   return(false);
+    if((bcd_number & 0xF0) >= 0xA0)
+       return(false);
 
-  if((bcd_number & 0x0F) >= 0x0A)
-   return(false);
+    if((bcd_number & 0x0F) >= 0x0A)
+       return(false);
 
-  return(true);
+    return(true);
  }
 
  static INLINE uint8 BCD_to_U8(uint8 bcd_number)
  {
-  return( ((bcd_number >> 4) * 10) + (bcd_number & 0x0F) );
+    return( ((bcd_number >> 4) * 10) + (bcd_number & 0x0F) );
  }
 
  static INLINE uint8 U8_to_BCD(uint8 num)
  {
-  return( ((num / 10) << 4) + (num % 10) );
+    return( ((num / 10) << 4) + (num % 10) );
  }
 
  // should always perform the conversion, even if the bcd number is invalid.
  static INLINE bool BCD_to_U8_check(uint8 bcd_number, uint8 *out_number)
  {
-  *out_number = BCD_to_U8(bcd_number);
+    *out_number = BCD_to_U8(bcd_number);
 
-  if(!BCD_is_valid(bcd_number))
-   return(false);
+    if(!BCD_is_valid(bcd_number))
+       return(false);
 
-  return(true);
+    return(true);
  }
 
  //

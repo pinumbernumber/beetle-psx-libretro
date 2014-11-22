@@ -447,17 +447,13 @@ void CDAccess_CCD::CheckSubQSanity(void)
 
 void CDAccess_CCD::Cleanup(void)
 {
- if(img_stream)
- {
-  delete img_stream;
-  img_stream = NULL;
- }
+   if(img_stream)
+      delete img_stream;
+   img_stream = NULL;
 
- if(sub_stream)
- {
-  delete sub_stream;
-  sub_stream = NULL;
- }
+   if(sub_stream)
+      delete sub_stream;
+   sub_stream = NULL;
 }
 
 CDAccess_CCD::~CDAccess_CCD()

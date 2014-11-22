@@ -5,17 +5,17 @@
 
 class OggOpusReader : public AudioReader
 {
- public:
- OggOpusReader(Stream *fp);
- ~OggOpusReader();
+   public:
+      OggOpusReader(Stream *fp);
+      ~OggOpusReader();
 
- int64 Read_(int16 *buffer, int64 frames);
- bool Seek_(int64 frame_offset);
- int64 FrameCount(void);
+      int64 Read_(int16 *buffer, int64 frames);
+      bool Seek_(int64 frame_offset);
+      int64 FrameCount(void);
 
- private:
- OggOpus_File *opfile;
- Stream *fw;
+   private:
+      OggOpus_File *opfile;
+      Stream *fw;
 };
 
 #endif

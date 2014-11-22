@@ -10,23 +10,24 @@ class AudioReader
  virtual ~AudioReader();
 
  virtual int64 FrameCount(void);
+
  INLINE int64 Read(int64 frame_offset, int16 *buffer, int64 frames)
  {
-  int64 ret;
+    int64 ret;
 
-  //if(frame_offset >= 0)
-  {
-   if(LastReadPos != frame_offset)
-   {
-    //puts("SEEK");
-    if(!Seek_(frame_offset))
-     return(0);
-    LastReadPos = frame_offset;
-   }
-  }
-  ret = Read_(buffer, frames);
-  LastReadPos += ret;
-  return(ret);
+    //if(frame_offset >= 0)
+    {
+       if(LastReadPos != frame_offset)
+       {
+          //puts("SEEK");
+          if(!Seek_(frame_offset))
+             return(0);
+          LastReadPos = frame_offset;
+       }
+    }
+    ret = Read_(buffer, frames);
+    LastReadPos += ret;
+    return(ret);
  }
 
  private:

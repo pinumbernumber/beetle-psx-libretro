@@ -26,28 +26,28 @@
 
 class CDAccess_CCD : public CDAccess
 {
- public:
+   public:
 
- CDAccess_CCD(const char *path, bool image_memcache);
- virtual ~CDAccess_CCD();
+      CDAccess_CCD(const char *path, bool image_memcache);
+      virtual ~CDAccess_CCD();
 
- virtual void Read_Raw_Sector(uint8 *buf, int32 lba);
+      virtual void Read_Raw_Sector(uint8 *buf, int32 lba);
 
- virtual void Read_TOC(CDUtility::TOC *toc);
+      virtual void Read_TOC(CDUtility::TOC *toc);
 
- virtual void Eject(bool eject_status);
+      virtual void Eject(bool eject_status);
 
- private:
+   private:
 
- void Load(const char *path, bool image_memcache);
- void Cleanup(void);
+      void Load(const char *path, bool image_memcache);
+      void Cleanup(void);
 
- void CheckSubQSanity(void);
+      void CheckSubQSanity(void);
 
- Stream* img_stream;
- Stream* sub_stream;
- size_t img_numsectors;
- CDUtility::TOC tocd;
+      Stream* img_stream;
+      Stream* sub_stream;
+      size_t img_numsectors;
+      CDUtility::TOC tocd;
 };
 
 #endif

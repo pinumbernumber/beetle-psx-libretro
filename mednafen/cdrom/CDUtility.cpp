@@ -70,163 +70,161 @@ static bool CDUtility_Inited = false;
 
 static void InitScrambleTable(void)
 {
- unsigned cv = 1;
+   unsigned cv = 1;
 
- for(unsigned i = 12; i < 2352; i++)
- {
-  unsigned char z = 0;
+   for(unsigned i = 12; i < 2352; i++)
+   {
+      unsigned char z = 0;
 
-  for(int b = 0; b < 8; b++)
-  {
-   z |= (cv & 1) << b;
+      for(int b = 0; b < 8; b++)
+      {
+         z |= (cv & 1) << b;
 
-   int feedback = ((cv >> 1) & 1) ^ (cv & 1);
-   cv = (cv >> 1) | (feedback << 14);
-  }
+         int feedback = ((cv >> 1) & 1) ^ (cv & 1);
+         cv = (cv >> 1) | (feedback << 14);
+      }
 
-  scramble_table[i - 12] = z;
- }
+      scramble_table[i - 12] = z;
+   }
 
- //for(int i = 0; i < 2352 - 12; i++)
- // printf("0x%02x, ", scramble_table[i]);
+   //for(int i = 0; i < 2352 - 12; i++)
+   // printf("0x%02x, ", scramble_table[i]);
 }
 
 void CDUtility_Init(void)
 {
- if(!CDUtility_Inited)
- {
-  Init_LEC_Correct();
+   if(CDUtility_Inited)
+      return;
 
-  InitScrambleTable();
+   Init_LEC_Correct();
 
-  CDUtility_Inited = true;
- }
+   InitScrambleTable();
+
+   CDUtility_Inited = true;
 }
 
 void encode_mode0_sector(uint32 aba, uint8 *sector_data)
 {
- CDUtility_Init();
+   CDUtility_Init();
 
- lec_encode_mode0_sector(aba, sector_data);
+   lec_encode_mode0_sector(aba, sector_data);
 }
 
 void encode_mode1_sector(uint32 aba, uint8 *sector_data)
 {
- CDUtility_Init();
+   CDUtility_Init();
 
- lec_encode_mode1_sector(aba, sector_data);
+   lec_encode_mode1_sector(aba, sector_data);
 }
 
 void encode_mode2_sector(uint32 aba, uint8 *sector_data)
 {
- CDUtility_Init();
+   CDUtility_Init();
 
- lec_encode_mode2_sector(aba, sector_data);
+   lec_encode_mode2_sector(aba, sector_data);
 }
 
 void encode_mode2_form1_sector(uint32 aba, uint8 *sector_data)
 {
- CDUtility_Init();
+   CDUtility_Init();
 
- lec_encode_mode2_form1_sector(aba, sector_data);
+   lec_encode_mode2_form1_sector(aba, sector_data);
 }
 
 void encode_mode2_form2_sector(uint32 aba, uint8 *sector_data)
 {
- CDUtility_Init();
+   CDUtility_Init();
 
- lec_encode_mode2_form2_sector(aba, sector_data);
+   lec_encode_mode2_form2_sector(aba, sector_data);
 }
 
 bool edc_check(const uint8 *sector_data, bool xa)
 {
- CDUtility_Init();
+   CDUtility_Init();
 
- return(CheckEDC(sector_data, xa));
+   return(CheckEDC(sector_data, xa));
 }
 
 bool edc_lec_check_and_correct(uint8 *sector_data, bool xa)
 {
- CDUtility_Init();
+   CDUtility_Init();
 
- return(ValidateRawSector(sector_data, xa));
+   return(ValidateRawSector(sector_data, xa));
 }
 
 
 bool subq_check_checksum(const uint8 *SubQBuf)
 {
- uint16 crc = 0;
- uint16 stored_crc = 0;
+   int i;
+   uint16 crc = 0;
+   uint16 stored_crc = 0;
 
- stored_crc = SubQBuf[0xA] << 8;
- stored_crc |= SubQBuf[0xB];
+   stored_crc = SubQBuf[0xA] << 8;
+   stored_crc |= SubQBuf[0xB];
 
- for(int i = 0; i < 0xA; i++)
-  crc = subq_crctab[(crc >> 8) ^ SubQBuf[i]] ^ (crc << 8);
+   for(i = 0; i < 0xA; i++)
+      crc = subq_crctab[(crc >> 8) ^ SubQBuf[i]] ^ (crc << 8);
 
- crc = ~crc;
+   crc = ~crc;
 
- return(crc == stored_crc);
+   return(crc == stored_crc);
 }
 
 void subq_generate_checksum(uint8 *buf)
 {
- uint16 crc = 0;
+   int i;
+   uint16 crc = 0;
 
- for(int i = 0; i < 0xA; i++)
-  crc = subq_crctab[(crc >> 8) ^ buf[i]] ^ (crc << 8);
+   for(i = 0; i < 0xA; i++)
+      crc = subq_crctab[(crc >> 8) ^ buf[i]] ^ (crc << 8);
 
- // Checksum
- buf[0xa] = ~(crc >> 8);
- buf[0xb] = ~(crc);
+   // Checksum
+   buf[0xa] = ~(crc >> 8);
+   buf[0xb] = ~(crc);
 }
 
 void subq_deinterleave(const uint8 *SubPWBuf, uint8 *qbuf)
 {
- memset(qbuf, 0, 0xC);
+   int i;
+   memset(qbuf, 0, 0xC);
 
- for(int i = 0; i < 96; i++)
- {
-  qbuf[i >> 3] |= ((SubPWBuf[i] >> 6) & 0x1) << (7 - (i & 0x7));
- }
+   for(i = 0; i < 96; i++)
+      qbuf[i >> 3] |= ((SubPWBuf[i] >> 6) & 0x1) << (7 - (i & 0x7));
 }
 
 
 // Deinterleaves 96 bytes of subchannel P-W data from 96 bytes of interleaved subchannel PW data.
 void subpw_deinterleave(const uint8 *in_buf, uint8 *out_buf)
 {
- assert(in_buf != out_buf);
+   unsigned ch, i;
+   assert(in_buf != out_buf);
 
- memset(out_buf, 0, 96);
+   memset(out_buf, 0, 96);
 
- for(unsigned ch = 0; ch < 8; ch++)
- {
-  for(unsigned i = 0; i < 96; i++)
-  {
-   out_buf[(ch * 12) + (i >> 3)] |= ((in_buf[i] >> (7 - ch)) & 0x1) << (7 - (i & 0x7));
-  }
- }
-
+   for(ch = 0; ch < 8; ch++)
+   {
+      for(i = 0; i < 96; i++)
+         out_buf[(ch * 12) + (i >> 3)] |= ((in_buf[i] >> (7 - ch)) & 0x1) << (7 - (i & 0x7));
+   }
 }
 
 // Interleaves 96 bytes of subchannel P-W data from 96 bytes of uninterleaved subchannel PW data.
 void subpw_interleave(const uint8 *in_buf, uint8 *out_buf)
 {
- assert(in_buf != out_buf);
+   unsigned d, bitpoodle, ch;
+   assert(in_buf != out_buf);
 
- for(unsigned d = 0; d < 12; d++)
- {
-  for(unsigned bitpoodle = 0; bitpoodle < 8; bitpoodle++)
-  {
-   uint8 rawb = 0;
-
-   for(unsigned ch = 0; ch < 8; ch++)
+   for(d = 0; d < 12; d++)
    {
-    rawb |= ((in_buf[ch * 12 + d] >> (7 - bitpoodle)) & 1) << (7 - ch);
+      for(bitpoodle = 0; bitpoodle < 8; bitpoodle++)
+      {
+         uint8 rawb = 0;
+
+         for(ch = 0; ch < 8; ch++)
+            rawb |= ((in_buf[ch * 12 + d] >> (7 - bitpoodle)) & 1) << (7 - ch);
+         out_buf[(d << 3) + bitpoodle] = rawb;
+      }
    }
-   out_buf[(d << 3) + bitpoodle] = rawb;
-  }
- }
 }
 
 // NOTES ON LEADOUT AREA SYNTHESIS
@@ -237,110 +235,100 @@ void subpw_interleave(const uint8 *in_buf, uint8 *out_buf)
 //
 void subpw_synth_leadout_lba(const TOC& toc, const int32 lba, uint8* SubPWBuf)
 {
- uint8 buf[0xC];
- uint32 lba_relative;
- uint32 ma, sa, fa;
- uint32 m, s, f;
+   int i;
+   uint8 buf[0xC];
+   uint32 lba_relative;
+   uint32 ma, sa, fa;
+   uint32 m, s, f;
 
- lba_relative = lba - toc.tracks[100].lba;
+   lba_relative = lba - toc.tracks[100].lba;
 
- f = (lba_relative % 75);
- s = ((lba_relative / 75) % 60);
- m = (lba_relative / 75 / 60);
+   f = (lba_relative % 75);
+   s = ((lba_relative / 75) % 60);
+   m = (lba_relative / 75 / 60);
 
- fa = (lba + 150) % 75;
- sa = ((lba + 150) / 75) % 60;
- ma = ((lba + 150) / 75 / 60);
+   fa = (lba + 150) % 75;
+   sa = ((lba + 150) / 75) % 60;
+   ma = ((lba + 150) / 75 / 60);
 
- uint8 adr = 0x1; // Q channel data encodes position
- uint8 control = (toc.tracks[toc.last_track].control & 0x4) | toc.tracks[100].control;
+   uint8 adr = 0x1; // Q channel data encodes position
+   uint8 control = (toc.tracks[toc.last_track].control & 0x4) | toc.tracks[100].control;
 
- memset(buf, 0, 0xC);
- buf[0] = (adr << 0) | (control << 4);
- buf[1] = 0xAA;
- buf[2] = 0x01;
+   memset(buf, 0, 0xC);
+   buf[0] = (adr << 0) | (control << 4);
+   buf[1] = 0xAA;
+   buf[2] = 0x01;
 
- // Track relative MSF address
- buf[3] = U8_to_BCD(m);
- buf[4] = U8_to_BCD(s);
- buf[5] = U8_to_BCD(f);
+   // Track relative MSF address
+   buf[3] = U8_to_BCD(m);
+   buf[4] = U8_to_BCD(s);
+   buf[5] = U8_to_BCD(f);
 
- buf[6] = 0; // Zerroooo
+   buf[6] = 0; // Zerroooo
 
- // Absolute MSF address
- buf[7] = U8_to_BCD(ma);
- buf[8] = U8_to_BCD(sa);
- buf[9] = U8_to_BCD(fa);
+   // Absolute MSF address
+   buf[7] = U8_to_BCD(ma);
+   buf[8] = U8_to_BCD(sa);
+   buf[9] = U8_to_BCD(fa);
 
- subq_generate_checksum(buf);
+   subq_generate_checksum(buf);
 
- for(int i = 0; i < 96; i++)
-  SubPWBuf[i] = (((buf[i >> 3] >> (7 - (i & 0x7))) & 1) ? 0x40 : 0x00) | 0x80;
+   for(i = 0; i < 96; i++)
+      SubPWBuf[i] = (((buf[i >> 3] >> (7 - (i & 0x7))) & 1) ? 0x40 : 0x00) | 0x80;
 }
 
 void synth_leadout_sector_lba(const uint8 mode, const TOC& toc, const int32 lba, uint8* out_buf)
 {
- memset(out_buf, 0, 2352 + 96);
- subpw_synth_leadout_lba(toc, lba, out_buf + 2352);
+   memset(out_buf, 0, 2352 + 96);
+   subpw_synth_leadout_lba(toc, lba, out_buf + 2352);
 
- if((toc.tracks[toc.last_track].control | toc.tracks[100].control) & 0x4)
- {
-  switch(mode)
-  {
-   default:
-	encode_mode0_sector(LBA_to_ABA(lba), out_buf);
-	break;
+   if((toc.tracks[toc.last_track].control | toc.tracks[100].control) & 0x4)
+   {
+      switch(mode)
+      {
+         default:
+            encode_mode0_sector(LBA_to_ABA(lba), out_buf);
+            break;
 
-   case 0x01:
-	encode_mode1_sector(LBA_to_ABA(lba), out_buf);
-	break;
+         case 0x01:
+            encode_mode1_sector(LBA_to_ABA(lba), out_buf);
+            break;
 
-   case 0x02:
-	out_buf[18] = 0x20;
-	encode_mode2_form2_sector(LBA_to_ABA(lba), out_buf);
-	break;
-  }
- }
+         case 0x02:
+            out_buf[18] = 0x20;
+            encode_mode2_form2_sector(LBA_to_ABA(lba), out_buf);
+            break;
+      }
+   }
 }
-
-#if 0
-bool subq_extrapolate(const uint8 *subq_input, int32 position_delta, uint8 *subq_output)
-{
- assert(subq_check_checksum(subq_input));
-
-
- subq_generate_checksum(subq_output);
-}
-#endif
 
 void scrambleize_data_sector(uint8 *sector_data)
 {
- for(unsigned i = 12; i < 2352; i++)
-  sector_data[i] ^= scramble_table[i - 12];
+   unsigned i;
+   for(i = 12; i < 2352; i++)
+      sector_data[i] ^= scramble_table[i - 12];
 }
 
 }
 
 void MDFN_strtoupper(char *str)
 {
- for(size_t x = 0; str[x]; x++)
- {
-  if(str[x] >= 'a' && str[x] <= 'z')
-  {
-   str[x] = str[x] - 'a' + 'A';
-  }
- }
+   size_t x;
+   for(x = 0; str[x]; x++)
+   {
+      if(str[x] >= 'a' && str[x] <= 'z')
+         str[x] = str[x] - 'a' + 'A';
+   }
 }
 
 void MDFN_strtoupper(std::string &str)
 {
+   size_t x;
    const size_t len = str.length();
 
-   for(size_t x = 0; x < len; x++)
+   for(x = 0; x < len; x++)
    {
       if(str[x] >= 'a' && str[x] <= 'z')
-      {
          str[x] = str[x] - 'a' + 'A';
-      }
    }
 }
