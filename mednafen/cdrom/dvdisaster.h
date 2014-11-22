@@ -122,8 +122,12 @@ void FreeReedSolomonTables(ReedSolomonTables*);
 #endif
 
 /*** 
- *** l-ec.c
+ *** l-ec.h
  ***/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define N_P_VECTORS   86      /* 43 16bit p vectors */
 #define P_VECTOR_SIZE 26      /* using RS(26,24) ECC */
@@ -154,6 +158,10 @@ void OrQVector(unsigned char*, unsigned char, int);
 int DecodePQ(ReedSolomonTables*, unsigned char*, int, int*, int);
 
 int CountC2Errors(unsigned char*);
+
+#ifdef __cplusplus
+}
+#endif
 
 /***
  *** misc.c 
