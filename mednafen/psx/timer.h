@@ -1,9 +1,6 @@
 #ifndef __MDFN_PSX_TIMER_H
 #define __MDFN_PSX_TIMER_H
 
-namespace MDFN_IEN_PSX
-{
-
 enum
 {
  TIMER_GSREG_COUNTER0 = 0x00,
@@ -19,9 +16,12 @@ enum
  TIMER_GSREG_TARGET2,
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint32 TIMER_GetRegister(unsigned int which, char *special, const uint32 special_len);
 void TIMER_SetRegister(unsigned int which, uint32 value);
-
 
 void TIMER_Write(const int32_t timestamp, uint32 A, uint16 V);
 uint16 TIMER_Read(const int32_t timestamp, uint32 A);
@@ -35,8 +35,11 @@ int32_t TIMER_Update(const int32_t unused);
 void TIMER_ResetTS(void);
 
 void TIMER_Power(void);
-int TIMER_StateAction(StateMem *sm, int load, int data_only);
+int TIMER_StateAction(void *data, int load, int data_only);
+int32_t TIMER_CalcNextEvent(int32_t next_event);
 
+#ifdef __cplusplus
 }
+#endif
 
 #endif

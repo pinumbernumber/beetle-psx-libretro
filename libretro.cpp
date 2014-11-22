@@ -704,7 +704,10 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(pscpu
             timestamp++;
 
          if(IsWrite)
+         {
             TIMER_Write(timestamp, A, V);
+            PSX_SetEventNT(PSX_EVENT_TIMER, timestamp + TIMER_CalcNextEvent(1024));
+         }
          else
             V = TIMER_Read(timestamp, A);
 

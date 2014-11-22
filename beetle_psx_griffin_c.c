@@ -31,3 +31,4 @@
 #include "mednafen/psx/sio.c"
 #include "mednafen/psx/irq.c"
 #include "mednafen/psx/mdec.c"
+#include "mednafen/psx/timer.c"

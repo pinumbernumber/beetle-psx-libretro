@@ -17,7 +17,6 @@
 
 #include "mednafen-types.h"
 #include "../state-common.h"
-#include "psx.h"
 #include "timer.h"
 #include "irq.h"
 
@@ -82,9 +81,6 @@
  TODO: If we ever return randomish values to "simulate" open bus, remember to change the return type and such of the TIMER_Read() function to full 32-bit too.
 */
 
-namespace MDFN_IEN_PSX
-{
-
 struct Timer
 {
    uint32_t Mode;
@@ -99,10 +95,10 @@ struct Timer
 
 static bool vblank;
 static bool hretrace;
-static Timer Timers[3];
+static struct Timer Timers[3];
 static int32_t lastts;
 
-static int32_t CalcNextEvent(int32_t next_event)
+int32_t TIMER_CalcNextEvent(int32_t next_event)
 {
    int i;
 
@@ -316,7 +312,7 @@ int32_t TIMER_Update(const int32_t timestamp)
 
    lastts = timestamp;
 
-   return(timestamp + CalcNextEvent(1024));
+   return(timestamp + TIMER_CalcNextEvent(1024));
 }
 
 static void CalcCountingStart(unsigned which)
@@ -402,8 +398,6 @@ void TIMER_Write(const int32_t timestamp, uint32_t A, uint16_t V)
    }
 
    // TIMER_Update(timestamp);
-
-   PSX_SetEventNT(PSX_EVENT_TIMER, timestamp + CalcNextEvent(1024));
 }
 
 uint16_t TIMER_Read(const int32_t timestamp, uint32_t A)
@@ -458,7 +452,7 @@ void TIMER_Power(void)
 }
 
 
-int TIMER_StateAction(StateMem *sm, int load, int data_only)
+int TIMER_StateAction(void *data, int load, int data_only)
 {
    int ret;
    SFORMAT StateRegs[] =
@@ -486,7 +480,7 @@ int TIMER_StateAction(StateMem *sm, int load, int data_only)
       { 0, 0, 0, 0 }
    };
    
-   ret = MDFNSS_StateAction(sm, load, StateRegs, "TIMER");
+   ret = MDFNSS_StateAction(data, load, StateRegs, "TIMER");
 
    if(load)
    {
@@ -537,8 +531,5 @@ void TIMER_SetRegister(unsigned int which, uint32_t value)
          Timers[tw].Target = value & 0xFFFF;
          break;
    }
-
-}
-
 
 }
