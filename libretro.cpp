@@ -68,9 +68,10 @@ enum
  REGION_EU = 2,
 };
 
+extern "C" void MDEC_Kill(void);
+
 namespace MDFN_IEN_PSX
 {
-   extern void MDEC_Kill(void);
 #if PSX_DBGPRINT_ENABLE
 static unsigned psx_dbg_level = 0;
 

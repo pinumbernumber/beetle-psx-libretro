@@ -58,7 +58,6 @@
 #include "../state-common.h"
 #include "mdec.h"
 
-#include "../masmem.h"
 #include "../cdrom/SimpleFIFO.h"
 #include <math.h>
 
@@ -71,8 +70,58 @@
  #include <altivec.h>
 #endif
 
-namespace MDFN_IEN_PSX
+#ifndef sign_10_to_s16
+#define sign_10_to_s16(_value)  (((int16)((uint32)(_value) << 6)) >> 6)
+#endif
+
+// This obviously won't convert higher-than-32 bit numbers to signed 32-bit ;)
+// Also, this shouldn't be used for 8-bit and 16-bit signed numbers, since you can
+// convert those faster with typecasts...
+#ifndef sign_x_to_s32
+#define sign_x_to_s32(_bits, _value) (((int32)((uint32)(_value) << (32 - _bits))) >> (32 - _bits))
+#endif
+
+static INLINE void StoreU16_RBO(uint16 *a, const uint16 v)
 {
+ #ifdef ARCH_POWERPC
+  __asm__ ("sthbrx %0, %y1" : : "r"(v), "Z"(*a));
+ #else
+  uint16 tmp = (v << 8) | (v >> 8);
+  *a = tmp;
+ #endif
+}
+
+static INLINE void StoreU16_LE(uint16 *a, const uint16 v)
+{
+#ifdef MSB_FIRST
+ StoreU16_RBO(a, v);
+#else
+ *a = v;
+#endif
+}
+
+static INLINE uint32 LoadU32_RBO(const uint32 *a)
+{
+ #ifdef ARCH_POWERPC
+  uint32 tmp;
+
+  __asm__ ("lwbrx %0, %y1" : "=r"(tmp) : "Z"(*a));
+
+  return(tmp);
+ #else
+  uint32 tmp = *a;
+  return((tmp << 24) | ((tmp & 0xFF00) << 8) | ((tmp >> 8) & 0xFF00) | (tmp >> 24));
+ #endif
+}
+
+static INLINE uint32 LoadU32_LE(const uint32 *a)
+{
+#ifdef MSB_FIRST
+   return LoadU32_RBO(a);
+#else
+   return *a;
+#endif
+}
 
 static int32 ClockCounter;
 static unsigned MDRPhase;
@@ -83,7 +132,7 @@ static int8 block_y[8][8];
 static int8 block_cb[8][8];	// [y >> 1][x >> 1]
 static int8 block_cr[8][8];	// [y >> 1][x >> 1]
 
-static uint32 Control;
+static uint32 MDECControl;
 static uint32 Command;
 static bool InCommand;
 
@@ -146,7 +195,7 @@ void MDEC_Power(void)
  memset(block_cb, 0, sizeof(block_cb));
  memset(block_cr, 0, sizeof(block_cr));
 
- Control = 0;
+ MDECControl = 0;
  Command = 0;
  InCommand = false;
 
@@ -199,7 +248,7 @@ int MDEC_StateAction(void *data, int load, int data_only)
   { ((&block_cb[0][0])), (uint32)((sizeof(block_cb) / sizeof(block_cb[0][0]))), 0 | 0, "&block_cb[0][0]" },
   { ((&block_cr[0][0])), (uint32)((sizeof(block_cr) / sizeof(block_cr[0][0]))), 0 | 0, "&block_cr[0][0]" },
 
-  { &((Control)), sizeof((Control)), 0x80000000 | 0, "Control" },
+  { &((MDECControl)), sizeof((MDECControl)), 0x80000000 | 0, "Control" },
   { &((Command)), sizeof((Command)), 0x80000000 | 0, "Command" },
   { &((InCommand)), 1, 0x80000000 | 0x08000000, "InCommand" },
 
@@ -299,7 +348,7 @@ static void IDCT_1D_Multi_16(int16 *in_coeff, int16 *out_coeff)
       __m128i c =  _mm_load_si128((__m128i *)&in_coeff[(col * 8)]);
 #endif
 
-      for(unsigned x = 0; x < 8; x++)
+      for(x = 0; x < 8; x++)
       {
          int32 sum = 0;
 #if defined(__SSE2__)
@@ -350,6 +399,7 @@ static INLINE uint16 RGB_to_RGB555(uint8 r, uint8 g, uint8 b)
 
 static void EncodeImage(const unsigned ybn)
 {
+   int x, y;
    //printf("ENCODE, %d\n", (Command & 0x08000000) ? 256 : 384);
 
    PixelBufferCount32 = 0;
@@ -361,12 +411,12 @@ static void EncodeImage(const unsigned ybn)
             const uint8 us_xor = (Command & (1U << 26)) ? 0x00 : 0x88;
             uint8* pix_out = PixelBuffer.pix8;
 
-            for(int y = 0; y < 8; y++)
+            for(y = 0; y < 8; y++)
             {
-               for(int x = 0; x < 8; x += 2)
+               for(x = 0; x < 8; x += 2)
                {
-                  uint8 p0 = std::min<int>(127, block_y[y][x + 0] + 8);
-                  uint8 p1 = std::min<int>(127, block_y[y][x + 1] + 8);
+                  uint8 p0 = min(127, block_y[y][x + 0] + 8);
+                  uint8 p1 = min(127, block_y[y][x + 1] + 8);
 
                   *pix_out = ((p0 >> 4) | (p1 & 0xF0)) ^ us_xor;
                   pix_out++;
@@ -382,9 +432,9 @@ static void EncodeImage(const unsigned ybn)
             const uint8 us_xor = (Command & (1U << 26)) ? 0x00 : 0x80;
             uint8* pix_out = PixelBuffer.pix8;
 
-            for(int y = 0; y < 8; y++)
+            for(y = 0; y < 8; y++)
             {
-               for(int x = 0; x < 8; x++)
+               for(x = 0; x < 8; x++)
                {
                   *pix_out = (uint8)block_y[y][x] ^ us_xor;
                   pix_out++;
@@ -399,13 +449,13 @@ static void EncodeImage(const unsigned ybn)
             const uint8 rgb_xor = (Command & (1U << 26)) ? 0x80 : 0x00;
             uint8* pix_out = PixelBuffer.pix8;
 
-            for(int y = 0; y < 8; y++)
+            for(y = 0; y < 8; y++)
             {
                const int8* by = &block_y[y][0];
                const int8* cb = &block_cb[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
                const int8* cr = &block_cr[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
 
-               for(int x = 0; x < 8; x++)
+               for(x = 0; x < 8; x++)
                {
                   int r, g, b;
 
@@ -426,13 +476,13 @@ static void EncodeImage(const unsigned ybn)
             uint16 pixel_xor = ((Command & 0x02000000) ? 0x8000 : 0x0000) | ((Command & (1U << 26)) ? 0x4210 : 0x0000);
             uint16* pix_out = PixelBuffer.pix16;
 
-            for(int y = 0; y < 8; y++)
+            for(y = 0; y < 8; y++)
             {
                const int8* by = &block_y[y][0];
                const int8* cb = &block_cb[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
                const int8* cr = &block_cr[(y >> 1) | ((ybn & 2) << 1)][(ybn & 1) << 2];
 
-               for(int x = 0; x < 8; x++)
+               for(x = 0; x < 8; x++)
                {
                   int r, g, b;
 
@@ -451,6 +501,7 @@ static void EncodeImage(const unsigned ybn)
 
 static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 {
+   int i;
    const uint32 qmw = (bool)(DecodeWB < 2);
 
    //printf("MDEC DMA SubWrite: %04x, %d\n", V, CoeffIndex);
@@ -467,11 +518,13 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
          int ci  = sign_10_to_s16(V & 0x3FF);
          int tmp = (ci * 2) << 4;
 
+         (void)tmp;
+
          if(q != 0)
             tmp = ((ci * q) << 4) + (ci ? ((ci < 0) ? 8 : -8) : 0);
 
          // Not sure if it should be 0x3FFF or 0x3FF0 or maybe 0x3FF8?
-         Coeff[ZigZag[0]] = std::min<int>(0x3FFF, std::max<int>(-0x4000, tmp));
+         Coeff[ZigZag[0]] = min(0x3FFF, max(-0x4000, tmp));
          CoeffIndex++;
       }
    }
@@ -486,7 +539,7 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
       {
          uint32 rlcount = V >> 10;
 
-         for(uint32 i = 0; i < rlcount && CoeffIndex < 64; i++)
+         for(i = 0; i < rlcount && CoeffIndex < 64; i++)
          {
             Coeff[ZigZag[CoeffIndex]] = 0;
             CoeffIndex++;
@@ -498,11 +551,13 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
             int ci  = sign_10_to_s16(V & 0x3FF);
             int tmp = (ci * 2) << 4;
 
+            (void)tmp;
+
             if(q != 0)
                tmp = (((ci * q) >> 3) << 4) + (ci ? ((ci < 0) ? 8 : -8) : 0);
 
             // Not sure if it should be 0x3FFF or 0x3FF0 or maybe 0x3FF8?
-            Coeff[ZigZag[CoeffIndex]] = std::min<int>(0x3FFF, std::max<int>(-0x4000, tmp));
+            Coeff[ZigZag[CoeffIndex]] = min(0x3FFF, max(-0x4000, tmp));
             CoeffIndex++;
          }
       }
@@ -572,6 +627,7 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 
 void MDEC_Run(int32 clocks)
 {
+   int i;
  static const unsigned MDRPhaseBias = __COUNTER__ + 1;
 
  //MDFN_DispMessage("%u", OutFIFO->in_count);
@@ -615,9 +671,15 @@ void MDEC_Run(int32 clocks)
     switch((Command >> 27) & 0x3)
     {
      case 0:
-     case 1: RAMOffsetWWS = 0; break;
-     case 2: RAMOffsetWWS = 6; break;
-     case 3: RAMOffsetWWS = 4; break;
+     case 1:
+        RAMOffsetWWS = 0;
+        break;
+     case 2:
+        RAMOffsetWWS = 6;
+        break;
+     case 3:
+        RAMOffsetWWS = 4;
+        break;
     }
     RAMOffsetY = 0;
     RAMOffsetCounter = RAMOffsetWWS;
@@ -665,7 +727,7 @@ void MDEC_Run(int32 clocks)
 
 	//printf("KA: %04x %08x\n", InCounter, tfr);
 
-	for(int i = 0; i < 4; i++)
+	for(i = 0; i < 4; i++)
 	{
          QMatrix[QMIndex >> 6][QMIndex & 0x3F] = (uint8)tfr;
 	 QMIndex = (QMIndex + 1) & 0x7F;
@@ -689,7 +751,7 @@ void MDEC_Run(int32 clocks)
      MDEC_READ_FIFO(tfr);
      InCounter--;
 
-     for(unsigned i = 0; i < 2; i++)
+     for(i = 0; i < 2; i++)
      {
       IDCTMatrix[((IDCTMIndex & 0x7) << 3) | ((IDCTMIndex >> 3) & 0x7)] = (int16)(tfr & 0xFFFF) >> 3;
       IDCTMIndex = (IDCTMIndex + 1) & 0x3F;
@@ -714,10 +776,12 @@ void MDEC_DMAWrite(uint32 V)
   SimpleFIFO_WriteUnit(InFIFO, V);
   MDEC_Run(0);
  }
+#if 0
  else
  {
   PSX_DBG(PSX_DBG_WARNING, "Input FIFO DMA write overflow?!\n");
  }
+#endif
 }
 
 uint32 MDEC_DMARead(int32* offs)
@@ -747,7 +811,7 @@ uint32 MDEC_DMARead(int32* offs)
  }
  else
  {
-  PSX_DBG(PSX_DBG_WARNING, "[MDEC] BONUS GNOMES\n");
+  //PSX_DBG(PSX_DBG_WARNING, "[MDEC] BONUS GNOMES\n");
   V = rand();
  }
 
@@ -756,17 +820,17 @@ uint32 MDEC_DMARead(int32* offs)
 
 bool MDEC_DMACanWrite(void)
 {
- return((FIFO_CAN_WRITE(InFIFO) >= 0x20) && (Control & (1U << 30)) && InCommand && InCounter != 0xFFFF);
+ return((FIFO_CAN_WRITE(InFIFO) >= 0x20) && (MDECControl & (1U << 30)) && InCommand && InCounter != 0xFFFF);
 }
 
 bool MDEC_DMACanRead(void)
 {
    if (OutFIFO)
-      return((OutFIFO->in_count >= 0x20) && (Control & (1U << 29)));
+      return((OutFIFO->in_count >= 0x20) && (MDECControl & (1U << 29)));
    return false;
 }
 
-void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
+void MDEC_Write(const int32_t timestamp, uint32 A, uint32 V)
 {
  //PSX_WARNING("[MDEC] Write: 0x%08x 0x%08x, %d  --- %u %u", A, V, timestamp, InFIFO->in_count, OutFIFO->in_count);
  if(A & 4)
@@ -792,7 +856,7 @@ void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
    SimpleFIFO_Flush(InFIFO);
    SimpleFIFO_Flush(OutFIFO);
   }
-  Control = V & 0x7FFFFFFF;
+  MDECControl = V & 0x7FFFFFFF;
  }
  else
  {
@@ -807,14 +871,16 @@ void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
    }
    MDEC_Run(0);
   }
+#if 0
   else
   {
    PSX_DBG(PSX_DBG_WARNING, "MDEC manual write FIFO overflow?!\n");
   }
+#endif
  }
 }
 
-uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
+uint32 MDEC_Read(const int32_t timestamp, uint32 A)
 {
  uint32 ret = 0;
 
@@ -847,6 +913,4 @@ uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
  //PSX_WARNING("[MDEC] Read: 0x%08x 0x%08x -- %d %d", A, ret, InputBuffer.in_count, InCounter);
 
  return(ret);
-}
-
 }

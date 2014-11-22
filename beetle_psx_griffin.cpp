@@ -7,7 +7,6 @@
 #include "mednafen/psx/cdc.cpp"
 #include "mednafen/psx/spu.cpp"
 #include "mednafen/psx/gpu.cpp"
-#include "mednafen/psx/mdec.cpp"
 #include "mednafen/psx/input/gamepad.cpp"
 #include "mednafen/psx/input/dualanalog.cpp"
 #include "mednafen/psx/input/dualshock.cpp"

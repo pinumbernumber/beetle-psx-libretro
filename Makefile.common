@@ -11,7 +11,6 @@ else
 	$(CORE_DIR)/cdc.cpp \
 	$(CORE_DIR)/spu.cpp \
 	$(CORE_DIR)/gpu.cpp \
-	$(CORE_DIR)/mdec.cpp \
 	$(CORE_DIR)/input/gamepad.cpp \
 	$(CORE_DIR)/input/dualanalog.cpp \
 	$(CORE_DIR)/input/dualshock.cpp \
@@ -22,7 +21,8 @@ else
 	$(CORE_DIR)/input/multitap.cpp \
 	$(CORE_DIR)/input/mouse.cpp
 	CORE_SOURCES_C := $(CORE_DIR)/sio.c \
-	$(CORE_DIR)/irq.c
+	$(CORE_DIR)/irq.c \
+	$(CORE_DIR)/mdec.c
 endif
 
 ifeq ($(NEED_THREADING), 1)
