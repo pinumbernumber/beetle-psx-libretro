@@ -924,7 +924,8 @@ static INLINE void MultiplyMatrixByVector(const gtematrix *matrix,
 }
 
 
-INLINE void MultiplyMatrixByVector_PT(const gtematrix *matrix, const int16_t *v, const int32_t *crv, uint32_t sf, int lm)
+INLINE void MultiplyMatrixByVector_PT(const gtematrix *matrix,
+      const int16_t *v, const int32_t *crv, uint32_t sf, int lm)
 {
    int64_t tmp[3];
    unsigned i;
@@ -1004,11 +1005,9 @@ static INLINE uint32_t Divide(uint32_t dividend, uint32_t divisor)
 
       return ((int64)dividend * ReciprocalTable[divisor & 0x7FFF] + 32768) >> 16;
    }
-   else
-   {
-      FLAGS |= 1 << 17;
-      return 0x1FFFF;
-   }
+
+   FLAGS |= 1 << 17;
+   return 0x1FFFF;
 }
 
 #define TransformXY(_h_div_sz) \
@@ -1024,37 +1023,30 @@ static INLINE uint32_t Divide(uint32_t dividend, uint32_t divisor)
    MAC[0] = F((int64)DQB + DQA * _h_div_sz); \
    IR0 = Lm_H(((int64)DQB + DQA * _h_div_sz) >> 12)
 
-#define _NormColor(sf, lm, v) \
-   int16_t tmp_vector[3]; \
+#define NormColorCommon(sf, lm, v) \
    MultiplyMatrixByVector(&Matrices.Light, Vectors[v], CRVectors.Null, sf, lm); \
    tmp_vector[0] = IR1; tmp_vector[1] = IR2; tmp_vector[2] = IR3; \
    MultiplyMatrixByVector(&Matrices.Color, tmp_vector, CRVectors.B, sf, lm)
 
-static INLINE void NormColor(uint32_t sf, int lm, uint32_t v)
-{
-   _NormColor(sf, lm, v);
-   MAC_to_RGB_FIFO();
-}
+#define NormColor(sf, lm, v) \
+   NormColorCommon(sf, lm, v); \
+   MAC_to_RGB_FIFO()
 
-static INLINE void NormColorColor(uint32_t v, uint32_t sf, int lm)
-{
-   _NormColor(sf, lm, v);
-
-   MAC[1] = ((RGB.R << 4) * IR1) >> sf;
-   MAC[2] = ((RGB.G << 4) * IR2) >> sf;
-   MAC[3] = ((RGB.B << 4) * IR3) >> sf;
-
-   MAC_to_IR(lm);
-
-   MAC_to_RGB_FIFO();
-}
+#define NormColorColor(v, sf, lm) \
+   NormColorCommon(sf, lm, v); \
+   MAC[1] = ((RGB.R << 4) * IR1) >> sf; \
+   MAC[2] = ((RGB.G << 4) * IR2) >> sf; \
+   MAC[3] = ((RGB.B << 4) * IR3) >> sf; \
+   MAC_to_IR(lm); \
+   MAC_to_RGB_FIFO()
 
 #define DepthCue(RGB_temp, sf, lm) \
-   for(i = 0; i < 3; i++) \
-   { \
-      MAC[1 + i] = A_MV(i, (((int64)CRVectors.FC[i] << 12) - (RGB_temp[i] << 12))) >> sf; \
-      MAC[1 + i] = A_MV(i, (((int64)RGB_temp[i] << 12) + IR0 * Lm_B(i, MAC[1 + i], FALSE))) >> sf; \
-   } \
+   MAC[1] = A_MV(0, (((int64)CRVectors.FC[0] << 12) - (RGB_temp[0] << 12))) >> sf; \
+   MAC[1] = A_MV(0, (((int64)RGB_temp[0] << 12) + IR0 * Lm_B(0, MAC[1], FALSE))) >> sf; \
+   MAC[2] = A_MV(1, (((int64)CRVectors.FC[1] << 12) - (RGB_temp[1] << 12))) >> sf; \
+   MAC[2] = A_MV(1, (((int64)RGB_temp[1] << 12) + IR0 * Lm_B(1, MAC[2], FALSE))) >> sf; \
+   MAC[3] = A_MV(2, (((int64)CRVectors.FC[2] << 12) - (RGB_temp[2] << 12))) >> sf; \
+   MAC[3] = A_MV(2, (((int64)RGB_temp[2] << 12) + IR0 * Lm_B(2, MAC[3], FALSE))) >> sf; \
    MAC_to_IR(lm); \
    MAC_to_RGB_FIFO()
 
@@ -1065,18 +1057,18 @@ static INLINE void NormColorColor(uint32_t v, uint32_t sf, int lm)
    RGB_temp[0] = RGB.R << 4; \
    RGB_temp[1] = RGB.G << 4; \
    RGB_temp[2] = RGB.B << 4; \
-   for(i = 0; i < 3; i++) \
-   { \
-      MAC[1 + i] = A_MV(i, (((int64)CRVectors.FC[i] << 12) - RGB_temp[i] * IR_temp[i])) >> sf; \
-      MAC[1 + i] = A_MV(i, (RGB_temp[i] * IR_temp[i] + IR0 * Lm_B(i, MAC[1 + i], FALSE))) >> sf; \
-   } \
+   MAC[1] = A_MV(0, (((int64)CRVectors.FC[0] << 12) - RGB_temp[0] * IR_temp[0])) >> sf; \
+   MAC[1] = A_MV(0, (RGB_temp[0] * IR_temp[0] + IR0 * Lm_B(0, MAC[1], FALSE))) >> sf; \
+   MAC[2] = A_MV(1, (((int64)CRVectors.FC[1] << 12) - RGB_temp[1] * IR_temp[1])) >> sf; \
+   MAC[2] = A_MV(1, (RGB_temp[1] * IR_temp[1] + IR0 * Lm_B(1, MAC[2], FALSE))) >> sf; \
+   MAC[3] = A_MV(2, (((int64)CRVectors.FC[2] << 12) - RGB_temp[2] * IR_temp[2])) >> sf; \
+   MAC[3] = A_MV(2, (RGB_temp[2] * IR_temp[2] + IR0 * Lm_B(2, MAC[3], FALSE))) >> sf; \
    MAC_to_IR(lm); \
    MAC_to_RGB_FIFO(); \
 }
 
 static INLINE void NormColorDepthCue(uint32_t v, uint32_t sf, int lm)
 {
-   int i;
    int16_t tmp_vector[3];
 
    MultiplyMatrixByVector(&Matrices.Light, Vectors[v], CRVectors.Null, sf, lm);
@@ -1118,6 +1110,7 @@ static INLINE void NormColorDepthCue(uint32_t v, uint32_t sf, int lm)
 int32_t GTE_Instruction(uint32_t instr)
 {
    int i;
+   int16_t tmp_vector[3];
    int64_t h_div_sz;
    const unsigned code = instr & 0x3F;
    int32_t ret = 1;
@@ -1247,16 +1240,12 @@ int32_t GTE_Instruction(uint32_t instr)
          break;
 
       case 0x14: /* CDP */
-         {
-            int16_t tmp_vector[3];
+         tmp_vector[0] = IR1; tmp_vector[1] = IR2; tmp_vector[2] = IR3;
+         MultiplyMatrixByVector(&Matrices.Color, tmp_vector, CRVectors.B, sf, lm);
 
-            tmp_vector[0] = IR1; tmp_vector[1] = IR2; tmp_vector[2] = IR3;
-            MultiplyMatrixByVector(&Matrices.Color, tmp_vector, CRVectors.B, sf, lm);
+         DepthCue_IR123(sf, lm);
 
-            DepthCue_IR123(sf, lm);
-
-            ret = 13;
-         }
+         ret = 13;
          break;
 
 
@@ -1267,7 +1256,9 @@ int32_t GTE_Instruction(uint32_t instr)
 
       case 0x16: /* NCDT */
          for(i = 0; i < 3; i++)
+         {
             NormColorDepthCue(i, sf, lm);
+         }
 
          ret = 44;
          break;
@@ -1296,22 +1287,18 @@ int32_t GTE_Instruction(uint32_t instr)
          break;
 
       case 0x1C:
-         {
-            int16_t tmp_vector[3];
+         tmp_vector[0] = IR1; tmp_vector[1] = IR2; tmp_vector[2] = IR3;
+         MultiplyMatrixByVector(&Matrices.Color, tmp_vector, CRVectors.B, sf, lm);
 
-            tmp_vector[0] = IR1; tmp_vector[1] = IR2; tmp_vector[2] = IR3;
-            MultiplyMatrixByVector(&Matrices.Color, tmp_vector, CRVectors.B, sf, lm);
+         MAC[1] = ((RGB.R << 4) * IR1) >> sf;
+         MAC[2] = ((RGB.G << 4) * IR2) >> sf;
+         MAC[3] = ((RGB.B << 4) * IR3) >> sf;
 
-            MAC[1] = ((RGB.R << 4) * IR1) >> sf;
-            MAC[2] = ((RGB.G << 4) * IR2) >> sf;
-            MAC[3] = ((RGB.B << 4) * IR3) >> sf;
+         MAC_to_IR(lm);
 
-            MAC_to_IR(lm);
+         MAC_to_RGB_FIFO();
 
-            MAC_to_RGB_FIFO();
-
-            ret = 11;
-         }
+         ret = 11;
          break;
 
          /*
@@ -1332,7 +1319,9 @@ int32_t GTE_Instruction(uint32_t instr)
 
       case 0x20:
          for(i = 0; i < 3; i++)
+         {
             NormColor(sf, lm, i);
+         }
 
          ret = 30;
          break;
@@ -1493,7 +1482,9 @@ int32_t GTE_Instruction(uint32_t instr)
 
       case 0x3F:
          for(i = 0; i < 3; i++)
+         {
             NormColorColor(i, sf, lm);
+         }
 
          ret = 39;
          break;
