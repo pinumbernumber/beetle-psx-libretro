@@ -181,49 +181,49 @@ int MDEC_StateAction(StateMem *sm, int load, int data_only)
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(ClockCounter),
-  SFVAR(MDRPhase),
+  { &((ClockCounter)), sizeof((ClockCounter)), 0x80000000 | 0, "ClockCounter" },
+  { &((MDRPhase)), sizeof((MDRPhase)), 0x80000000 | 0, "MDRPhase" },
 
-#define SFFIFO32(fifo)  SFARRAY32(fifo->data, fifo->size),	\
-			 SFVAR(fifo->read_pos),				\
-			 SFVAR(fifo->write_pos),				\
-			 SFVAR(fifo->in_count)
+  { ((InFIFO->data)), (uint32)(((InFIFO->size)) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((InFIFO->data)), "&InFIFO.data[0]" },
+  { &((InFIFO->read_pos)), sizeof((InFIFO->read_pos)), 0x80000000 | 0, "InFIFO.read_pos" },
+  { &((InFIFO->write_pos)), sizeof((InFIFO->write_pos)), 0x80000000 | 0, "InFIFO.write_pos" },
+  { &((InFIFO->in_count)), sizeof((InFIFO->in_count)), 0x80000000 | 0, "InFIFO.in_count" },
+  { ((OutFIFO->data)), (uint32)(((OutFIFO->size)) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((OutFIFO->data)), "&OutFIFO.data[0]" },
+  { &((OutFIFO->read_pos)), sizeof((OutFIFO->read_pos)), 0x80000000 | 0, "OutFIFO.read_pos" },
+  { &((OutFIFO->write_pos)), sizeof((OutFIFO->write_pos)), 0x80000000 |  0, "OutFIFO.write_pos" },
+  { &((OutFIFO->in_count)), sizeof((OutFIFO->in_count)), 0x80000000 | 0, "OutFIFO.in_count" },
 
-  SFFIFO32(InFIFO),
-  SFFIFO32(OutFIFO),
-#undef SFFIFO
+  { ((&block_y[0][0])), (uint32)((sizeof(block_y) / sizeof(block_y[0][0]))), 0 | SF_FORCE_A8((&block_y[0][0])), "&block_y[0][0]" },
+  { ((&block_cb[0][0])), (uint32)((sizeof(block_cb) / sizeof(block_cb[0][0]))), 0 | SF_FORCE_A8((&block_cb[0][0])), "&block_cb[0][0]" },
+  { ((&block_cr[0][0])), (uint32)((sizeof(block_cr) / sizeof(block_cr[0][0]))), 0 | SF_FORCE_A8((&block_cr[0][0])), "&block_cr[0][0]" },
 
-  SFARRAY(&block_y[0][0], sizeof(block_y) / sizeof(block_y[0][0])),
-  SFARRAY(&block_cb[0][0], sizeof(block_cb) / sizeof(block_cb[0][0])),
-  SFARRAY(&block_cr[0][0], sizeof(block_cr) / sizeof(block_cr[0][0])),
+  { &((Control)), SF_IS_BOOL(&((Control))) ? 1 : sizeof((Control)), 0x80000000 | (SF_IS_BOOL(&((Control))) ? 0x08000000 : 0), "Control" },
+  { &((Command)), SF_IS_BOOL(&((Command))) ? 1 : sizeof((Command)), 0x80000000 | (SF_IS_BOOL(&((Command))) ? 0x08000000 : 0), "Command" },
+  { &((InCommand)), SF_IS_BOOL(&((InCommand))) ? 1 : sizeof((InCommand)), 0x80000000 | (SF_IS_BOOL(&((InCommand))) ? 0x08000000 : 0), "InCommand" },
 
-  SFVAR(Control),
-  SFVAR(Command),
-  SFVAR(InCommand),
+  { ((&QMatrix[0][0])), (uint32)((sizeof(QMatrix) / sizeof(QMatrix[0][0]))), 0 | SF_FORCE_A8((&QMatrix[0][0])), "&QMatrix[0][0]" },
+  { &((QMIndex)), SF_IS_BOOL(&((QMIndex))) ? 1 : sizeof((QMIndex)), 0x80000000 | (SF_IS_BOOL(&((QMIndex))) ? 0x08000000 : 0), "QMIndex" },
 
-  SFARRAY(&QMatrix[0][0], sizeof(QMatrix) / sizeof(QMatrix[0][0])),
-  SFVAR(QMIndex),
+  { ((&IDCTMatrix[0])), (uint32)(((sizeof(IDCTMatrix) / sizeof(IDCTMatrix[0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&IDCTMatrix[0])), "&IDCTMatrix[0]" },
+  { &((IDCTMIndex)), SF_IS_BOOL(&((IDCTMIndex))) ? 1 : sizeof((IDCTMIndex)), 0x80000000 | (SF_IS_BOOL(&((IDCTMIndex))) ? 0x08000000 : 0), "IDCTMIndex" },
 
-  SFARRAY16(&IDCTMatrix[0], sizeof(IDCTMatrix) / sizeof(IDCTMatrix[0])),
-  SFVAR(IDCTMIndex),
+  { &((QScale)), SF_IS_BOOL(&((QScale))) ? 1 : sizeof((QScale)), 0x80000000 | (SF_IS_BOOL(&((QScale))) ? 0x08000000 : 0), "QScale" },
 
-  SFVAR(QScale),
+  { ((&Coeff[0])), (uint32)(((sizeof(Coeff) / sizeof(Coeff[0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&Coeff[0])), "&Coeff[0]" },
+  { &((CoeffIndex)), SF_IS_BOOL(&((CoeffIndex))) ? 1 : sizeof((CoeffIndex)), 0x80000000 | (SF_IS_BOOL(&((CoeffIndex))) ? 0x08000000 : 0), "CoeffIndex" },
+  { &((DecodeWB)), SF_IS_BOOL(&((DecodeWB))) ? 1 : sizeof((DecodeWB)), 0x80000000 | (SF_IS_BOOL(&((DecodeWB))) ? 0x08000000 : 0), "DecodeWB" },
 
-  SFARRAY16(&Coeff[0], sizeof(Coeff) / sizeof(Coeff[0])),
-  SFVAR(CoeffIndex),
-  SFVAR(DecodeWB),
+  { ((&PixelBuffer.pix32[0])), (uint32)(((sizeof(PixelBuffer.pix32) / sizeof(PixelBuffer.pix32[0]))) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((&PixelBuffer.pix32[0])), "&PixelBuffer.pix32[0]" },
+  { &((PixelBufferReadOffset)), SF_IS_BOOL(&((PixelBufferReadOffset))) ? 1 : sizeof((PixelBufferReadOffset)), 0x80000000 | (SF_IS_BOOL(&((PixelBufferReadOffset))) ? 0x08000000 : 0), "PixelBufferReadOffset" },
+  { &((PixelBufferCount32)), SF_IS_BOOL(&((PixelBufferCount32))) ? 1 : sizeof((PixelBufferCount32)), 0x80000000 | (SF_IS_BOOL(&((PixelBufferCount32))) ? 0x08000000 : 0), "PixelBufferCount32" },
 
-  SFARRAY32(&PixelBuffer.pix32[0], sizeof(PixelBuffer.pix32) / sizeof(PixelBuffer.pix32[0])),
-  SFVAR(PixelBufferReadOffset),
-  SFVAR(PixelBufferCount32),
+  { &((InCounter)), SF_IS_BOOL(&((InCounter))) ? 1 : sizeof((InCounter)), 0x80000000 | (SF_IS_BOOL(&((InCounter))) ? 0x08000000 : 0), "InCounter" },
 
-  SFVAR(InCounter),
+  { &((RAMOffsetY)), SF_IS_BOOL(&((RAMOffsetY))) ? 1 : sizeof((RAMOffsetY)), 0x80000000 | (SF_IS_BOOL(&((RAMOffsetY))) ? 0x08000000 : 0), "RAMOffsetY" },
+  { &((RAMOffsetCounter)), SF_IS_BOOL(&((RAMOffsetCounter))) ? 1 : sizeof((RAMOffsetCounter)), 0x80000000 | (SF_IS_BOOL(&((RAMOffsetCounter))) ? 0x08000000 : 0), "RAMOffsetCounter" },
+  { &((RAMOffsetWWS)), SF_IS_BOOL(&((RAMOffsetWWS))) ? 1 : sizeof((RAMOffsetWWS)), 0x80000000 | (SF_IS_BOOL(&((RAMOffsetWWS))) ? 0x08000000 : 0), "RAMOffsetWWS" },
 
-  SFVAR(RAMOffsetY),
-  SFVAR(RAMOffsetCounter),
-  SFVAR(RAMOffsetWWS),
-
-  SFEND
+  { 0, 0, 0, 0 }
  };
 
  int ret = MDFNSS_StateAction(sm, load, StateRegs, "MDEC");

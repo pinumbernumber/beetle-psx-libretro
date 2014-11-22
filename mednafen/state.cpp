@@ -379,6 +379,7 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
          }
          else
          {
+            printf("Unknown variable in save state: %s\n", toa + 1);
             if(smem_seek(st, recorded_size, SEEK_CUR) < 0)
             {
                puts("Seek error");
