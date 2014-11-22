@@ -757,7 +757,8 @@ void PS_GPU::ProcessFIFO(void)
 
       case INCMD_FBWRITE:
          {
-            uint32_t InData = BlitterFIFO.ReadUnit();
+            uint32_t InData = SimpleFIFO_ReadUnit(BlitterFIFO);
+            SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
 
             for(int i = 0; i < 2; i++)
             {
@@ -795,7 +796,8 @@ void PS_GPU::ProcessFIFO(void)
             {
                for(unsigned i = 0; i < vl; i++)
                {
-                  CB[i] = BlitterFIFO.ReadUnit();
+                  CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
+                  SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
                }
 
                command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)](this, CB);
@@ -814,9 +816,9 @@ void PS_GPU::ProcessFIFO(void)
             unsigned vl = 1 + (bool)(InCmd_CC & 0x10);
             uint32_t CB[2];
 
-            if((SimpleFIFO_ReadUnitPeek(BlitterFIFO) & 0xF000F000) == 0x50005000)
+            if((SimpleFIFO_ReadUnit(BlitterFIFO) & 0xF000F000) == 0x50005000)
             {
-               BlitterFIFO.ReadUnit();
+               SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
                InCmd = INCMD_NONE;
                return;
             }
@@ -825,7 +827,8 @@ void PS_GPU::ProcessFIFO(void)
             {
                for(unsigned i = 0; i < vl; i++)
                {
-                  CB[i] = BlitterFIFO.ReadUnit();
+                  CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
+                  SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
                }
 
                command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)](this, CB);
@@ -835,7 +838,7 @@ void PS_GPU::ProcessFIFO(void)
          break;
    }
 
-   const uint32_t cc = SimpleFIFO_ReadUnitPeek(BlitterFIFO) >> 24;
+   const uint32_t cc = SimpleFIFO_ReadUnit(BlitterFIFO) >> 24;
    const CTEntry *command = &Commands[cc];
 
    if(DrawTimeAvail < 0 && !command->ss_cmd)
@@ -846,7 +849,10 @@ void PS_GPU::ProcessFIFO(void)
       uint32_t CB[0x10];
 
       for(unsigned i = 0; i < command->len; i++)
-         CB[i] = BlitterFIFO.ReadUnit();
+      {
+         CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
+         SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
+      }
 
       if(!command->ss_cmd)
          DrawTimeAvail -= 2;
@@ -890,7 +896,7 @@ void PS_GPU::ProcessFIFO(void)
 
 INLINE void PS_GPU::WriteCB(uint32_t InData)
 {
-   if(BlitterFIFO.in_count >= 0x10 && (InCmd != INCMD_NONE || (BlitterFIFO.in_count - 0x10) >= Commands[SimpleFIFO_ReadUnitPeek(BlitterFIFO) >> 24].fifo_fb_len))
+   if(BlitterFIFO.in_count >= 0x10 && (InCmd != INCMD_NONE || (BlitterFIFO.in_count - 0x10) >= Commands[SimpleFIFO_ReadUnit(BlitterFIFO) >> 24].fifo_fb_len))
    {
       PSX_DBG(PSX_DBG_WARNING, "GPU FIFO overflow!!!\n");
       return;

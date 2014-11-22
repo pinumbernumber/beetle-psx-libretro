@@ -17,7 +17,7 @@
    (fifo).write_pos = ((fifo).write_pos + 1) & ((fifo).size - 1); \
    (fifo).in_count++
 
-#define SimpleFIFO_ReadUnitPeek(fifo) ((fifo).data[(fifo).read_pos])
+#define SimpleFIFO_ReadUnit(fifo) ((fifo).data[(fifo).read_pos])
 
 #define SimpleFIFO_Write(fifo, happy_data, happy_count) \
   while(happy_count) \
@@ -36,6 +36,10 @@
     (fifo).read_pos %= (fifo).size; \
     (fifo).write_pos %= (fifo).size; \
     (fifo).in_count %= ((fifo).size + 1)
+
+#define SimpleFIFO_ReadUnitIncrement(fifo) \
+  (fifo).read_pos = ((fifo).read_pos + 1) & ((fifo).size - 1); \
+  (fifo).in_count--
 
 template<typename T>
 class SimpleFIFO
@@ -64,17 +68,6 @@ class SimpleFIFO
 
 
 
- INLINE T ReadUnit()
- {
-  uint32 cur_read_pos = read_pos;
-
-  assert(in_count > 0);
-
-  read_pos = (read_pos + 1) & (size - 1);
-  in_count--;
-
-  return data[cur_read_pos];
- }
 
  T* data;
  uint32 size;

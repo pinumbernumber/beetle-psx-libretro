@@ -1343,7 +1343,10 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 	 	else if(V & 0x40)	// Something CD-DA related(along with & 0x20 ???)?
 	 	{
 		 for(unsigned i = 0; i < 4 && DMABuffer.in_count; i++)
-		  DMABuffer.ReadUnit();
+       {
+          SimpleFIFO_ReadUnit(DMABuffer);
+          SimpleFIFO_ReadUnitIncrement(DMABuffer);
+       }
 		}
 		else
 		{
@@ -1459,7 +1462,10 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
    case 0x02:
 	//PSX_WARNING("[CDC] DMA Buffer manual read");
 	if(DMABuffer.in_count)
-	 ret = DMABuffer.ReadUnit();
+   {
+      ret = SimpleFIFO_ReadUnit(DMABuffer);
+      SimpleFIFO_ReadUnitIncrement(DMABuffer);
+   }
 	else
 	{
 	 PSX_WARNING("[CDC] CD data transfer port read, but no data present!");
@@ -1495,7 +1501,10 @@ uint32 PS_CDC::DMARead(void)
  for(int i = 0; i < 4; i++)
  {
   if(DMABuffer.in_count)
-   data |= DMABuffer.ReadUnit() << (i * 8);
+  {
+   data |= SimpleFIFO_ReadUnit(DMABuffer) << (i * 8);
+   SimpleFIFO_ReadUnitIncrement(DMABuffer);
+  }
   else
   {
    //assert(0);

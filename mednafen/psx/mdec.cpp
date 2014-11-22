@@ -539,7 +539,7 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 #define MDEC_WAIT_COND(n)  { case __COUNTER__: if(!(n)) { MDRPhase = __COUNTER__ - MDRPhaseBias - 1; return; } }
 
 #define MDEC_WRITE_FIFO(n) { MDEC_WAIT_COND(FIFO_CAN_WRITE(OutFIFO)); SimpleFIFO_WriteUnit(OutFIFO, n);  }
-#define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO.in_count); n = InFIFO.ReadUnit(); }
+#define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO.in_count); n = SimpleFIFO_ReadUnit(InFIFO); SimpleFIFO_ReadUnitIncrement(InFIFO); }
 #define MDEC_EAT_CLOCKS(n) { ClockCounter -= (n); MDEC_WAIT_COND(ClockCounter > 0); }
 
 void MDEC_Run(int32 clocks)
@@ -700,7 +700,8 @@ uint32 MDEC_DMARead(int32* offs)
 
  if(MDFN_LIKELY(OutFIFO.in_count))
  {
-  V = OutFIFO.ReadUnit();
+  V = SimpleFIFO_ReadUnit(OutFIFO);
+  SimpleFIFO_ReadUnitIncrement(OutFIFO);
 
   *offs = (RAMOffsetY & 0x7) * RAMOffsetWWS;
 
@@ -807,7 +808,10 @@ uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
  else
  {
   if(OutFIFO.in_count)
-   ret = OutFIFO.ReadUnit();
+  {
+   ret = SimpleFIFO_ReadUnit(OutFIFO);
+   SimpleFIFO_ReadUnitIncrement(OutFIFO);
+  }
  }
 
  //PSX_WARNING("[MDEC] Read: 0x%08x 0x%08x -- %d %d", A, ret, InputBuffer.in_count, InCounter);
