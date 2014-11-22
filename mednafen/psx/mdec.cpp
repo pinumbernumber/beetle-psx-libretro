@@ -53,7 +53,9 @@
 //	SimCity 2000 startup.
 
 
-#include "psx.h"
+#include <stdint.h>
+#include "mednafen-types.h"
+#include "../state-common.h"
 #include "mdec.h"
 
 #include "../masmem.h"
@@ -184,36 +186,36 @@ int MDEC_StateAction(void *data, int load, int data_only)
   { &((ClockCounter)), sizeof((ClockCounter)), 0x80000000 | 0, "ClockCounter" },
   { &((MDRPhase)), sizeof((MDRPhase)), 0x80000000 | 0, "MDRPhase" },
 
-  { ((InFIFO->data)), (uint32)(((InFIFO->size)) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((InFIFO->data)), "&InFIFO.data[0]" },
+  { ((InFIFO->data)), (uint32)(((InFIFO->size)) * sizeof(uint32)), 0x40000000 | 0, "&InFIFO.data[0]" },
   { &((InFIFO->read_pos)), sizeof((InFIFO->read_pos)), 0x80000000 | 0, "InFIFO.read_pos" },
   { &((InFIFO->write_pos)), sizeof((InFIFO->write_pos)), 0x80000000 | 0, "InFIFO.write_pos" },
   { &((InFIFO->in_count)), sizeof((InFIFO->in_count)), 0x80000000 | 0, "InFIFO.in_count" },
-  { ((OutFIFO->data)), (uint32)(((OutFIFO->size)) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((OutFIFO->data)), "&OutFIFO.data[0]" },
+  { ((OutFIFO->data)), (uint32)(((OutFIFO->size)) * sizeof(uint32)), 0x40000000 | 0, "&OutFIFO.data[0]" },
   { &((OutFIFO->read_pos)), sizeof((OutFIFO->read_pos)), 0x80000000 | 0, "OutFIFO.read_pos" },
   { &((OutFIFO->write_pos)), sizeof((OutFIFO->write_pos)), 0x80000000 |  0, "OutFIFO.write_pos" },
   { &((OutFIFO->in_count)), sizeof((OutFIFO->in_count)), 0x80000000 | 0, "OutFIFO.in_count" },
 
-  { ((&block_y[0][0])), (uint32)((sizeof(block_y) / sizeof(block_y[0][0]))), 0 | SF_FORCE_A8((&block_y[0][0])), "&block_y[0][0]" },
-  { ((&block_cb[0][0])), (uint32)((sizeof(block_cb) / sizeof(block_cb[0][0]))), 0 | SF_FORCE_A8((&block_cb[0][0])), "&block_cb[0][0]" },
-  { ((&block_cr[0][0])), (uint32)((sizeof(block_cr) / sizeof(block_cr[0][0]))), 0 | SF_FORCE_A8((&block_cr[0][0])), "&block_cr[0][0]" },
+  { ((&block_y[0][0])), (uint32)((sizeof(block_y) / sizeof(block_y[0][0]))), 0 | 0, "&block_y[0][0]" },
+  { ((&block_cb[0][0])), (uint32)((sizeof(block_cb) / sizeof(block_cb[0][0]))), 0 | 0, "&block_cb[0][0]" },
+  { ((&block_cr[0][0])), (uint32)((sizeof(block_cr) / sizeof(block_cr[0][0]))), 0 | 0, "&block_cr[0][0]" },
 
   { &((Control)), sizeof((Control)), 0x80000000 | 0, "Control" },
   { &((Command)), sizeof((Command)), 0x80000000 | 0, "Command" },
   { &((InCommand)), 1, 0x80000000 | 0x08000000, "InCommand" },
 
-  { ((&QMatrix[0][0])), (uint32)((sizeof(QMatrix) / sizeof(QMatrix[0][0]))), 0 | SF_FORCE_A8((&QMatrix[0][0])), "&QMatrix[0][0]" },
+  { ((&QMatrix[0][0])), (uint32)((sizeof(QMatrix) / sizeof(QMatrix[0][0]))), 0 | 0, "&QMatrix[0][0]" },
   { &((QMIndex)), sizeof((QMIndex)), 0x80000000 | 0, "QMIndex" },
 
-  { ((&IDCTMatrix[0])), (uint32)(((sizeof(IDCTMatrix) / sizeof(IDCTMatrix[0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&IDCTMatrix[0])), "&IDCTMatrix[0]" },
+  { ((&IDCTMatrix[0])), (uint32)(((sizeof(IDCTMatrix) / sizeof(IDCTMatrix[0]))) * sizeof(uint16)), 0x20000000 | 0, "&IDCTMatrix[0]" },
   { &((IDCTMIndex)), sizeof((IDCTMIndex)), 0x80000000 | 0, "IDCTMIndex" },
 
   { &((QScale)), sizeof((QScale)), 0x80000000 | 0, "QScale" },
 
-  { ((&Coeff[0])), (uint32)(((sizeof(Coeff) / sizeof(Coeff[0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&Coeff[0])), "&Coeff[0]" },
+  { ((&Coeff[0])), (uint32)(((sizeof(Coeff) / sizeof(Coeff[0]))) * sizeof(uint16)), 0x20000000 | 0, "&Coeff[0]" },
   { &((CoeffIndex)), sizeof((CoeffIndex)), 0x80000000 | 0, "CoeffIndex" },
   { &((DecodeWB)), sizeof((DecodeWB)), 0x80000000 | 0, "DecodeWB" },
 
-  { ((&PixelBuffer.pix32[0])), (uint32)(((sizeof(PixelBuffer.pix32) / sizeof(PixelBuffer.pix32[0]))) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((&PixelBuffer.pix32[0])), "&PixelBuffer.pix32[0]" },
+  { ((&PixelBuffer.pix32[0])), (uint32)(((sizeof(PixelBuffer.pix32) / sizeof(PixelBuffer.pix32[0]))) * sizeof(uint32)), 0x40000000 | 0, "&PixelBuffer.pix32[0]" },
   { &((PixelBufferReadOffset)), sizeof((PixelBufferReadOffset)), 0x80000000 | 0, "PixelBufferReadOffset" },
   { &((PixelBufferCount32)), sizeof((PixelBufferCount32)), 0x80000000 | 0, "PixelBufferCount32" },
 
