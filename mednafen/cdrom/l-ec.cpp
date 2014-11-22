@@ -348,8 +348,9 @@ int DecodePQ(ReedSolomonTables *rt, unsigned char *data, int padding,
          for(i=0; i<NROOTS; i++) 
          {
             if(b[i] != GF_ALPHA0)
-            t[i+1] = lambda[i+1] ^ gt->alphaTo[mod_fieldmax(discr_r + b[i])];
-            else t[i+1] = lambda[i+1];
+               t[i+1] = lambda[i+1] ^ gt->alphaTo[mod_fieldmax(discr_r + b[i])];
+            else
+               t[i+1] = lambda[i+1];
          }
 
          if(2*el <= r+erasure_count-1) 
@@ -409,16 +410,15 @@ int DecodePQ(ReedSolomonTables *rt, unsigned char *data, int padding,
 
       /* If we've already found max possible roots, abort the search to save time */
 
-      if(++lambda_roots == deg_lambda) break;
+      if(++lambda_roots == deg_lambda)
+         break;
    }
 
    /* deg(lambda) unequal to number of roots => uncorrectable error detected
       This is not reliable for very small numbers of roots, e.g. nroots = 2 */
 
    if(deg_lambda != lambda_roots)
-   {
       return -1;
-   } 
 
    /* Compute err+eras evaluator poly omega(x) = syn(x)*lambda(x) 
       (modulo x**nroots). in index form. Also find deg(omega). */
@@ -432,7 +432,7 @@ int DecodePQ(ReedSolomonTables *rt, unsigned char *data, int padding,
       for(j=i; j>=0; j--)
       {
          if((syndrome[i - j] != GF_ALPHA0) && (lambda[j] != GF_ALPHA0))
-         tmp ^= gt->alphaTo[mod_fieldmax(syndrome[i - j] + lambda[j])];
+            tmp ^= gt->alphaTo[mod_fieldmax(syndrome[i - j] + lambda[j])];
       }
 
       omega[i] = gt->indexOf[tmp];
@@ -453,7 +453,7 @@ int DecodePQ(ReedSolomonTables *rt, unsigned char *data, int padding,
       for(i=deg_omega; i>=0; i--) 
       {
          if(omega[i] != GF_ALPHA0)
-         num1 ^= gt->alphaTo[mod_fieldmax(omega[i] + i * root[j])];
+            num1 ^= gt->alphaTo[mod_fieldmax(omega[i] + i * root[j])];
       }
 
       num2 = gt->alphaTo[mod_fieldmax(root[j] * (LEC_FIRST_ROOT - 1) + GF_FIELDMAX)];
@@ -464,7 +464,7 @@ int DecodePQ(ReedSolomonTables *rt, unsigned char *data, int padding,
       for(i=MIN(deg_lambda, NROOTS-1) & ~1; i>=0; i-=2) 
       {
          if(lambda[i+1] != GF_ALPHA0)
-         den ^= gt->alphaTo[mod_fieldmax(lambda[i+1] + i * root[j])];
+            den ^= gt->alphaTo[mod_fieldmax(lambda[i+1] + i * root[j])];
       }
 
       /* Apply error to data */
@@ -496,8 +496,9 @@ int DecodePQ(ReedSolomonTables *rt, unsigned char *data, int padding,
       for(i=0; i<NROOTS; i++)
       {
          if(syndrome[i] == 0) 
-         syndrome[i] = data[j];
-         else syndrome[i] = data[j] ^ gt->alphaTo[mod_fieldmax(gt->indexOf[syndrome[i]] 
+            syndrome[i] = data[j];
+         else
+            syndrome[i] = data[j] ^ gt->alphaTo[mod_fieldmax(gt->indexOf[syndrome[i]] 
                + (LEC_FIRST_ROOT+i)*LEC_PRIM_ELEM)];
       }
 

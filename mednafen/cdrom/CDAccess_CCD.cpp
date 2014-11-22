@@ -16,6 +16,7 @@
  */
 
 #include "../mednafen.h"
+#include "../error.h"
 #include "../general.h"
 #include "../msvc_compat.h"
 #include "CDAccess_CCD.h"

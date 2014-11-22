@@ -48,11 +48,11 @@ CDROM_SOURCES += $(MEDNAFEN_DIR)/cdrom/CDAccess.cpp \
 	$(MEDNAFEN_DIR)/cdrom/CDUtility.cpp \
 	$(MEDNAFEN_DIR)/cdrom/lec.cpp \
 	$(MEDNAFEN_DIR)/cdrom/audioreader.cpp \
-	$(MEDNAFEN_DIR)/cdrom/galois.cpp \
 	$(MEDNAFEN_DIR)/cdrom/recover-raw.cpp \
 	$(MEDNAFEN_DIR)/cdrom/l-ec.cpp \
 	$(MEDNAFEN_DIR)/cdrom/crc32.cpp \
 	$(MEDNAFEN_DIR)/cdrom/cdromif.cpp
+CDROM_SOURCES_C := $(MEDNAFEN_DIR)/cdrom/galois.c
 endif
    FLAGS += -DNEED_CD
 endif
@@ -94,7 +94,7 @@ TRIO_SOURCES += $(MEDNAFEN_DIR)/trio/trio.c \
 ifeq ($(HAVE_GRIFFIN), 1)
 SOURCES_C := beetle_psx_griffin_c.c
 else
-SOURCES_C := 	$(TREMOR_SRC) $(LIBRETRO_SOURCES_C) $(TRIO_SOURCES) $(THREAD_SOURCES) $(CRC32_SOURCES)
+SOURCES_C := 	$(TREMOR_SRC) $(LIBRETRO_SOURCES_C) $(TRIO_SOURCES) $(THREAD_SOURCES) $(CRC32_SOURCES) $(CDROM_SOURCES_C)
 endif
 
 SOURCES := $(LIBRETRO_SOURCES) $(CORE_SOURCES) $(MEDNAFEN_SOURCES) $(HW_CPU_SOURCES) $(HW_MISC_SOURCES) $(HW_SOUND_SOURCES) $(HW_VIDEO_SOURCES)

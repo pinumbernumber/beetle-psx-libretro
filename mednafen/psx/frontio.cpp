@@ -32,6 +32,8 @@
 
 #include "input/multitap.h"
 
+#include "../mednafen/error.h"
+
 //#define PSX_FIODBGINFO(format, ...) { /* printf(format " -- timestamp=%d -- PAD temp\n", ## __VA_ARGS__, timestamp); */  }
 static void PSX_FIODBGINFO(const char *format, ...)
 {

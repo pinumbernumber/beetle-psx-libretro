@@ -19,6 +19,7 @@
 
 #include <sys/stat.h>
 #include "mednafen.h"
+#include "error.h"
 #include "Stream.h"
 #include "FileStream.h"
 

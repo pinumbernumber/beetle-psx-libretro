@@ -27,11 +27,13 @@
 
 #include "dvdisaster.h"
 
-/*
- * The following routine is performance critical.
- */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-static inline int mod_fieldmax(int x)
+/* The following routine is performance critical. */
+
+static INLINE int mod_fieldmax(int x)
 {
    while (x >= GF_FIELDMAX) 
    {
@@ -41,5 +43,9 @@ static inline int mod_fieldmax(int x)
 
    return x;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

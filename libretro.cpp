@@ -1,6 +1,7 @@
 #include "mednafen/mednafen.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
+#include "mednafen/error.h"
 #include "mednafen/general.h"
 #include "mednafen/md5.h"
 #include "mednafen/msvc_compat.h"
@@ -21,6 +22,7 @@ static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 static retro_rumble_interface rumble;
 static unsigned players = 2;
+
 
 /* start of Mednafen psx.cpp */
 
@@ -68,7 +70,7 @@ enum
 
 namespace MDFN_IEN_PSX
 {
-
+   extern void MDEC_Kill(void);
 #if PSX_DBGPRINT_ENABLE
 static unsigned psx_dbg_level = 0;
 

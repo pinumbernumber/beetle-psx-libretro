@@ -17,6 +17,7 @@
 
 #include <sys/stat.h>
 #include "mednafen.h"
+#include "error.h"
 #include "FileWrapper.h"
 
 #include "include/trio/trio.h"

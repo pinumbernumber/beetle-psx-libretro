@@ -20,3 +20,7 @@
 
 #include "threads.c"
 #include "scrc32.c"
+
+#if NEED_CD
+#include "mednafen/cdrom/galois.c"
+#endif

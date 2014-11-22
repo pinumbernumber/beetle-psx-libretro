@@ -52,6 +52,7 @@
 #else
 #include <unistd.h>
 #endif
+#include <boolean.h>
 
 /***
  *** dvdisaster.c
@@ -66,7 +67,7 @@ void Verify(void);
 uint32 EDCCrc32(const unsigned char*, int);
 
 /***
- *** galois.c
+ *** galois.h
  ***
  * This is currently the hardcoded GF(2**8).
  * int32 gives abundant space for the GF.
@@ -76,6 +77,10 @@ uint32 EDCCrc32(const unsigned char*, int);
  * Note that some performance critical stuff needs to
  * be #included from galois-inlines.h
  */  
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Galois field parameters for 8bit symbol Reed-Solomon code */
 
@@ -104,11 +109,17 @@ typedef struct _ReedSolomonTables
    int32 ndata;         /* data bytes per ecc block */
 } ReedSolomonTables;
 
+
+
 GaloisTables* CreateGaloisTables(int32);
 void FreeGaloisTables(GaloisTables*);
 
 ReedSolomonTables *CreateReedSolomonTables(GaloisTables*, int32, int32, int);
 void FreeReedSolomonTables(ReedSolomonTables*);
+
+#ifdef __cplusplus
+}
+#endif
 
 /*** 
  *** l-ec.c

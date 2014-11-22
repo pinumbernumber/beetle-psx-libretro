@@ -31,6 +31,7 @@
 */
 
 #include "../mednafen.h"
+#include "../error.h"
 
 #include <sys/types.h>
 
@@ -232,7 +233,9 @@ void CDAccess_Image::ParseTOCFileLineInfo(CDRFILE_TRACK_INFO *track, const int t
   track->AReader = AR_Open(track->fp);
 
   if(!track->AReader)
+  {
    throw MDFN_Error(0, "TODO ERROR");
+  }
  }
 
  sector_mult = DI_Size_Table[track->DIFormat];
