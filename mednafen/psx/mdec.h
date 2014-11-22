@@ -18,7 +18,7 @@ bool MDEC_DMACanWrite(void);
 bool MDEC_DMACanRead(void);
 void MDEC_Run(int32 clocks);
 
-int MDEC_StateAction(StateMem *sm, int load, int data_only);
+int MDEC_StateAction(void *data, int load, int data_only);
 }
 
 #endif
