@@ -6,6 +6,9 @@
 
 #include "../math_ops.h"
 
+#define FIFO_CAN_WRITE_INTERNAL() (size - in_count)
+#define FIFO_CAN_WRITE(fifo) ((fifo).size - (fifo).in_count)
+
 template<typename T>
 class SimpleFIFO
 {
@@ -38,11 +41,6 @@ class SimpleFIFO
     in_count %= (size + 1);
  }
 
- INLINE uint32 CanWrite(void)
- {
-  return(size - in_count);
- }
-
  INLINE T ReadUnitPeek()
  {
   assert(in_count > 0);
@@ -63,7 +61,7 @@ class SimpleFIFO
 
  INLINE void Write(const T *happy_data, uint32 happy_count)
  {
-  assert(CanWrite() >= happy_count);
+  assert(FIFO_CAN_WRITE_INTERNAL() >= happy_count);
 
   while(happy_count)
   {
@@ -78,7 +76,7 @@ class SimpleFIFO
 
  INLINE void WriteUnit(const T wr_data)
  {
-   assert(CanWrite() >= 1);
+   assert(FIFO_CAN_WRITE_INTERNAL() >= 1);
    data[write_pos] = wr_data;
    write_pos = (write_pos + 1) & (size - 1);
    in_count++;
@@ -87,7 +85,7 @@ class SimpleFIFO
  INLINE void WriteByte(const T wr_data)
  {
    assert(sizeof(T) == 1);
-   assert(CanWrite() >= 1);
+   assert(FIFO_CAN_WRITE_INTERNAL() >= 1);
    data[write_pos] = wr_data;
    write_pos = (write_pos + 1) & (size - 1);
  }

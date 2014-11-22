@@ -24,7 +24,7 @@
 
   bool InFIFOReady;
 
-  if(InFIFO.CanWrite())
+  if(FIFO_CAN_WRITE(InFIFO))
   {
    InFIFO.WriteUnit(V);
 
@@ -34,13 +34,13 @@
     {
      InCounter--;
 
-     // This condition when InFIFO.CanWrite() != 0 is a bit buggy on real hardware, decoding loop *seems* to be reading too
+     // This condition when FIFO_CAN_WRITE(InFIFO) != 0 is a bit buggy on real hardware, decoding loop *seems* to be reading too
      // much and pulling garbage from the FIFO.
      if(InCounter == 0xFFFF)	
       InFIFOReady = true;
     }
 
-    if(InFIFO.CanWrite() == 0)
+    if(FIFO_CAN_WRITE(InFIFO) == 0)
      InFIFOReady = true;
    }
   }
@@ -538,7 +538,7 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 //
 #define MDEC_WAIT_COND(n)  { case __COUNTER__: if(!(n)) { MDRPhase = __COUNTER__ - MDRPhaseBias - 1; return; } }
 
-#define MDEC_WRITE_FIFO(n) { MDEC_WAIT_COND(OutFIFO.CanWrite()); OutFIFO.WriteUnit(n);  }
+#define MDEC_WRITE_FIFO(n) { MDEC_WAIT_COND(FIFO_CAN_WRITE(OutFIFO)); OutFIFO.WriteUnit(n);  }
 #define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO.in_count); n = InFIFO.ReadUnit(); }
 #define MDEC_EAT_CLOCKS(n) { ClockCounter -= (n); MDEC_WAIT_COND(ClockCounter > 0); }
 
@@ -682,7 +682,7 @@ void MDEC_Run(int32 clocks)
 
 void MDEC_DMAWrite(uint32 V)
 {
- if(InFIFO.CanWrite())
+ if(FIFO_CAN_WRITE(InFIFO))
  {
   InFIFO.WriteUnit(V);
   MDEC_Run(0);
@@ -728,7 +728,7 @@ uint32 MDEC_DMARead(int32* offs)
 
 bool MDEC_DMACanWrite(void)
 {
- return((InFIFO.CanWrite() >= 0x20) && (Control & (1U << 30)) && InCommand && InCounter != 0xFFFF);
+ return((FIFO_CAN_WRITE(InFIFO) >= 0x20) && (Control & (1U << 30)) && InCommand && InCounter != 0xFFFF);
 }
 
 bool MDEC_DMACanRead(void)
@@ -766,7 +766,7 @@ void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
  }
  else
  {
-  if(InFIFO.CanWrite())
+  if(FIFO_CAN_WRITE(InFIFO))
   {
    InFIFO.WriteUnit(V);
 
@@ -793,7 +793,7 @@ uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
   ret = 0;
 
   ret |= (OutFIFO.in_count == 0) << 31;
-  ret |= (InFIFO.CanWrite() == 0) << 30;
+  ret |= (FIFO_CAN_WRITE(InFIFO) == 0) << 30;
   ret |= InCommand << 29;
 
   ret |= MDEC_DMACanWrite() << 28;
