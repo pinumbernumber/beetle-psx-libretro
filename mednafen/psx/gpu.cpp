@@ -171,13 +171,14 @@ PS_GPU::~PS_GPU()
 
 void PS_GPU::FillVideoParams(MDFNGI* gi)
 {
+   gi->lcm_width = 2800;
+   gi->lcm_height = (LineVisLast + 1 - LineVisFirst) * 2;
+   gi->nominal_height = LineVisLast + 1 - LineVisFirst;
+
    if(HardwarePALType)
    {
-      gi->lcm_width = 2800;
-      gi->lcm_height = (LineVisLast + 1 - LineVisFirst) * 2; //576;
 
       gi->nominal_width = 377;	// Dunno. :(
-      gi->nominal_height = LineVisLast + 1 - LineVisFirst; //288;
 
       gi->fb_width = 768;
       gi->fb_height = 576;
@@ -188,11 +189,7 @@ void PS_GPU::FillVideoParams(MDFNGI* gi)
    }
    else
    {
-      gi->lcm_width = 2800;
-      gi->lcm_height = (LineVisLast + 1 - LineVisFirst) * 2; //480;
-
       gi->nominal_width = 320;
-      gi->nominal_height = LineVisLast + 1 - LineVisFirst; //240;
 
       gi->fb_width = 768;
       gi->fb_height = 480;
@@ -459,14 +456,11 @@ INLINE uint16_t PS_GPU::ModTexel(uint16_t texel, int32 r, int32 g, int32 b, cons
 template<uint32_t TexMode_TA>
 INLINE uint16_t PS_GPU::GetTexel(const uint32_t clut_offset, int32 u_arg, int32 v_arg)
 {
-   uint16_t fbw;
-   uint32_t u, v, fbtex_x, fbtex_y;
-
-   u = TexWindowXLUT[u_arg];
-   v = TexWindowYLUT[v_arg];
-   fbtex_x = TexPageX + (u >> (2 - TexMode_TA));
-   fbtex_y = TexPageY + v;
-   fbw = GPURAM[fbtex_y][fbtex_x & 1023];
+   uint32_t u = TexWindowXLUT[u_arg];
+   uint32_t v = TexWindowYLUT[v_arg];
+   uint32_t fbtex_x = TexPageX + (u >> (2 - TexMode_TA));
+   uint32_t fbtex_y = TexPageY + v;
+   uint16_t fbw = GPURAM[fbtex_y][fbtex_x & 1023];
 
    if(TexMode_TA != 2)
    {
@@ -554,17 +548,17 @@ static void G_Command_IRQ(PS_GPU* g, const uint32 *cb)
 //
 static void G_Command_FBFill(PS_GPU* gpu, const uint32 *cb)
 {
-   int32_t x, y, r, g, b, destX, destY, width, height;
-   r = cb[0] & 0xFF;
-   g = (cb[0] >> 8) & 0xFF;
-   b = (cb[0] >> 16) & 0xFF;
+   int32_t x, y;
+   int32_t r = cb[0] & 0xFF;
+   int32_t g = (cb[0] >> 8) & 0xFF;
+   int32_t b = (cb[0] >> 16) & 0xFF;
    const uint16_t fill_value = ((r >> 3) << 0) | ((g >> 3) << 5) | ((b >> 3) << 10);
 
-   destX = (cb[1] >>  0) & 0x3F0;
-   destY = (cb[1] >> 16) & 0x3FF;
+   int32_t destX = (cb[1] >>  0) & 0x3F0;
+   int32_t destY = (cb[1] >> 16) & 0x3FF;
 
-   width =  (((cb[2] >> 0) & 0x3FF) + 0xF) & ~0xF;
-   height = (cb[2] >> 16) & 0x1FF;
+   int32_t width =  (((cb[2] >> 0) & 0x3FF) + 0xF) & ~0xF;
+   int32_t height = (cb[2] >> 16) & 0x1FF;
 
    //printf("[GPU] FB Fill %d:%d w=%d, h=%d\n", destX, destY, width, height);
    gpu->DrawTimeAvail -= 46;	// Approximate
@@ -1015,7 +1009,7 @@ void PS_GPU::WriteDMA(uint32_t V)
    WriteCB(V);
 }
 
-INLINE uint32_t PS_GPU::ReadData(void)
+uint32_t PS_GPU::ReadDMA(void)
 {
    if(InCmd == INCMD_FBREAD)
    {
@@ -1039,11 +1033,6 @@ INLINE uint32_t PS_GPU::ReadData(void)
    }
 
    return DataReadBuffer;
-}
-
-uint32_t PS_GPU::ReadDMA(void)
-{
- return ReadData();
 }
 
 uint32_t PS_GPU::Read(const pscpu_timestamp_t timestamp, uint32_t A)
@@ -1073,7 +1062,7 @@ uint32_t PS_GPU::Read(const pscpu_timestamp_t timestamp, uint32_t A)
   if(InCmd == INCMD_FBREAD)	// Might want to more accurately emulate this in the future?
    ret |= (1 << 27);
 
-  ret |= CalcFIFOReadyBit() << 28;		// FIFO has room bit? (kinda).
+  ret |= DMACanWrite() << 28;		// FIFO has room bit? (kinda).
 
   //
   //
@@ -1092,7 +1081,7 @@ uint32_t PS_GPU::Read(const pscpu_timestamp_t timestamp, uint32_t A)
    ret |= 1 << 12;
  }
  else		// "Data"
-  ret = ReadData();
+  ret = ReadDMA();
 
  if(DMAControl & 2)
  {
@@ -1102,15 +1091,6 @@ uint32_t PS_GPU::Read(const pscpu_timestamp_t timestamp, uint32_t A)
  return(ret >> ((A & 3) * 8));
 }
 
-/*
-static INLINE uint32_t ShiftHelper(uint32_t val, int shamt, uint32_t mask)
-{
- if(shamt < 0)
-  return((val >> (-shamt)) & mask);
- else
-  return((val << shamt) & mask);
-}
-*/
 INLINE void PS_GPU::ReorderRGB_Var(uint32_t out_Rshift, uint32_t out_Gshift, uint32_t out_Bshift, bool bpp24, const uint16_t *src, uint32_t *dest, const int32 dx_start, const int32 dx_end, int32 fb_x)
 {
    if(bpp24)	// 24bpp

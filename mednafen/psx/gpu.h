@@ -56,7 +56,7 @@ class PS_GPU
 
  void Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V);
 
- INLINE bool CalcFIFOReadyBit(void)
+ INLINE bool DMACanWrite(void)
  {
   if(InCmd & (INCMD_PLINE | INCMD_QUAD))
    return(false);
@@ -71,11 +71,6 @@ class PS_GPU
    return(false);
 
   return(true);
- }
-
- INLINE bool DMACanWrite(void)
- {
-  return CalcFIFOReadyBit();
  }
 
  void WriteDMA(uint32 V);
