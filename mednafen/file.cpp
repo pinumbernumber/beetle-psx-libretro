@@ -68,7 +68,8 @@ MDFNFILE::~MDFNFILE()
 }
 
 
-bool MDFNFILE::Open(const char *path, const void *known_ext, const char *purpose, const bool suppress_notfound_pe)
+bool MDFNFILE::Open(const char *path, const void *known_ext,
+      const char *purpose, const bool suppress_notfound_pe)
 {
    FILE *fp;
    (void)known_ext;
@@ -112,19 +113,13 @@ uint64 MDFNFILE::fread(void *ptr, size_t element_size, size_t nmemb)
       int64 ak = f_size - location;
 
       memcpy((uint8*)ptr, f_data + location, ak);
-
       location = f_size;
-
       return(ak / element_size);
    }
-   else
-   {
-      memcpy((uint8*)ptr, f_data + location, total);
 
-      location += total;
-
-      return nmemb;
-   }
+   memcpy((uint8*)ptr, f_data + location, total);
+   location += total;
+   return nmemb;
 }
 
 int MDFNFILE::fseek(int64 offset, int whence)

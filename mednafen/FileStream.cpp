@@ -87,7 +87,8 @@ int64 FileStream::tell(void)
    return ftello(fp);
 }
 
-int64 FileStream::size(void) {
+int64 FileStream::size(void)
+{
    struct stat buf;
 
    fstat(fileno(fp), &buf);
