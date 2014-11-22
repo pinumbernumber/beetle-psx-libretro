@@ -31,6 +31,37 @@
 #define BIU_INVALIDATE_MODE	0x00000002	// Enable Invalidate mode(IsC must be set to 1 as well presumably?)
 #define BIU_LOCK		0x00000001	// Enable Lock mode(IsC must be set to 1 as well presumably?)
 						// Does lock mode prevent the actual data payload from being modified, while allowing tags to be modified/updated???
+                  //
+struct
+{
+   union
+   {
+      uint32_t Regs[32];
+      struct
+      {
+         uint32_t Unused00;
+         uint32_t Unused01;
+         uint32_t Unused02;
+         uint32_t BPC;		// RW
+         uint32_t Unused04;
+         uint32_t BDA;		// RW
+         uint32_t TAR;
+         uint32_t DCIC;	// RW
+         uint32_t Unused08;	
+         uint32_t BDAM;	// R/W
+         uint32_t Unused0A;
+         uint32_t BPCM;	// R/W
+         uint32_t SR;		// R/W
+         uint32_t CAUSE;	// R/W(partial)
+         uint32_t EPC;		// R
+         uint32_t PRID;	// R
+         uint32_t ERREG;	// ?(may not exist, test)
+      };
+   };
+} CP0;
+
+static uint32_t IPCache;
+static bool Halted;
 
 namespace MDFN_IEN_PSX
 {
@@ -66,7 +97,7 @@ void PS_CPU::SetFastMap(void *region_mem, uint32_t region_address, uint32_t regi
       FastMap[A >> FAST_MAP_SHIFT] = ((uint8_t *)region_mem - region_address);
 }
 
-INLINE void PS_CPU::RecalcIPCache(void)
+static INLINE void RecalcIPCache(void)
 {
    IPCache = 0;
 
@@ -179,7 +210,11 @@ int PS_CPU::StateAction(StateMem *sm, int load, int data_only)
    return(ret);
 }
 
-void PS_CPU::AssertIRQ(int which, bool asserted)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void CPU_AssertIRQ(int which, bool asserted)
 {
    assert(which >= 0 && which <= 5);
 
@@ -190,6 +225,10 @@ void PS_CPU::AssertIRQ(int which, bool asserted)
 
    RecalcIPCache();
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 void PS_CPU::SetBIU(uint32_t val)
 {

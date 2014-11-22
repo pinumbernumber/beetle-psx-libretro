@@ -30,7 +30,7 @@ void IRQ_Power(void)
    Status = 0;
    Mask = 0;
 
-   CPU->AssertIRQ(0, (bool)(Status & Mask));
+   CPU_AssertIRQ(0, (bool)(Status & Mask));
 }
 
 int IRQ_StateAction(StateMem *sm, int load, int data_only)
@@ -45,7 +45,7 @@ int IRQ_StateAction(StateMem *sm, int load, int data_only)
    int ret = MDFNSS_StateAction(sm, load, StateRegs, "IRQ");
 
    if(load)
-      CPU->AssertIRQ(0, (bool)(Status & Mask));
+      CPU_AssertIRQ(0, (bool)(Status & Mask));
 
    return(ret);
 }
@@ -68,7 +68,7 @@ void IRQ_Assert(int which, bool status)
       Status |= (old_Asserted ^ Asserted) & Asserted;
    }
 
-   CPU->AssertIRQ(0, (bool)(Status & Mask));
+   CPU_AssertIRQ(0, (bool)(Status & Mask));
 }
 
 
@@ -87,7 +87,7 @@ void IRQ_Write(uint32_t A, uint32_t V)
       //Status |= Asserted;
    }
 
-   CPU->AssertIRQ(0, (bool)(Status & Mask));
+   CPU_AssertIRQ(0, (bool)(Status & Mask));
 }
 
 
@@ -117,7 +117,7 @@ void IRQ_Reset(void)
    Status = 0; 
    Mask = 0;
 
-   CPU->AssertIRQ(0, (bool)(Status & Mask));
+   CPU_AssertIRQ(0, (bool)(Status & Mask));
 }
 
 
@@ -148,17 +148,17 @@ void IRQ_SetRegister(unsigned int which, uint32_t value)
    {
       case IRQ_GSREG_ASSERTED:
          Asserted = value;
-         CPU->AssertIRQ(0, (bool)(Status & Mask));
+         CPU_AssertIRQ(0, (bool)(Status & Mask));
          break;
 
       case IRQ_GSREG_STATUS:
          Status = value;
-         CPU->AssertIRQ(0, (bool)(Status & Mask));
+         CPU_AssertIRQ(0, (bool)(Status & Mask));
          break;
 
       case IRQ_GSREG_MASK:
          Mask = value;
-         CPU->AssertIRQ(0, (bool)(Status & Mask));
+         CPU_AssertIRQ(0, (bool)(Status & Mask));
          break;
    }
 }

@@ -68,8 +68,6 @@ class PS_CPU
 
  void Power(void);
 
- // which ranges 0-5, inclusive
- void AssertIRQ(int which, bool asserted);
 
  void SetHalt(bool status);
 
@@ -93,10 +91,6 @@ class PS_CPU
  uint32_t BACKED_PC;
  uint32_t BACKED_new_PC;
  uint32_t BACKED_new_PC_mask;
-
- uint32_t IPCache;
- void RecalcIPCache(void);
- bool Halted;
 
  uint32_t BACKED_LDWhich;
  uint32_t BACKED_LDValue;
@@ -135,33 +129,6 @@ class PS_CPU
   CP0REG_ERREG = 16
  };
 
- struct
- {
-  union
-  {
-   uint32_t Regs[32];
-   struct
-   {
-    uint32_t Unused00;
-    uint32_t Unused01;
-    uint32_t Unused02;
-    uint32_t BPC;		// RW
-    uint32_t Unused04;
-    uint32_t BDA;		// RW
-    uint32_t TAR;
-    uint32_t DCIC;	// RW
-    uint32_t Unused08;	
-    uint32_t BDAM;	// R/W
-    uint32_t Unused0A;
-    uint32_t BPCM;	// R/W
-    uint32_t SR;		// R/W
-    uint32_t CAUSE;	// R/W(partial)
-    uint32_t EPC;		// R
-    uint32_t PRID;	// R
-    uint32_t ERREG;	// ?(may not exist, test)
-   };
-  };
- } CP0;
 
 #if 1
  //uint32_t WrAbsorb;
@@ -256,5 +223,16 @@ class PS_CPU
 };
 
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// which ranges 0-5, inclusive
+void CPU_AssertIRQ(int which, bool asserted);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
