@@ -461,21 +461,29 @@ int TIMER_StateAction(StateMem *sm, int load, int data_only)
    int ret;
    SFORMAT StateRegs[] =
    {
-#define SFTIMER(n)	SFVARN(Timers[n].Mode, #n "Mode"),			\
-      SFVARN(Timers[n].Counter, #n "Counter"),		\
-      SFVARN(Timers[n].Target, #n "Target"),			\
-      SFVARN(Timers[n].Div8Counter, #n "Div8Counter"),	\
-      SFVARN(Timers[n].IRQDone, #n "IRQDone"),     \
-      SFVARN(Timers[n].DoZeCounting, #n "DoZeCounting")
-      SFTIMER(0),
-      SFTIMER(1),
-      SFTIMER(2),
-#undef SFTIMER
-
-      SFVAR(vblank),
-      SFVAR(hretrace),
-      SFEND
+      { &(Timers[0].Mode), SF_IS_BOOL(&(Timers[0].Mode)) ? 1 : sizeof(Timers[0].Mode), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Mode)) ? 0x08000000 : 0), "0" "Mode" },
+      { &(Timers[0].Counter), SF_IS_BOOL(&(Timers[0].Counter)) ? 1 : sizeof(Timers[0].Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Counter)) ? 0x08000000 : 0), "0" "Counter" },
+      { &(Timers[0].Target), SF_IS_BOOL(&(Timers[0].Target)) ? 1 : sizeof(Timers[0].Target), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Target)) ? 0x08000000 : 0), "0" "Target" },
+      { &(Timers[0].Div8Counter), SF_IS_BOOL(&(Timers[0].Div8Counter)) ? 1 : sizeof(Timers[0].Div8Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[0].Div8Counter)) ? 0x08000000 : 0), "0" "Div8Counter" },
+      { &(Timers[0].IRQDone), 1, 0x80000000 | 0x08000000, "0" "IRQDone" },
+      { &(Timers[0].DoZeCounting), sizeof(Timers[0].DoZeCounting), 0x80000000 | 0, "0" "DoZeCounting" },
+      { &(Timers[1].Mode), SF_IS_BOOL(&(Timers[1].Mode)) ? 1 : sizeof(Timers[1].Mode), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Mode)) ? 0x08000000 : 0), "1" "Mode" },
+      { &(Timers[1].Counter), SF_IS_BOOL(&(Timers[1].Counter)) ? 1 : sizeof(Timers[1].Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Counter)) ? 0x08000000 : 0), "1" "Counter" },
+      { &(Timers[1].Target), SF_IS_BOOL(&(Timers[1].Target)) ? 1 : sizeof(Timers[1].Target), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Target)) ? 0x08000000 : 0), "1" "Target" },
+      { &(Timers[1].Div8Counter), SF_IS_BOOL(&(Timers[1].Div8Counter)) ? 1 : sizeof(Timers[1].Div8Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[1].Div8Counter)) ? 0x08000000 : 0), "1" "Div8Counter" },
+      { &(Timers[1].IRQDone), 1, 0x80000000 | 0x08000000, "1" "IRQDone" },
+      { &(Timers[1].DoZeCounting), sizeof(Timers[1].DoZeCounting), 0x80000000 | 0, "1" "DoZeCounting" },
+      { &(Timers[2].Mode), SF_IS_BOOL(&(Timers[2].Mode)) ? 1 : sizeof(Timers[2].Mode), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Mode)) ? 0x08000000 : 0), "2" "Mode" },
+      { &(Timers[2].Counter), SF_IS_BOOL(&(Timers[2].Counter)) ? 1 : sizeof(Timers[2].Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Counter)) ? 0x08000000 : 0), "2" "Counter" },
+      { &(Timers[2].Target), SF_IS_BOOL(&(Timers[2].Target)) ? 1 : sizeof(Timers[2].Target), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Target)) ? 0x08000000 : 0), "2" "Target" },
+      { &(Timers[2].Div8Counter), SF_IS_BOOL(&(Timers[2].Div8Counter)) ? 1 : sizeof(Timers[2].Div8Counter), 0x80000000 | (SF_IS_BOOL(&(Timers[2].Div8Counter)) ? 0x08000000 : 0), "2" "Div8Counter" },
+      { &(Timers[2].IRQDone), 1, 0x80000000 | 0x08000000, "2" "IRQDone" },
+      { &(Timers[2].DoZeCounting), sizeof(Timers[2].DoZeCounting), 0x80000000 | 0, "2" "DoZeCounting" },
+      { &((vblank)), 1, 0x80000000 | 0x08000000, "vblank" },
+      { &((hretrace)), 1, 0x80000000 | 0x08000000, "hretrace" },
+      { 0, 0, 0, 0 }
    };
+   
    ret = MDFNSS_StateAction(sm, load, StateRegs, "TIMER");
 
    if(load)
