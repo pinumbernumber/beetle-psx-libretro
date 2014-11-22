@@ -305,15 +305,7 @@ int CDIF_MT::ReadThreadStart()
  ra_count = 0;
  last_read_lba = ~0U;
 
- try
- {
-  RT_EjectDisc(false, true);
- }
- catch(std::exception &e)
- {
-  EmuThreadQueue.Write(CDIF_Message(CDIF_MSG_FATAL_ERROR, std::string(e.what())));
-  return(0);
- }
+ RT_EjectDisc(false, true);
 
  is_phys_cache = false;
 
@@ -334,15 +326,8 @@ int CDIF_MT::ReadThreadStart()
  		 	 break;
 
     case CDIF_MSG_EJECT:
-			try
-			{
-			 RT_EjectDisc(msg.args[0]);
-			 EmuThreadQueue.Write(CDIF_Message(CDIF_MSG_DONE));
-			}
-			catch(std::exception &e)
-			{
-			 EmuThreadQueue.Write(CDIF_Message(CDIF_MSG_FATAL_ERROR, std::string(e.what())));
-			}
+          RT_EjectDisc(msg.args[0]);
+          EmuThreadQueue.Write(CDIF_Message(CDIF_MSG_DONE));
 			break;
 
     case CDIF_MSG_READ_SECTOR:
@@ -387,17 +372,7 @@ int CDIF_MT::ReadThreadStart()
    uint8 tmpbuf[2352 + 96];
    bool error_condition = false;
 
-   try
-   {
-    disc_cdaccess->Read_Raw_Sector(tmpbuf, ra_lba);
-   }
-   catch(std::exception &e)
-   {
-      if (log_cb)
-         log_cb(RETRO_LOG_ERROR, "Sector %u read error: %s\n", ra_lba, e.what());
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    error_condition = true;
-   }
+   disc_cdaccess->Read_Raw_Sector(tmpbuf, ra_lba);
    
    MDFND_LockMutex(SBMutex);
 
@@ -421,8 +396,6 @@ int CDIF_MT::ReadThreadStart()
 
 CDIF_MT::CDIF_MT(CDAccess *cda) : disc_cdaccess(cda), CDReadThread(NULL), SBMutex(NULL), SBCond(NULL)
 {
- try
- {
   CDIF_Message msg;
   RTS_Args s;
 
@@ -434,35 +407,6 @@ CDIF_MT::CDIF_MT(CDAccess *cda) : disc_cdaccess(cda), CDReadThread(NULL), SBMute
 
   CDReadThread = MDFND_CreateThread(ReadThreadStart_C, &s);
   EmuThreadQueue.Read(&msg);
- }
- catch(...)
- {
-  if(CDReadThread)
-  {
-   MDFND_WaitThread(CDReadThread, NULL);
-   CDReadThread = NULL;
-  }
-
-  if(SBMutex)
-  {
-   MDFND_DestroyMutex(SBMutex);
-   SBMutex = NULL;
-  }
-
-  if(SBCond)
-  {
-   MDFND_DestroyCond(SBCond);
-   SBCond = NULL;
-  }
-
-  if(disc_cdaccess)
-  {
-   delete disc_cdaccess;
-   disc_cdaccess = NULL;
-  }
-
-  throw;
- }
 }
 
 
@@ -470,16 +414,7 @@ CDIF_MT::~CDIF_MT()
 {
  bool thread_deaded_failed = false;
 
- try
- {
-  ReadThreadQueue.Write(CDIF_Message(CDIF_MSG_DIEDIEDIE));
- }
- catch(std::exception &e)
- {
-    if (log_cb)
-       log_cb(RETRO_LOG_ERROR, "%s.\n", e.what());
-    thread_deaded_failed = true;
- }
+ ReadThreadQueue.Write(CDIF_Message(CDIF_MSG_DIEDIEDIE));
 
  if(!thread_deaded_failed)
   MDFND_WaitThread(CDReadThread, NULL);
@@ -625,18 +560,10 @@ bool CDIF_MT::Eject(bool eject_status)
  if(UnrecoverableError)
   return(false);
 
- try
- {
   CDIF_Message msg;
 
   ReadThreadQueue.Write(CDIF_Message(CDIF_MSG_EJECT, eject_status));
   EmuThreadQueue.Read(&msg);
- }
- catch(std::exception &e)
- {
-    log_cb(RETRO_LOG_ERROR, "Error on eject/insert attempt: %s\n", e.what());
-    return(false);
- }
 
  return(true);
 }
@@ -685,17 +612,7 @@ bool CDIF_ST::ReadRawSector(uint8 *buf, uint32 lba)
   return(false);
  }
 
- try
- {
-  disc_cdaccess->Read_Raw_Sector(buf, lba);
- }
- catch(std::exception &e)
- {
-    if (log_cb)
-       log_cb(RETRO_LOG_ERROR, "Sector %u read error: %s\n", lba, e.what());
-  memset(buf, 0, 2352 + 96);
-  return(false);
- }
+ disc_cdaccess->Read_Raw_Sector(buf, lba);
 
  return(true);
 }
@@ -705,32 +622,23 @@ bool CDIF_ST::Eject(bool eject_status)
  if(UnrecoverableError)
   return(false);
 
- try
+ int32 old_de = DiscEjected;
+
+ DiscEjected = eject_status;
+
+ if(old_de != DiscEjected)
  {
-  int32 old_de = DiscEjected;
+    disc_cdaccess->Eject(eject_status);
 
-  DiscEjected = eject_status;
-
-  if(old_de != DiscEjected)
-  {
-   disc_cdaccess->Eject(eject_status);
-
-   if(!eject_status)     // Re-read the TOC
-   {
-    disc_cdaccess->Read_TOC(&disc_toc);
-
-    if(disc_toc.first_track < 1 || disc_toc.last_track > 99 || disc_toc.first_track > disc_toc.last_track)
+    if(!eject_status)     // Re-read the TOC
     {
-     throw(MDFN_Error(0, _("TOC first(%d)/last(%d) track numbers bad."), disc_toc.first_track, disc_toc.last_track));
+       disc_cdaccess->Read_TOC(&disc_toc);
+
+       if(disc_toc.first_track < 1 || disc_toc.last_track > 99 || disc_toc.first_track > disc_toc.last_track)
+       {
+          throw(MDFN_Error(0, _("TOC first(%d)/last(%d) track numbers bad."), disc_toc.first_track, disc_toc.last_track));
+       }
     }
-   }
-  }
- }
- catch(std::exception &e)
- {
-    if (log_cb)
-       log_cb(RETRO_LOG_ERROR, "%s\n", e.what());
-    return(false);
  }
 
  return(true);

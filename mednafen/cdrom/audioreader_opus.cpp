@@ -34,58 +34,42 @@ static size_t iop_read_func(void *ptr, size_t size, size_t nmemb, void *user_dat
  if(!size)
   return(0);
 
- try
- {
+ if (fw)
   return fw->read(ptr, size * nmemb, false) / size;
- }
- catch(...)
- {
-  return(0);
- }
+ return(0);
 }
 
 static int iop_seek_func(void *user_data, opus_int64 offset, int whence)
 {
  Stream *fw = (Stream*)user_data;
 
- try
+ if (fw)
  {
   fw->seek(offset, whence);
   return(0);
  }
- catch(...)
- {
-  return(-1);
- }
+ return(-1);
 }
 
 static int iop_close_func(void *user_data)
 {
  Stream *fw = (Stream*)user_data;
 
- try
+ if (fw)
  {
   fw->close();
   return(0);
  }
- catch(...)
- {
-  return EOF;
- }
+ return EOF;
 }
 
 static opus_int64 iop_tell_func(void *user_data)
 {
  Stream *fw = (Stream*)user_data;
 
- try
- {
+ if (fw)
   return fw->tell();
- }
- catch(...)
- {
-  return(-1);
- }
+ return(-1);
 }
 
 /* Error strings copied from libopusfile header file comments. */
