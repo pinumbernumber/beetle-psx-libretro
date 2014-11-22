@@ -80,7 +80,7 @@ class PS_CDC
  uint8 ResultsWP;	// Write position, 4 bit(0 ... 15).
  uint8 ResultsRP;	// Read position, 4 bit(0 ... 15).
 
- SimpleFIFO<uint8> DMABuffer;
+ SimpleFIFOU8 *DMABuffer;
  uint8 SB[2340];
  uint32 SB_In;
 

@@ -125,8 +125,9 @@ namespace MDFN_IEN_PSX
 {
 
    // 0x10 on actual PS1 GPU, 0x20 here(see comment at top of gpu.h)	// 0x10)
-PS_GPU::PS_GPU(bool pal_clock_and_tv, int sls, int sle) : BlitterFIFO(0x20)
+PS_GPU::PS_GPU(bool pal_clock_and_tv, int sls, int sle)
 {
+   SimpleFIFO_New(BlitterFIFO, SimpleFIFOU32, uint32, 0x20);
    int x, y, v;
    HardwarePALType = pal_clock_and_tv;
 
@@ -165,7 +166,7 @@ PS_GPU::PS_GPU(bool pal_clock_and_tv, int sls, int sle) : BlitterFIFO(0x20)
 
 PS_GPU::~PS_GPU()
 {
-
+   SimpleFIFO_Free(BlitterFIFO);
 }
 
 void PS_GPU::FillVideoParams(MDFNGI* gi)
@@ -739,7 +740,7 @@ CTEntry PS_GPU::Commands[256] =
 
 void PS_GPU::ProcessFIFO(void)
 {
-   if(!BlitterFIFO.in_count)
+   if(!BlitterFIFO->in_count)
       return;
 
    switch(InCmd)
@@ -792,7 +793,7 @@ void PS_GPU::ProcessFIFO(void)
             unsigned vl = 1 + (bool)(cc & 0x4) + (bool)(cc & 0x10);
             uint32_t CB[3];
 
-            if(BlitterFIFO.in_count >= vl)
+            if(BlitterFIFO->in_count >= vl)
             {
                for(unsigned i = 0; i < vl; i++)
                {
@@ -823,7 +824,7 @@ void PS_GPU::ProcessFIFO(void)
                return;
             }
 
-            if(BlitterFIFO.in_count >= vl)
+            if(BlitterFIFO->in_count >= vl)
             {
                for(unsigned i = 0; i < vl; i++)
                {
@@ -844,7 +845,7 @@ void PS_GPU::ProcessFIFO(void)
    if(DrawTimeAvail < 0 && !command->ss_cmd)
       return;
 
-   if(BlitterFIFO.in_count >= command->len)
+   if(BlitterFIFO->in_count >= command->len)
    {
       uint32_t CB[0x10];
 
@@ -896,7 +897,7 @@ void PS_GPU::ProcessFIFO(void)
 
 INLINE void PS_GPU::WriteCB(uint32_t InData)
 {
-   if(BlitterFIFO.in_count >= 0x10 && (InCmd != INCMD_NONE || (BlitterFIFO.in_count - 0x10) >= Commands[SimpleFIFO_ReadUnit(BlitterFIFO) >> 24].fifo_fb_len))
+   if(BlitterFIFO->in_count >= 0x10 && (InCmd != INCMD_NONE || (BlitterFIFO->in_count - 0x10) >= Commands[SimpleFIFO_ReadUnit(BlitterFIFO) >> 24].fifo_fb_len))
    {
       PSX_DBG(PSX_DBG_WARNING, "GPU FIFO overflow!!!\n");
       return;
@@ -1066,7 +1067,7 @@ uint32_t PS_GPU::Read(const pscpu_timestamp_t timestamp, uint32_t A)
 
   ret |= DisplayOff << 23;
 
-  if(InCmd == INCMD_NONE && DrawTimeAvail >= 0 && BlitterFIFO.in_count == 0x00)	// GPU idle bit.
+  if(InCmd == INCMD_NONE && DrawTimeAvail >= 0 && BlitterFIFO->in_count == 0x00)	// GPU idle bit.
    ret |= 1 << 26;
 
   if(InCmd == INCMD_FBREAD)	// Might want to more accurately emulate this in the future?
@@ -1499,10 +1500,10 @@ int PS_GPU::StateAction(StateMem *sm, int load, int data_only)
       SFVAR(abr),
       SFVAR(TexMode),
 
-      SFARRAY32(&BlitterFIFO.data[0], BlitterFIFO.size),
-      SFVAR(BlitterFIFO.read_pos),
-      SFVAR(BlitterFIFO.write_pos),
-      SFVAR(BlitterFIFO.in_count),
+      SFARRAY32(BlitterFIFO->data, BlitterFIFO->size),
+      SFVAR(BlitterFIFO->read_pos),
+      SFVAR(BlitterFIFO->write_pos),
+      SFVAR(BlitterFIFO->in_count),
 
       SFVAR(DataReadBuffer),
 

@@ -50,18 +50,19 @@ using namespace CDUtility;
 namespace MDFN_IEN_PSX
 {
 
-PS_CDC::PS_CDC() : DMABuffer(4096)
+PS_CDC::PS_CDC()
 {
- IsPSXDisc = false;
- Cur_CDIF = NULL;
+   SimpleFIFO_New(DMABuffer, SimpleFIFOU8, uint8, 4096);
+   IsPSXDisc = false;
+   Cur_CDIF = NULL;
 
- DriveStatus = DS_STOPPED;
- PendingCommandPhase = 0;
+   DriveStatus = DS_STOPPED;
+   PendingCommandPhase = 0;
 }
 
 PS_CDC::~PS_CDC()
 {
-
+   SimpleFIFO_Free(DMABuffer);
 }
 
 void PS_CDC::SetDisc(bool tray_open, CDIF *cdif, const char *disc_id)
@@ -250,10 +251,10 @@ int PS_CDC::StateAction(StateMem *sm, int load, int data_only)
   //
   //
   //
-  SFARRAY(&DMABuffer.data[0], DMABuffer.size),
-  SFVAR(DMABuffer.read_pos),
-  SFVAR(DMABuffer.write_pos),
-  SFVAR(DMABuffer.in_count),
+  SFARRAY(DMABuffer->data, DMABuffer->size),
+  SFVAR(DMABuffer->read_pos),
+  SFVAR(DMABuffer->write_pos),
+  SFVAR(DMABuffer->in_count),
   //
   //
   //
@@ -1270,7 +1271,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
   const unsigned reg_index = ((RegSelector & 0x3) * 3) + (A - 1);
 
   Update(timestamp);
-  //PSX_WARNING("[CDC] Write to register 0x%02x: 0x%02x @ %d --- 0x%02x 0x%02x\n", reg_index, V, timestamp, DMABuffer.in_count, IRQBuffer);
+  //PSX_WARNING("[CDC] Write to register 0x%02x: 0x%02x @ %d --- 0x%02x 0x%02x\n", reg_index, V, timestamp, DMABuffer->in_count, IRQBuffer);
 
   switch(reg_index)
   {
@@ -1314,7 +1315,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 	 case 0x02:
  	 	if(V & 0x80)
 	 	{
-	  	 if(!DMABuffer.in_count)
+	  	 if(!DMABuffer->in_count)
 	  	 {
           uint8 *sb_buf = (uint8*)&SB[0];
 		  if(!SB_In)
@@ -1337,12 +1338,12 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
 	  	 }
 		 else
 		 {
-		  //PSX_WARNING("[CDC] Attempt to start data transfer via 0x80->1803 when %d bytes still in buffer", DMABuffer.in_count);
+		  //PSX_WARNING("[CDC] Attempt to start data transfer via 0x80->1803 when %d bytes still in buffer", DMABuffer->in_count);
 		 }
 	 	}
 	 	else if(V & 0x40)	// Something CD-DA related(along with & 0x20 ???)?
 	 	{
-		 for(unsigned i = 0; i < 4 && DMABuffer.in_count; i++)
+		 for(unsigned i = 0; i < 4 && DMABuffer->in_count; i++)
        {
           SimpleFIFO_ReadUnit(DMABuffer);
           SimpleFIFO_ReadUnitIncrement(DMABuffer);
@@ -1445,10 +1446,10 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
 	if(ResultsIn)
 	 ret |= 0x20;
 
-	if(DMABuffer.in_count)
+	if(DMABuffer->in_count)
 	 ret |= 0x40;
 
-        if(PendingCommandCounter > 0 && PendingCommandPhase <= 1)
+   if(PendingCommandCounter > 0 && PendingCommandPhase <= 1)
 	 ret |= 0x80;
  }
  else
@@ -1461,7 +1462,7 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
 
    case 0x02:
 	//PSX_WARNING("[CDC] DMA Buffer manual read");
-	if(DMABuffer.in_count)
+	if(DMABuffer->in_count)
    {
       ret = SimpleFIFO_ReadUnit(DMABuffer);
       SimpleFIFO_ReadUnitIncrement(DMABuffer);
@@ -1491,7 +1492,9 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
 
 bool PS_CDC::DMACanRead(void)
 {
- return(DMABuffer.in_count);
+   if (DMABuffer)
+      return(DMABuffer->in_count);
+   return false;
 }
 
 uint32 PS_CDC::DMARead(void)
@@ -1500,7 +1503,7 @@ uint32 PS_CDC::DMARead(void)
 
  for(int i = 0; i < 4; i++)
  {
-  if(DMABuffer.in_count)
+  if(DMABuffer->in_count)
   {
    data |= SimpleFIFO_ReadUnit(DMABuffer) << (i * 8);
    SimpleFIFO_ReadUnitIncrement(DMABuffer);

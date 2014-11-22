@@ -74,8 +74,8 @@ namespace MDFN_IEN_PSX
 
 static int32 ClockCounter;
 static unsigned MDRPhase;
-static SimpleFIFO<uint32> InFIFO(0x20);
-static SimpleFIFO<uint32> OutFIFO(0x20);
+static SimpleFIFOU32 *InFIFO;
+static SimpleFIFOU32 *OutFIFO;
 
 static int8 block_y[8][8];
 static int8 block_cb[8][8];	// [y >> 1][x >> 1]
@@ -129,6 +129,14 @@ void MDEC_Power(void)
  ClockCounter = 0;
  MDRPhase = 0;
 
+ if (!InFIFO)
+ {
+    SimpleFIFO_New(InFIFO, SimpleFIFOU32, uint32, 0x20);
+ }
+ if (!OutFIFO)
+ {
+    SimpleFIFO_New(OutFIFO, SimpleFIFOU32, uint32, 0x20);
+ }
  SimpleFIFO_Flush(InFIFO);
  SimpleFIFO_Flush(OutFIFO);
 
@@ -163,6 +171,12 @@ void MDEC_Power(void)
  RAMOffsetWWS = 0;
 }
 
+void MDEC_Kill(void)
+{
+   SimpleFIFO_Free(InFIFO);
+   SimpleFIFO_Free(OutFIFO);
+}
+
 int MDEC_StateAction(StateMem *sm, int load, int data_only)
 {
  SFORMAT StateRegs[] =
@@ -170,10 +184,10 @@ int MDEC_StateAction(StateMem *sm, int load, int data_only)
   SFVAR(ClockCounter),
   SFVAR(MDRPhase),
 
-#define SFFIFO32(fifoobj)  SFARRAY32(&fifoobj.data[0], fifoobj.size),	\
-			 SFVAR(fifoobj.read_pos),				\
-			 SFVAR(fifoobj.write_pos),				\
-			 SFVAR(fifoobj.in_count)
+#define SFFIFO32(fifo)  SFARRAY32(fifo->data, fifo->size),	\
+			 SFVAR(fifo->read_pos),				\
+			 SFVAR(fifo->write_pos),				\
+			 SFVAR(fifo->in_count)
 
   SFFIFO32(InFIFO),
   SFFIFO32(OutFIFO),
@@ -539,14 +553,14 @@ static INLINE void WriteImageData(uint16 V, int32* eat_cycles)
 #define MDEC_WAIT_COND(n)  { case __COUNTER__: if(!(n)) { MDRPhase = __COUNTER__ - MDRPhaseBias - 1; return; } }
 
 #define MDEC_WRITE_FIFO(n) { MDEC_WAIT_COND(FIFO_CAN_WRITE(OutFIFO)); SimpleFIFO_WriteUnit(OutFIFO, n);  }
-#define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO.in_count); n = SimpleFIFO_ReadUnit(InFIFO); SimpleFIFO_ReadUnitIncrement(InFIFO); }
+#define MDEC_READ_FIFO(n)  { MDEC_WAIT_COND(InFIFO->in_count); n = SimpleFIFO_ReadUnit(InFIFO); SimpleFIFO_ReadUnitIncrement(InFIFO); }
 #define MDEC_EAT_CLOCKS(n) { ClockCounter -= (n); MDEC_WAIT_COND(ClockCounter > 0); }
 
 void MDEC_Run(int32 clocks)
 {
  static const unsigned MDRPhaseBias = __COUNTER__ + 1;
 
- //MDFN_DispMessage("%u", OutFIFO.in_count);
+ //MDFN_DispMessage("%u", OutFIFO->in_count);
 
  ClockCounter += clocks;
 
@@ -698,7 +712,7 @@ uint32 MDEC_DMARead(int32* offs)
 
  *offs = 0;
 
- if(MDFN_LIKELY(OutFIFO.in_count))
+ if(MDFN_LIKELY(OutFIFO->in_count))
  {
   V = SimpleFIFO_ReadUnit(OutFIFO);
   SimpleFIFO_ReadUnitIncrement(OutFIFO);
@@ -733,12 +747,14 @@ bool MDEC_DMACanWrite(void)
 
 bool MDEC_DMACanRead(void)
 {
- return((OutFIFO.in_count >= 0x20) && (Control & (1U << 29)));
+   if (OutFIFO)
+      return((OutFIFO->in_count >= 0x20) && (Control & (1U << 29)));
+   return false;
 }
 
 void MDEC_Write(const pscpu_timestamp_t timestamp, uint32 A, uint32 V)
 {
- //PSX_WARNING("[MDEC] Write: 0x%08x 0x%08x, %d  --- %u %u", A, V, timestamp, InFIFO.in_count, OutFIFO.in_count);
+ //PSX_WARNING("[MDEC] Write: 0x%08x 0x%08x, %d  --- %u %u", A, V, timestamp, InFIFO->in_count, OutFIFO->in_count);
  if(A & 4)
  {
   if(V & 0x80000000) // Reset?
@@ -792,7 +808,7 @@ uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
  {
   ret = 0;
 
-  ret |= (OutFIFO.in_count == 0) << 31;
+  ret |= (OutFIFO->in_count == 0) << 31;
   ret |= (FIFO_CAN_WRITE(InFIFO) == 0) << 30;
   ret |= InCommand << 29;
 
@@ -807,7 +823,7 @@ uint32 MDEC_Read(const pscpu_timestamp_t timestamp, uint32 A)
  }
  else
  {
-  if(OutFIFO.in_count)
+  if(OutFIFO->in_count)
   {
    ret = SimpleFIFO_ReadUnit(OutFIFO);
    SimpleFIFO_ReadUnitIncrement(OutFIFO);

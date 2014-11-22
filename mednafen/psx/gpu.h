@@ -61,13 +61,13 @@ class PS_GPU
   if(InCmd & (INCMD_PLINE | INCMD_QUAD))
    return(false);
 
-  if(BlitterFIFO.in_count == 0)
+  if(BlitterFIFO->in_count == 0)
    return(true);
 
   if(InCmd & (INCMD_FBREAD | INCMD_FBWRITE))
    return(false);
 
-  if(BlitterFIFO.in_count >= Commands[SimpleFIFO_ReadUnit(BlitterFIFO) >> 24].fifo_fb_len)
+  if(BlitterFIFO->in_count >= Commands[SimpleFIFO_ReadUnit(BlitterFIFO) >> 24].fifo_fb_len)
    return(false);
 
   return(true);
@@ -158,7 +158,7 @@ class PS_GPU
 
  static CTEntry Commands[256];
 
- SimpleFIFO<uint32> BlitterFIFO;
+ SimpleFIFOU32 *BlitterFIFO;
 
  uint32 DataReadBuffer;
 

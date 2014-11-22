@@ -1651,6 +1651,7 @@ static void Cleanup(void)
 {
    TextMem.resize(0);
 
+   MDEC_Kill();
 
    if(CDC)
       delete CDC;
