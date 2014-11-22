@@ -15,14 +15,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "psx.h"
-
-namespace MDFN_IEN_PSX
-{
+#include "../mednafen-types.h"
+#include "../state-common.h"
+#include "irq.h"
 
 static uint16_t Asserted;
 static uint16_t Mask;
 static uint16_t Status;
+
+/* forward decls */
+void CPU_AssertIRQ(int which, bool asserted);
 
 void IRQ_Power(void)
 {
@@ -33,7 +35,7 @@ void IRQ_Power(void)
    CPU_AssertIRQ(0, (bool)(Status & Mask));
 }
 
-int IRQ_StateAction(StateMem *sm, int load, int data_only)
+int IRQ_StateAction(void *data, int load, int data_only)
 {
    SFORMAT StateRegs[] =
    {
@@ -42,7 +44,7 @@ int IRQ_StateAction(StateMem *sm, int load, int data_only)
       { &((Status)), sizeof((Status)), 0x80000000 | 0, "Status" },
       { 0, 0, 0, 0 }
    };
-   int ret = MDFNSS_StateAction(sm, load, StateRegs, "IRQ");
+   int ret = MDFNSS_StateAction(data, load, StateRegs, "IRQ");
 
    if(load)
       CPU_AssertIRQ(0, (bool)(Status & Mask));
@@ -161,7 +163,4 @@ void IRQ_SetRegister(unsigned int which, uint32_t value)
          CPU_AssertIRQ(0, (bool)(Status & Mask));
          break;
    }
-}
-
-
 }

@@ -2,8 +2,7 @@ ifeq ($(HAVE_GRIFFIN),1)
    CORE_SOURCES := beetle_psx_griffin.cpp \
 	$(CORE_DIR)/dma.cpp
 else
-   CORE_SOURCES := $(CORE_DIR)/irq.cpp \
-	$(CORE_DIR)/timer.cpp \
+   CORE_SOURCES := $(CORE_DIR)/timer.cpp \
 	$(CORE_DIR)/dma.cpp \
 	$(CORE_DIR)/frontio.cpp \
 	$(CORE_DIR)/cpu.cpp \
@@ -22,7 +21,8 @@ else
 	$(CORE_DIR)/input/memcard.cpp \
 	$(CORE_DIR)/input/multitap.cpp \
 	$(CORE_DIR)/input/mouse.cpp
-	CORE_SOURCES_C := $(CORE_DIR)/sio.c
+	CORE_SOURCES_C := $(CORE_DIR)/sio.c \
+	$(CORE_DIR)/irq.c
 endif
 
 ifeq ($(NEED_THREADING), 1)

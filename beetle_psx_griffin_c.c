@@ -29,3 +29,4 @@
 #endif
 
 #include "mednafen/psx/sio.c"
+#include "mednafen/psx/irq.c"

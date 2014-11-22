@@ -1,5 +1,4 @@
 
-#include "mednafen/psx/irq.cpp"
 #include "mednafen/psx/timer.cpp"
 #include "mednafen/psx/frontio.cpp"
 #include "mednafen/psx/cpu.cpp"

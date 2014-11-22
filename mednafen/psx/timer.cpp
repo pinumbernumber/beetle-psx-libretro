@@ -17,7 +17,9 @@
 
 #include "mednafen-types.h"
 #include "../state-common.h"
+#include "psx.h"
 #include "timer.h"
+#include "irq.h"
 
 /*
  Notes(some of it may be incomplete or wrong in subtle ways)
