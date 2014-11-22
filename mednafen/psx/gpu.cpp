@@ -1469,100 +1469,100 @@ int PS_GPU::StateAction(StateMem *sm, int load, int data_only)
 {
    SFORMAT StateRegs[] =
    {
-      SFARRAY16(&GPURAM[0][0], sizeof(GPURAM) / sizeof(GPURAM[0][0])),
+      { ((&GPURAM[0][0])), (uint32)(((sizeof(GPURAM) / sizeof(GPURAM[0][0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&GPURAM[0][0])), "&GPURAM[0][0]" },
 
-      SFVAR(DMAControl),
+      { &((DMAControl)), sizeof((DMAControl)), 0x80000000 | 0, "DMAControl" },
 
-      SFVAR(ClipX0),
-      SFVAR(ClipY0),
-      SFVAR(ClipX1),
-      SFVAR(ClipY1),
+      { &((ClipX0)), sizeof((ClipX0)), 0x80000000 | 0, "ClipX0" },
+      { &((ClipY0)), sizeof((ClipY0)), 0x80000000 | 0, "ClipY0" },
+      { &((ClipX1)), SF_IS_BOOL(&((ClipX1))) ? 1 : sizeof((ClipX1)), 0x80000000 | (SF_IS_BOOL(&((ClipX1))) ? 0x08000000 : 0), "ClipX1" },
+      { &((ClipY1)), SF_IS_BOOL(&((ClipY1))) ? 1 : sizeof((ClipY1)), 0x80000000 | (SF_IS_BOOL(&((ClipY1))) ? 0x08000000 : 0), "ClipY1" },
 
-      SFVAR(OffsX),
-      SFVAR(OffsY),
+      { &((OffsX)), SF_IS_BOOL(&((OffsX))) ? 1 : sizeof((OffsX)), 0x80000000 | (SF_IS_BOOL(&((OffsX))) ? 0x08000000 : 0), "OffsX" },
+      { &((OffsY)), SF_IS_BOOL(&((OffsY))) ? 1 : sizeof((OffsY)), 0x80000000 | (SF_IS_BOOL(&((OffsY))) ? 0x08000000 : 0), "OffsY" },
 
-      SFVAR(dtd),
-      SFVAR(dfe),
+      { &((dtd)), SF_IS_BOOL(&((dtd))) ? 1 : sizeof((dtd)), 0x80000000 | (SF_IS_BOOL(&((dtd))) ? 0x08000000 : 0), "dtd" },
+      { &((dfe)), SF_IS_BOOL(&((dfe))) ? 1 : sizeof((dfe)), 0x80000000 | (SF_IS_BOOL(&((dfe))) ? 0x08000000 : 0), "dfe" },
 
-      SFVAR(MaskSetOR),
-      SFVAR(MaskEvalAND),
+      { &((MaskSetOR)), SF_IS_BOOL(&((MaskSetOR))) ? 1 : sizeof((MaskSetOR)), 0x80000000 | (SF_IS_BOOL(&((MaskSetOR))) ? 0x08000000 : 0), "MaskSetOR" },
+      { &((MaskEvalAND)), SF_IS_BOOL(&((MaskEvalAND))) ? 1 : sizeof((MaskEvalAND)), 0x80000000 | (SF_IS_BOOL(&((MaskEvalAND))) ? 0x08000000 : 0), "MaskEvalAND" },
 
-      SFVAR(tww),
-      SFVAR(twh),
-      SFVAR(twx),
-      SFVAR(twy),
+      { &((tww)), sizeof((tww)), 0x80000000 | 0, "tww" },
+      { &((twh)), sizeof((twh)), 0x80000000 | 0, "twh" },
+      { &((twx)), sizeof((twx)), 0x80000000 | 0, "twx" },
+      { &((twy)), sizeof((twy)), 0x80000000 | 0, "twy" },
 
-      SFVAR(TexPageX),
-      SFVAR(TexPageY),
+      { &((TexPageX)), SF_IS_BOOL(&((TexPageX))) ? 1 : sizeof((TexPageX)), 0x80000000 | (SF_IS_BOOL(&((TexPageX))) ? 0x08000000 : 0), "TexPageX" },
+      { &((TexPageY)), SF_IS_BOOL(&((TexPageY))) ? 1 : sizeof((TexPageY)), 0x80000000 | (SF_IS_BOOL(&((TexPageY))) ? 0x08000000 : 0), "TexPageY" },
 
-      SFVAR(SpriteFlip),
+      { &((SpriteFlip)), SF_IS_BOOL(&((SpriteFlip))) ? 1 : sizeof((SpriteFlip)), 0x80000000 | (SF_IS_BOOL(&((SpriteFlip))) ? 0x08000000 : 0), "SpriteFlip" },
 
-      SFVAR(abr),
-      SFVAR(TexMode),
+      { &((abr)), SF_IS_BOOL(&((abr))) ? 1 : sizeof((abr)), 0x80000000 | (SF_IS_BOOL(&((abr))) ? 0x08000000 : 0), "abr" },
+      { &((TexMode)), SF_IS_BOOL(&((TexMode))) ? 1 : sizeof((TexMode)), 0x80000000 | (SF_IS_BOOL(&((TexMode))) ? 0x08000000 : 0), "TexMode" },
 
-      SFARRAY32(BlitterFIFO->data, BlitterFIFO->size),
-      SFVAR(BlitterFIFO->read_pos),
-      SFVAR(BlitterFIFO->write_pos),
-      SFVAR(BlitterFIFO->in_count),
+      { ((BlitterFIFO->data)), (uint32)(((BlitterFIFO->size)) * sizeof(uint32)), 0x40000000 | SF_FORCE_A32((BlitterFIFO->data)), "&BlitterFIFO.data[0]" },
+      { &((BlitterFIFO->read_pos)), SF_IS_BOOL(&((BlitterFIFO->read_pos))) ? 1 : sizeof((BlitterFIFO->read_pos)), 0x80000000 | (SF_IS_BOOL(&((BlitterFIFO->read_pos))) ? 0x08000000 : 0), "BlitterFIFO.read_pos" },
+      { &((BlitterFIFO->write_pos)), SF_IS_BOOL(&((BlitterFIFO->write_pos))) ? 1 : sizeof((BlitterFIFO->write_pos)), 0x80000000 | (SF_IS_BOOL(&((BlitterFIFO->write_pos))) ? 0x08000000 : 0), "BlitterFIFO.write_pos" },
+      { &((BlitterFIFO->in_count)), SF_IS_BOOL(&((BlitterFIFO->in_count))) ? 1 : sizeof((BlitterFIFO->in_count)), 0x80000000 | (SF_IS_BOOL(&((BlitterFIFO->in_count))) ? 0x08000000 : 0), "BlitterFIFO.in_count" },
 
-      SFVAR(DataReadBuffer),
+      { &((DataReadBuffer)), SF_IS_BOOL(&((DataReadBuffer))) ? 1 : sizeof((DataReadBuffer)), 0x80000000 | (SF_IS_BOOL(&((DataReadBuffer))) ? 0x08000000 : 0), "DataReadBuffer" },
 
-      SFVAR(IRQPending),
+      { &((IRQPending)), SF_IS_BOOL(&((IRQPending))) ? 1 : sizeof((IRQPending)), 0x80000000 | (SF_IS_BOOL(&((IRQPending))) ? 0x08000000 : 0), "IRQPending" },
 
-      SFVAR(InCmd),
-      SFVAR(InCmd_CC),
+      { &((InCmd)), SF_IS_BOOL(&((InCmd))) ? 1 : sizeof((InCmd)), 0x80000000 | (SF_IS_BOOL(&((InCmd))) ? 0x08000000 : 0), "InCmd" },
+      { &((InCmd_CC)), SF_IS_BOOL(&((InCmd_CC))) ? 1 : sizeof((InCmd_CC)), 0x80000000 | (SF_IS_BOOL(&((InCmd_CC))) ? 0x08000000 : 0), "InCmd_CC" },
 
-#define TVHELPER(n)	SFVAR(n.x), SFVAR(n.y), SFVAR(n.u), SFVAR(n.v), SFVAR(n.r), SFVAR(n.g), SFVAR(n.b)
-      TVHELPER(InQuad_F3Vertices[0]),
-      TVHELPER(InQuad_F3Vertices[1]),
-      TVHELPER(InQuad_F3Vertices[2]),
-#undef TVHELPER
-      SFVAR(InQuad_clut),
 
-      SFVAR(InPLine_PrevPoint.x),
-      SFVAR(InPLine_PrevPoint.y),
-      SFVAR(InPLine_PrevPoint.r),
-      SFVAR(InPLine_PrevPoint.g),
-      SFVAR(InPLine_PrevPoint.b),
+      { &((InQuad_F3Vertices[0].x)), SF_IS_BOOL(&((InQuad_F3Vertices[0].x))) ? 1 : sizeof((InQuad_F3Vertices[0].x)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].x))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].x" }, { &((InQuad_F3Vertices[0].y)), SF_IS_BOOL(&((InQuad_F3Vertices[0].y))) ? 1 : sizeof((InQuad_F3Vertices[0].y)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].y))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].y" }, { &((InQuad_F3Vertices[0].u)), SF_IS_BOOL(&((InQuad_F3Vertices[0].u))) ? 1 : sizeof((InQuad_F3Vertices[0].u)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].u))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].u" }, { &((InQuad_F3Vertices[0].v)), SF_IS_BOOL(&((InQuad_F3Vertices[0].v))) ? 1 : sizeof((InQuad_F3Vertices[0].v)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].v))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].v" }, { &((InQuad_F3Vertices[0].r)), SF_IS_BOOL(&((InQuad_F3Vertices[0].r))) ? 1 : sizeof((InQuad_F3Vertices[0].r)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].r))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].r" }, { &((InQuad_F3Vertices[0].g)), SF_IS_BOOL(&((InQuad_F3Vertices[0].g))) ? 1 : sizeof((InQuad_F3Vertices[0].g)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].g))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].g" }, { &((InQuad_F3Vertices[0].b)), SF_IS_BOOL(&((InQuad_F3Vertices[0].b))) ? 1 : sizeof((InQuad_F3Vertices[0].b)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[0].b))) ? 0x08000000 : 0), "InQuad_F3Vertices[0].b" },
+      { &((InQuad_F3Vertices[1].x)), SF_IS_BOOL(&((InQuad_F3Vertices[1].x))) ? 1 : sizeof((InQuad_F3Vertices[1].x)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[1].x))) ? 0x08000000 : 0), "InQuad_F3Vertices[1].x" }, { &((InQuad_F3Vertices[1].y)), SF_IS_BOOL(&((InQuad_F3Vertices[1].y))) ? 1 : sizeof((InQuad_F3Vertices[1].y)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[1].y))) ? 0x08000000 : 0), "InQuad_F3Vertices[1].y" }, { &((InQuad_F3Vertices[1].u)), SF_IS_BOOL(&((InQuad_F3Vertices[1].u))) ? 1 : sizeof((InQuad_F3Vertices[1].u)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[1].u))) ? 0x08000000 : 0), "InQuad_F3Vertices[1].u" }, { &((InQuad_F3Vertices[1].v)), SF_IS_BOOL(&((InQuad_F3Vertices[1].v))) ? 1 : sizeof((InQuad_F3Vertices[1].v)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[1].v))) ? 0x08000000 : 0), "InQuad_F3Vertices[1].v" }, { &((InQuad_F3Vertices[1].r)), SF_IS_BOOL(&((InQuad_F3Vertices[1].r))) ? 1 : sizeof((InQuad_F3Vertices[1].r)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[1].r))) ? 0x08000000 : 0), "InQuad_F3Vertices[1].r" }, { &((InQuad_F3Vertices[1].g)), SF_IS_BOOL(&((InQuad_F3Vertices[1].g))) ? 1 : sizeof((InQuad_F3Vertices[1].g)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[1].g))) ? 0x08000000 : 0), "InQuad_F3Vertices[1].g" }, { &((InQuad_F3Vertices[1].b)), SF_IS_BOOL(&((InQuad_F3Vertices[1].b))) ? 1 : sizeof((InQuad_F3Vertices[1].b)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[1].b))) ? 0x08000000 : 0), "InQuad_F3Vertices[1].b" },
+      { &((InQuad_F3Vertices[2].x)), SF_IS_BOOL(&((InQuad_F3Vertices[2].x))) ? 1 : sizeof((InQuad_F3Vertices[2].x)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[2].x))) ? 0x08000000 : 0), "InQuad_F3Vertices[2].x" }, { &((InQuad_F3Vertices[2].y)), SF_IS_BOOL(&((InQuad_F3Vertices[2].y))) ? 1 : sizeof((InQuad_F3Vertices[2].y)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[2].y))) ? 0x08000000 : 0), "InQuad_F3Vertices[2].y" }, { &((InQuad_F3Vertices[2].u)), SF_IS_BOOL(&((InQuad_F3Vertices[2].u))) ? 1 : sizeof((InQuad_F3Vertices[2].u)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[2].u))) ? 0x08000000 : 0), "InQuad_F3Vertices[2].u" }, { &((InQuad_F3Vertices[2].v)), SF_IS_BOOL(&((InQuad_F3Vertices[2].v))) ? 1 : sizeof((InQuad_F3Vertices[2].v)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[2].v))) ? 0x08000000 : 0), "InQuad_F3Vertices[2].v" }, { &((InQuad_F3Vertices[2].r)), SF_IS_BOOL(&((InQuad_F3Vertices[2].r))) ? 1 : sizeof((InQuad_F3Vertices[2].r)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[2].r))) ? 0x08000000 : 0), "InQuad_F3Vertices[2].r" }, { &((InQuad_F3Vertices[2].g)), SF_IS_BOOL(&((InQuad_F3Vertices[2].g))) ? 1 : sizeof((InQuad_F3Vertices[2].g)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[2].g))) ? 0x08000000 : 0), "InQuad_F3Vertices[2].g" }, { &((InQuad_F3Vertices[2].b)), SF_IS_BOOL(&((InQuad_F3Vertices[2].b))) ? 1 : sizeof((InQuad_F3Vertices[2].b)), 0x80000000 | (SF_IS_BOOL(&((InQuad_F3Vertices[2].b))) ? 0x08000000 : 0), "InQuad_F3Vertices[2].b" },
 
-      SFVAR(FBRW_X),
-      SFVAR(FBRW_Y),
-      SFVAR(FBRW_W),
-      SFVAR(FBRW_H),
-      SFVAR(FBRW_CurY),
-      SFVAR(FBRW_CurX),
+      { &((InQuad_clut)), SF_IS_BOOL(&((InQuad_clut))) ? 1 : sizeof((InQuad_clut)), 0x80000000 | (SF_IS_BOOL(&((InQuad_clut))) ? 0x08000000 : 0), "InQuad_clut" },
 
-      SFVAR(DisplayMode),
-      SFVAR(DisplayOff),
-      SFVAR(DisplayFB_XStart),
-      SFVAR(DisplayFB_YStart),
+      { &((InPLine_PrevPoint.x)), SF_IS_BOOL(&((InPLine_PrevPoint.x))) ? 1 : sizeof((InPLine_PrevPoint.x)), 0x80000000 | (SF_IS_BOOL(&((InPLine_PrevPoint.x))) ? 0x08000000 : 0), "InPLine_PrevPoint.x" },
+      { &((InPLine_PrevPoint.y)), SF_IS_BOOL(&((InPLine_PrevPoint.y))) ? 1 : sizeof((InPLine_PrevPoint.y)), 0x80000000 | (SF_IS_BOOL(&((InPLine_PrevPoint.y))) ? 0x08000000 : 0), "InPLine_PrevPoint.y" },
+      { &((InPLine_PrevPoint.r)), SF_IS_BOOL(&((InPLine_PrevPoint.r))) ? 1 : sizeof((InPLine_PrevPoint.r)), 0x80000000 | (SF_IS_BOOL(&((InPLine_PrevPoint.r))) ? 0x08000000 : 0), "InPLine_PrevPoint.r" },
+      { &((InPLine_PrevPoint.g)), SF_IS_BOOL(&((InPLine_PrevPoint.g))) ? 1 : sizeof((InPLine_PrevPoint.g)), 0x80000000 | (SF_IS_BOOL(&((InPLine_PrevPoint.g))) ? 0x08000000 : 0), "InPLine_PrevPoint.g" },
+      { &((InPLine_PrevPoint.b)), SF_IS_BOOL(&((InPLine_PrevPoint.b))) ? 1 : sizeof((InPLine_PrevPoint.b)), 0x80000000 | (SF_IS_BOOL(&((InPLine_PrevPoint.b))) ? 0x08000000 : 0), "InPLine_PrevPoint.b" },
 
-      SFVAR(HorizStart),
-      SFVAR(HorizEnd),
+      { &((FBRW_X)), SF_IS_BOOL(&((FBRW_X))) ? 1 : sizeof((FBRW_X)), 0x80000000 | (SF_IS_BOOL(&((FBRW_X))) ? 0x08000000 : 0), "FBRW_X" },
+      { &((FBRW_Y)), SF_IS_BOOL(&((FBRW_Y))) ? 1 : sizeof((FBRW_Y)), 0x80000000 | (SF_IS_BOOL(&((FBRW_Y))) ? 0x08000000 : 0), "FBRW_Y" },
+      { &((FBRW_W)), SF_IS_BOOL(&((FBRW_W))) ? 1 : sizeof((FBRW_W)), 0x80000000 | (SF_IS_BOOL(&((FBRW_W))) ? 0x08000000 : 0), "FBRW_W" },
+      { &((FBRW_H)), SF_IS_BOOL(&((FBRW_H))) ? 1 : sizeof((FBRW_H)), 0x80000000 | (SF_IS_BOOL(&((FBRW_H))) ? 0x08000000 : 0), "FBRW_H" },
+      { &((FBRW_CurY)), SF_IS_BOOL(&((FBRW_CurY))) ? 1 : sizeof((FBRW_CurY)), 0x80000000 | (SF_IS_BOOL(&((FBRW_CurY))) ? 0x08000000 : 0), "FBRW_CurY" },
+      { &((FBRW_CurX)), SF_IS_BOOL(&((FBRW_CurX))) ? 1 : sizeof((FBRW_CurX)), 0x80000000 | (SF_IS_BOOL(&((FBRW_CurX))) ? 0x08000000 : 0), "FBRW_CurX" },
 
-      SFVAR(VertStart),
-      SFVAR(VertEnd),
+      { &((DisplayMode)), SF_IS_BOOL(&((DisplayMode))) ? 1 : sizeof((DisplayMode)), 0x80000000 | (SF_IS_BOOL(&((DisplayMode))) ? 0x08000000 : 0), "DisplayMode" },
+      { &((DisplayOff)), SF_IS_BOOL(&((DisplayOff))) ? 1 : sizeof((DisplayOff)), 0x80000000 | (SF_IS_BOOL(&((DisplayOff))) ? 0x08000000 : 0), "DisplayOff" },
+      { &((DisplayFB_XStart)), SF_IS_BOOL(&((DisplayFB_XStart))) ? 1 : sizeof((DisplayFB_XStart)), 0x80000000 | (SF_IS_BOOL(&((DisplayFB_XStart))) ? 0x08000000 : 0), "DisplayFB_XStart" },
+      { &((DisplayFB_YStart)), SF_IS_BOOL(&((DisplayFB_YStart))) ? 1 : sizeof((DisplayFB_YStart)), 0x80000000 | (SF_IS_BOOL(&((DisplayFB_YStart))) ? 0x08000000 : 0), "DisplayFB_YStart" },
 
-      SFVAR(DisplayFB_CurYOffset),
-      SFVAR(DisplayFB_CurLineYReadout),
+      { &((HorizStart)), SF_IS_BOOL(&((HorizStart))) ? 1 : sizeof((HorizStart)), 0x80000000 | (SF_IS_BOOL(&((HorizStart))) ? 0x08000000 : 0), "HorizStart" },
+      { &((HorizEnd)), SF_IS_BOOL(&((HorizEnd))) ? 1 : sizeof((HorizEnd)), 0x80000000 | (SF_IS_BOOL(&((HorizEnd))) ? 0x08000000 : 0), "HorizEnd" },
 
-      SFVAR(InVBlank),
+      { &((VertStart)), SF_IS_BOOL(&((VertStart))) ? 1 : sizeof((VertStart)), 0x80000000 | (SF_IS_BOOL(&((VertStart))) ? 0x08000000 : 0), "VertStart" },
+      { &((VertEnd)), SF_IS_BOOL(&((VertEnd))) ? 1 : sizeof((VertEnd)), 0x80000000 | (SF_IS_BOOL(&((VertEnd))) ? 0x08000000 : 0), "VertEnd" },
 
-      SFVAR(LinesPerField),
-      SFVAR(scanline),
-      SFVAR(field),
-      SFVAR(field_ram_readout),
-      SFVAR(PhaseChange),
+      { &((DisplayFB_CurYOffset)), SF_IS_BOOL(&((DisplayFB_CurYOffset))) ? 1 : sizeof((DisplayFB_CurYOffset)), 0x80000000 | (SF_IS_BOOL(&((DisplayFB_CurYOffset))) ? 0x08000000 : 0), "DisplayFB_CurYOffset" },
+      { &((DisplayFB_CurLineYReadout)), SF_IS_BOOL(&((DisplayFB_CurLineYReadout))) ? 1 : sizeof((DisplayFB_CurLineYReadout)), 0x80000000 | (SF_IS_BOOL(&((DisplayFB_CurLineYReadout))) ? 0x08000000 : 0), "DisplayFB_CurLineYReadout" },
 
-      SFVAR(DotClockCounter),
+      { &((InVBlank)), SF_IS_BOOL(&((InVBlank))) ? 1 : sizeof((InVBlank)), 0x80000000 | (SF_IS_BOOL(&((InVBlank))) ? 0x08000000 : 0), "InVBlank" },
 
-      SFVAR(GPUClockCounter),
-      SFVAR(LineClockCounter),
-      SFVAR(LinePhase),
+      { &((LinesPerField)), SF_IS_BOOL(&((LinesPerField))) ? 1 : sizeof((LinesPerField)), 0x80000000 | (SF_IS_BOOL(&((LinesPerField))) ? 0x08000000 : 0), "LinesPerField" },
+      { &((scanline)), SF_IS_BOOL(&((scanline))) ? 1 : sizeof((scanline)), 0x80000000 | (SF_IS_BOOL(&((scanline))) ? 0x08000000 : 0), "scanline" },
+      { &((field)), SF_IS_BOOL(&((field))) ? 1 : sizeof((field)), 0x80000000 | (SF_IS_BOOL(&((field))) ? 0x08000000 : 0), "field" },
+      { &((field_ram_readout)), SF_IS_BOOL(&((field_ram_readout))) ? 1 : sizeof((field_ram_readout)), 0x80000000 | (SF_IS_BOOL(&((field_ram_readout))) ? 0x08000000 : 0), "field_ram_readout" },
+      { &((PhaseChange)), SF_IS_BOOL(&((PhaseChange))) ? 1 : sizeof((PhaseChange)), 0x80000000 | (SF_IS_BOOL(&((PhaseChange))) ? 0x08000000 : 0), "PhaseChange" },
 
-      SFVAR(DrawTimeAvail),
+      { &((DotClockCounter)), SF_IS_BOOL(&((DotClockCounter))) ? 1 : sizeof((DotClockCounter)), 0x80000000 | (SF_IS_BOOL(&((DotClockCounter))) ? 0x08000000 : 0), "DotClockCounter" },
 
-      SFEND
+      { &((GPUClockCounter)), SF_IS_BOOL(&((GPUClockCounter))) ? 1 : sizeof((GPUClockCounter)), 0x80000000 | (SF_IS_BOOL(&((GPUClockCounter))) ? 0x08000000 : 0), "GPUClockCounter" },
+      { &((LineClockCounter)), SF_IS_BOOL(&((LineClockCounter))) ? 1 : sizeof((LineClockCounter)), 0x80000000 | (SF_IS_BOOL(&((LineClockCounter))) ? 0x08000000 : 0), "LineClockCounter" },
+      { &((LinePhase)), SF_IS_BOOL(&((LinePhase))) ? 1 : sizeof((LinePhase)), 0x80000000 | (SF_IS_BOOL(&((LinePhase))) ? 0x08000000 : 0), "LinePhase" },
+
+      { &((DrawTimeAvail)), SF_IS_BOOL(&((DrawTimeAvail))) ? 1 : sizeof((DrawTimeAvail)), 0x80000000 | (SF_IS_BOOL(&((DrawTimeAvail))) ? 0x08000000 : 0), "DrawTimeAvail" },
+
+      { 0, 0, 0, 0 }
    };
    int ret = MDFNSS_StateAction(sm, load, StateRegs, "GPU");
 

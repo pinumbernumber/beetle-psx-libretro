@@ -217,113 +217,113 @@ int PS_CDC::StateAction(StateMem *sm, int load, int data_only)
 {
  SFORMAT StateRegs[] =
  {
- SFVAR(DiscChanged),
- SFVAR(DiscStartupDelay),
+ { &((DiscChanged)), 1, 0x80000000 | 0x08000000, "DiscChanged" },
+ { &((DiscStartupDelay)), sizeof((DiscStartupDelay)), 0x80000000 | 0, "DiscStartupDelay" },
 
- SFARRAY16(&AudioBuffer.Samples[0][0], sizeof(AudioBuffer.Samples) / sizeof(AudioBuffer.Samples[0][0])),
- SFVAR(AudioBuffer.Size),
- SFVAR(AudioBuffer.Freq),
- SFVAR(AudioBuffer.ReadPos),
+ { ((&AudioBuffer.Samples[0][0])), (uint32)(((sizeof(AudioBuffer.Samples) / sizeof(AudioBuffer.Samples[0][0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&AudioBuffer.Samples[0][0])), "&AudioBuffer.Samples[0][0]" },
+ { &((AudioBuffer.Size)), SF_IS_BOOL(&((AudioBuffer.Size))) ? 1 : sizeof((AudioBuffer.Size)), 0x80000000 | (SF_IS_BOOL(&((AudioBuffer.Size))) ? 0x08000000 : 0), "AudioBuffer.Size" },
+ { &((AudioBuffer.Freq)), SF_IS_BOOL(&((AudioBuffer.Freq))) ? 1 : sizeof((AudioBuffer.Freq)), 0x80000000 | (SF_IS_BOOL(&((AudioBuffer.Freq))) ? 0x08000000 : 0), "AudioBuffer.Freq" },
+ { &((AudioBuffer.ReadPos)), SF_IS_BOOL(&((AudioBuffer.ReadPos))) ? 1 : sizeof((AudioBuffer.ReadPos)), 0x80000000 | (SF_IS_BOOL(&((AudioBuffer.ReadPos))) ? 0x08000000 : 0), "AudioBuffer.ReadPos" },
 
- SFARRAY(&Pending_DecodeVolume[0][0], 2 * 2),
- SFARRAY(&DecodeVolume[0][0], 2 * 2),
+ { ((&Pending_DecodeVolume[0][0])), (uint32)((2 * 2)), 0 | SF_FORCE_A8((&Pending_DecodeVolume[0][0])), "&Pending_DecodeVolume[0][0]" },
+ { ((&DecodeVolume[0][0])), (uint32)((2 * 2)), 0 | SF_FORCE_A8((&DecodeVolume[0][0])), "&DecodeVolume[0][0]" },
 
- SFARRAY16(&ADPCM_ResampBuf[0][0], sizeof(ADPCM_ResampBuf) / sizeof(ADPCM_ResampBuf[0][0])),
- SFVAR(ADPCM_ResampCurPhase),
- SFVAR(ADPCM_ResampCurPos),
-
-
-
- SFVAR(RegSelector),
- SFARRAY(ArgsBuf, 16),
- SFVAR(ArgsWP),
- SFVAR(ArgsRP),
-
- SFVAR(ArgsReceiveLatch),
- SFARRAY(ArgsReceiveBuf, 32),
- SFVAR(ArgsReceiveIn),
-
- SFARRAY(ResultsBuffer, 16),
- SFVAR(ResultsIn),
- SFVAR(ResultsWP),
- SFVAR(ResultsRP),
-
-  //
-  //
-  //
-  SFARRAY(DMABuffer->data, DMABuffer->size),
-  SFVAR(DMABuffer->read_pos),
-  SFVAR(DMABuffer->write_pos),
-  SFVAR(DMABuffer->in_count),
-  //
-  //
-  //
-
-  SFARRAY(SB, sizeof(SB) / sizeof(SB[0])),
-  SFVAR(SB_In),
-
-  SFARRAY(&SectorPipe[0][0], sizeof(SectorPipe) / sizeof(SectorPipe[0][0])),
-  SFVAR(SectorPipe_Pos),
-  SFVAR(SectorPipe_In),
- 
-  SFARRAY(SubQBuf, sizeof(SubQBuf) / sizeof(SubQBuf[0])),
-  SFARRAY(SubQBuf_Safe, sizeof(SubQBuf_Safe) / sizeof(SubQBuf_Safe[0])),
- 
-  SFVAR(SubQChecksumOK),
-
-  SFVAR(HeaderBufValid),
-  SFARRAY(HeaderBuf, sizeof(HeaderBuf) / sizeof(HeaderBuf[0])),
- 
-  SFVAR(IRQBuffer),
-  SFVAR(IRQOutTestMask),
-  SFVAR(CDCReadyReceiveCounter),
-
-  SFVAR(FilterFile),
-  SFVAR(FilterChan),
-
-  SFVAR(PendingCommand),
-  SFVAR(PendingCommandPhase),
-  SFVAR(PendingCommandCounter),
-
-  SFVAR(SPUCounter),
-
-  SFVAR(Mode),
-  SFVAR(DriveStatus),
-  SFVAR(StatusAfterSeek),
-  SFVAR(Forward),
-  SFVAR(Backward),
-  SFVAR(Muted),
-
-  SFVAR(PlayTrackMatch),
-
-  SFVAR(PSRCounter),
-
-  SFVAR(CurSector),
+ { ((&ADPCM_ResampBuf[0][0])), (uint32)(((sizeof(ADPCM_ResampBuf) / sizeof(ADPCM_ResampBuf[0][0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&ADPCM_ResampBuf[0][0])), "&ADPCM_ResampBuf[0][0]" },
+ { &((ADPCM_ResampCurPhase)), SF_IS_BOOL(&((ADPCM_ResampCurPhase))) ? 1 : sizeof((ADPCM_ResampCurPhase)), 0x80000000 | (SF_IS_BOOL(&((ADPCM_ResampCurPhase))) ? 0x08000000 : 0), "ADPCM_ResampCurPhase" },
+ { &((ADPCM_ResampCurPos)), SF_IS_BOOL(&((ADPCM_ResampCurPos))) ? 1 : sizeof((ADPCM_ResampCurPos)), 0x80000000 | (SF_IS_BOOL(&((ADPCM_ResampCurPos))) ? 0x08000000 : 0), "ADPCM_ResampCurPos" },
 
 
-  SFVAR(AsyncIRQPending),
-  SFARRAY(AsyncResultsPending, sizeof(AsyncResultsPending) / sizeof(AsyncResultsPending[0])),
-  SFVAR(AsyncResultsPendingCount),
 
-  SFVAR(SeekTarget),
+ { &((RegSelector)), SF_IS_BOOL(&((RegSelector))) ? 1 : sizeof((RegSelector)), 0x80000000 | (SF_IS_BOOL(&((RegSelector))) ? 0x08000000 : 0), "RegSelector" },
+ { ((ArgsBuf)), (uint32)((16)), 0 | SF_FORCE_A8((ArgsBuf)), "ArgsBuf" },
+ { &((ArgsWP)), SF_IS_BOOL(&((ArgsWP))) ? 1 : sizeof((ArgsWP)), 0x80000000 | (SF_IS_BOOL(&((ArgsWP))) ? 0x08000000 : 0), "ArgsWP" },
+ { &((ArgsRP)), SF_IS_BOOL(&((ArgsRP))) ? 1 : sizeof((ArgsRP)), 0x80000000 | (SF_IS_BOOL(&((ArgsRP))) ? 0x08000000 : 0), "ArgsRP" },
 
-  // FIXME: Save TOC stuff?
-#if 0
- CDUtility::TOC toc;
- bool IsPSXDisc;
- uint8 DiscID[4];
-#endif
-  SFVAR(CommandLoc),
-  SFVAR(CommandLoc_Dirty),
-  SFARRAY16(&xa_previous[0][0], sizeof(xa_previous) / sizeof(xa_previous[0][0])),
+ { &((ArgsReceiveLatch)), SF_IS_BOOL(&((ArgsReceiveLatch))) ? 1 : sizeof((ArgsReceiveLatch)), 0x80000000 | (SF_IS_BOOL(&((ArgsReceiveLatch))) ? 0x08000000 : 0), "ArgsReceiveLatch" },
+ { ((ArgsReceiveBuf)), (uint32)((32)), 0 | SF_FORCE_A8((ArgsReceiveBuf)), "ArgsReceiveBuf" },
+ { &((ArgsReceiveIn)), SF_IS_BOOL(&((ArgsReceiveIn))) ? 1 : sizeof((ArgsReceiveIn)), 0x80000000 | (SF_IS_BOOL(&((ArgsReceiveIn))) ? 0x08000000 : 0), "ArgsReceiveIn" },
 
-  SFVAR(xa_cur_set),
-  SFVAR(xa_cur_file),
-  SFVAR(xa_cur_chan),
+ { ((ResultsBuffer)), (uint32)((16)), 0 | SF_FORCE_A8((ResultsBuffer)), "ResultsBuffer" },
+ { &((ResultsIn)), SF_IS_BOOL(&((ResultsIn))) ? 1 : sizeof((ResultsIn)), 0x80000000 | (SF_IS_BOOL(&((ResultsIn))) ? 0x08000000 : 0), "ResultsIn" },
+ { &((ResultsWP)), SF_IS_BOOL(&((ResultsWP))) ? 1 : sizeof((ResultsWP)), 0x80000000 | (SF_IS_BOOL(&((ResultsWP))) ? 0x08000000 : 0), "ResultsWP" },
+ { &((ResultsRP)), SF_IS_BOOL(&((ResultsRP))) ? 1 : sizeof((ResultsRP)), 0x80000000 | (SF_IS_BOOL(&((ResultsRP))) ? 0x08000000 : 0), "ResultsRP" },
 
-  SFVAR(ReportLastF),
 
-  SFEND
+
+
+  { ((DMABuffer->data)), (uint32)((DMABuffer->size)), 0 | SF_FORCE_A8((DMABuffer->data)), "&DMABuffer.data[0]" },
+  { &((DMABuffer->read_pos)), SF_IS_BOOL(&((DMABuffer->read_pos))) ? 1 : sizeof((DMABuffer->read_pos)), 0x80000000 | (SF_IS_BOOL(&((DMABuffer->read_pos))) ? 0x08000000 : 0), "DMABuffer.read_pos" },
+  { &((DMABuffer->write_pos)), SF_IS_BOOL(&((DMABuffer->write_pos))) ? 1 : sizeof((DMABuffer->write_pos)), 0x80000000 | (SF_IS_BOOL(&((DMABuffer->write_pos))) ? 0x08000000 : 0), "DMABuffer.write_pos" },
+  { &((DMABuffer->in_count)), SF_IS_BOOL(&((DMABuffer->in_count))) ? 1 : sizeof((DMABuffer->in_count)), 0x80000000 | (SF_IS_BOOL(&((DMABuffer->in_count))) ? 0x08000000 : 0), "DMABuffer.in_count" },
+
+
+
+
+  { ((SB)), (uint32)((sizeof(SB) / sizeof(SB[0]))), 0 | SF_FORCE_A8((SB)), "SB" },
+  { &((SB_In)), SF_IS_BOOL(&((SB_In))) ? 1 : sizeof((SB_In)), 0x80000000 | (SF_IS_BOOL(&((SB_In))) ? 0x08000000 : 0), "SB_In" },
+
+  { ((&SectorPipe[0][0])), (uint32)((sizeof(SectorPipe) / sizeof(SectorPipe[0][0]))), 0 | SF_FORCE_A8((&SectorPipe[0][0])), "&SectorPipe[0][0]" },
+  { &((SectorPipe_Pos)), SF_IS_BOOL(&((SectorPipe_Pos))) ? 1 : sizeof((SectorPipe_Pos)), 0x80000000 | (SF_IS_BOOL(&((SectorPipe_Pos))) ? 0x08000000 : 0), "SectorPipe_Pos" },
+  { &((SectorPipe_In)), SF_IS_BOOL(&((SectorPipe_In))) ? 1 : sizeof((SectorPipe_In)), 0x80000000 | (SF_IS_BOOL(&((SectorPipe_In))) ? 0x08000000 : 0), "SectorPipe_In" },
+
+  { ((SubQBuf)), (uint32)((sizeof(SubQBuf) / sizeof(SubQBuf[0]))), 0 | SF_FORCE_A8((SubQBuf)), "SubQBuf" },
+  { ((SubQBuf_Safe)), (uint32)((sizeof(SubQBuf_Safe) / sizeof(SubQBuf_Safe[0]))), 0 | SF_FORCE_A8((SubQBuf_Safe)), "SubQBuf_Safe" },
+
+  { &((SubQChecksumOK)), SF_IS_BOOL(&((SubQChecksumOK))) ? 1 : sizeof((SubQChecksumOK)), 0x80000000 | (SF_IS_BOOL(&((SubQChecksumOK))) ? 0x08000000 : 0), "SubQChecksumOK" },
+
+  { &((HeaderBufValid)), SF_IS_BOOL(&((HeaderBufValid))) ? 1 : sizeof((HeaderBufValid)), 0x80000000 | (SF_IS_BOOL(&((HeaderBufValid))) ? 0x08000000 : 0), "HeaderBufValid" },
+  { ((HeaderBuf)), (uint32)((sizeof(HeaderBuf) / sizeof(HeaderBuf[0]))), 0 | SF_FORCE_A8((HeaderBuf)), "HeaderBuf" },
+
+  { &((IRQBuffer)), SF_IS_BOOL(&((IRQBuffer))) ? 1 : sizeof((IRQBuffer)), 0x80000000 | (SF_IS_BOOL(&((IRQBuffer))) ? 0x08000000 : 0), "IRQBuffer" },
+  { &((IRQOutTestMask)), SF_IS_BOOL(&((IRQOutTestMask))) ? 1 : sizeof((IRQOutTestMask)), 0x80000000 | (SF_IS_BOOL(&((IRQOutTestMask))) ? 0x08000000 : 0), "IRQOutTestMask" },
+  { &((CDCReadyReceiveCounter)), SF_IS_BOOL(&((CDCReadyReceiveCounter))) ? 1 : sizeof((CDCReadyReceiveCounter)), 0x80000000 | (SF_IS_BOOL(&((CDCReadyReceiveCounter))) ? 0x08000000 : 0), "CDCReadyReceiveCounter" },
+
+  { &((FilterFile)), SF_IS_BOOL(&((FilterFile))) ? 1 : sizeof((FilterFile)), 0x80000000 | (SF_IS_BOOL(&((FilterFile))) ? 0x08000000 : 0), "FilterFile" },
+  { &((FilterChan)), SF_IS_BOOL(&((FilterChan))) ? 1 : sizeof((FilterChan)), 0x80000000 | (SF_IS_BOOL(&((FilterChan))) ? 0x08000000 : 0), "FilterChan" },
+
+  { &((PendingCommand)), SF_IS_BOOL(&((PendingCommand))) ? 1 : sizeof((PendingCommand)), 0x80000000 | (SF_IS_BOOL(&((PendingCommand))) ? 0x08000000 : 0), "PendingCommand" },
+  { &((PendingCommandPhase)), SF_IS_BOOL(&((PendingCommandPhase))) ? 1 : sizeof((PendingCommandPhase)), 0x80000000 | (SF_IS_BOOL(&((PendingCommandPhase))) ? 0x08000000 : 0), "PendingCommandPhase" },
+  { &((PendingCommandCounter)), SF_IS_BOOL(&((PendingCommandCounter))) ? 1 : sizeof((PendingCommandCounter)), 0x80000000 | (SF_IS_BOOL(&((PendingCommandCounter))) ? 0x08000000 : 0), "PendingCommandCounter" },
+
+  { &((SPUCounter)), SF_IS_BOOL(&((SPUCounter))) ? 1 : sizeof((SPUCounter)), 0x80000000 | (SF_IS_BOOL(&((SPUCounter))) ? 0x08000000 : 0), "SPUCounter" },
+
+  { &((Mode)), SF_IS_BOOL(&((Mode))) ? 1 : sizeof((Mode)), 0x80000000 | (SF_IS_BOOL(&((Mode))) ? 0x08000000 : 0), "Mode" },
+  { &((DriveStatus)), SF_IS_BOOL(&((DriveStatus))) ? 1 : sizeof((DriveStatus)), 0x80000000 | (SF_IS_BOOL(&((DriveStatus))) ? 0x08000000 : 0), "DriveStatus" },
+  { &((StatusAfterSeek)), SF_IS_BOOL(&((StatusAfterSeek))) ? 1 : sizeof((StatusAfterSeek)), 0x80000000 | (SF_IS_BOOL(&((StatusAfterSeek))) ? 0x08000000 : 0), "StatusAfterSeek" },
+  { &((Forward)), SF_IS_BOOL(&((Forward))) ? 1 : sizeof((Forward)), 0x80000000 | (SF_IS_BOOL(&((Forward))) ? 0x08000000 : 0), "Forward" },
+  { &((Backward)), SF_IS_BOOL(&((Backward))) ? 1 : sizeof((Backward)), 0x80000000 | (SF_IS_BOOL(&((Backward))) ? 0x08000000 : 0), "Backward" },
+  { &((Muted)), SF_IS_BOOL(&((Muted))) ? 1 : sizeof((Muted)), 0x80000000 | (SF_IS_BOOL(&((Muted))) ? 0x08000000 : 0), "Muted" },
+
+  { &((PlayTrackMatch)), SF_IS_BOOL(&((PlayTrackMatch))) ? 1 : sizeof((PlayTrackMatch)), 0x80000000 | (SF_IS_BOOL(&((PlayTrackMatch))) ? 0x08000000 : 0), "PlayTrackMatch" },
+
+  { &((PSRCounter)), SF_IS_BOOL(&((PSRCounter))) ? 1 : sizeof((PSRCounter)), 0x80000000 | (SF_IS_BOOL(&((PSRCounter))) ? 0x08000000 : 0), "PSRCounter" },
+
+  { &((CurSector)), SF_IS_BOOL(&((CurSector))) ? 1 : sizeof((CurSector)), 0x80000000 | (SF_IS_BOOL(&((CurSector))) ? 0x08000000 : 0), "CurSector" },
+
+
+  { &((AsyncIRQPending)), SF_IS_BOOL(&((AsyncIRQPending))) ? 1 : sizeof((AsyncIRQPending)), 0x80000000 | (SF_IS_BOOL(&((AsyncIRQPending))) ? 0x08000000 : 0), "AsyncIRQPending" },
+  { ((AsyncResultsPending)), (uint32)((sizeof(AsyncResultsPending) / sizeof(AsyncResultsPending[0]))), 0 | SF_FORCE_A8((AsyncResultsPending)), "AsyncResultsPending" },
+  { &((AsyncResultsPendingCount)), SF_IS_BOOL(&((AsyncResultsPendingCount))) ? 1 : sizeof((AsyncResultsPendingCount)), 0x80000000 | (SF_IS_BOOL(&((AsyncResultsPendingCount))) ? 0x08000000 : 0), "AsyncResultsPendingCount" },
+
+  { &((SeekTarget)), SF_IS_BOOL(&((SeekTarget))) ? 1 : sizeof((SeekTarget)), 0x80000000 | (SF_IS_BOOL(&((SeekTarget))) ? 0x08000000 : 0), "SeekTarget" },
+
+
+
+
+
+
+
+  { &((CommandLoc)), SF_IS_BOOL(&((CommandLoc))) ? 1 : sizeof((CommandLoc)), 0x80000000 | (SF_IS_BOOL(&((CommandLoc))) ? 0x08000000 : 0), "CommandLoc" },
+  { &((CommandLoc_Dirty)), SF_IS_BOOL(&((CommandLoc_Dirty))) ? 1 : sizeof((CommandLoc_Dirty)), 0x80000000 | (SF_IS_BOOL(&((CommandLoc_Dirty))) ? 0x08000000 : 0), "CommandLoc_Dirty" },
+  { ((&xa_previous[0][0])), (uint32)(((sizeof(xa_previous) / sizeof(xa_previous[0][0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&xa_previous[0][0])), "&xa_previous[0][0]" },
+
+  { &((xa_cur_set)), SF_IS_BOOL(&((xa_cur_set))) ? 1 : sizeof((xa_cur_set)), 0x80000000 | (SF_IS_BOOL(&((xa_cur_set))) ? 0x08000000 : 0), "xa_cur_set" },
+  { &((xa_cur_file)), SF_IS_BOOL(&((xa_cur_file))) ? 1 : sizeof((xa_cur_file)), 0x80000000 | (SF_IS_BOOL(&((xa_cur_file))) ? 0x08000000 : 0), "xa_cur_file" },
+  { &((xa_cur_chan)), SF_IS_BOOL(&((xa_cur_chan))) ? 1 : sizeof((xa_cur_chan)), 0x80000000 | (SF_IS_BOOL(&((xa_cur_chan))) ? 0x08000000 : 0), "xa_cur_chan" },
+
+  { &((ReportLastF)), SF_IS_BOOL(&((ReportLastF))) ? 1 : sizeof((ReportLastF)), 0x80000000 | (SF_IS_BOOL(&((ReportLastF))) ? 0x08000000 : 0), "ReportLastF" },
+
+  { 0, 0, 0, 0 }
  };
 
  int ret = MDFNSS_StateAction(sm, load, StateRegs, "CDC");
