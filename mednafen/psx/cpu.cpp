@@ -224,27 +224,6 @@ static const uint32_t addr_mask[8] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFF
 				     0x7FFFFFFF, 0x1FFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 
 template<typename T>
-INLINE T PS_CPU::PeekMemory(uint32_t address)
-{
-   T ret;
-   address &= addr_mask[address >> 29];
-
-   if(address >= 0x1F800000 && address <= 0x1F8003FF)
-      return ScratchRAM.Read<T>(address & 0x3FF);
-
-   //assert(!(CP0.SR & 0x10000));
-
-   if(sizeof(T) == 1)
-      ret = PSX_MemPeek8(address);
-   else if(sizeof(T) == 2)
-      ret = PSX_MemPeek16(address);
-   else
-      ret = PSX_MemPeek32(address);
-
-   return(ret);
-}
-
-template<typename T>
 INLINE T PS_CPU::ReadMemory(pscpu_timestamp_t &timestamp, uint32_t address, bool DS24, bool LWC_timing)
 {
    T ret;
@@ -738,19 +717,34 @@ bool PS_CPU::PeekCheckICache(uint32_t PC, uint32_t *iw)
 }
 
 
-uint8_t PS_CPU::PeekMem8(uint32_t A)
+uint8_t PS_CPU::PeekMem8(uint32_t address)
 {
- return PeekMemory<uint8>(A);
+   address &= addr_mask[address >> 29];
+
+   if(address >= 0x1F800000 && address <= 0x1F8003FF)
+      return ScratchRAM.Read<uint8>(address & 0x3FF);
+
+   return PSX_MemPeek8(address);
 }
 
-uint16_t PS_CPU::PeekMem16(uint32_t A)
+uint16_t PS_CPU::PeekMem16(uint32_t address)
 {
- return PeekMemory<uint16>(A);
+   address &= addr_mask[address >> 29];
+
+   if(address >= 0x1F800000 && address <= 0x1F8003FF)
+      return ScratchRAM.Read<uint16>(address & 0x3FF);
+
+   return PSX_MemPeek16(address);
 }
 
-uint32_t PS_CPU::PeekMem32(uint32_t A)
+uint32_t PS_CPU::PeekMem32(uint32_t address)
 {
- return PeekMemory<uint32>(A);
+   address &= addr_mask[address >> 29];
+
+   if(address >= 0x1F800000 && address <= 0x1F8003FF)
+      return ScratchRAM.Read<uint32>(address & 0x3FF);
+
+   return PSX_MemPeek32(address);
 }
 
 
