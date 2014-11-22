@@ -48,11 +48,11 @@ CDROM_SOURCES += $(MEDNAFEN_DIR)/cdrom/CDAccess.cpp \
 	$(MEDNAFEN_DIR)/cdrom/CDUtility.cpp \
 	$(MEDNAFEN_DIR)/cdrom/lec.cpp \
 	$(MEDNAFEN_DIR)/cdrom/audioreader.cpp \
-	$(MEDNAFEN_DIR)/cdrom/recover-raw.cpp \
-	$(MEDNAFEN_DIR)/cdrom/crc32.cpp \
 	$(MEDNAFEN_DIR)/cdrom/cdromif.cpp
 CDROM_SOURCES_C := $(MEDNAFEN_DIR)/cdrom/galois.c \
-	$(MEDNAFEN_DIR)/cdrom/l-ec.c
+	$(MEDNAFEN_DIR)/cdrom/l-ec.c \
+	$(MEDNAFEN_DIR)/cdrom/recover-raw.c \
+	$(MEDNAFEN_DIR)/cdrom/mednafen_crc32.c
 endif
    FLAGS += -DNEED_CD
 endif

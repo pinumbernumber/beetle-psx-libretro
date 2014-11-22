@@ -29,7 +29,7 @@ bool Init_LEC_Correct(void)
    gt = CreateGaloisTables(0x11d);
    rt = CreateReedSolomonTables(gt, 0, 1, 10);
 
-   return(1);
+   return 1;
 }
 
 void Kill_LEC_Correct(void)
@@ -63,10 +63,10 @@ int CheckEDC(const unsigned char *cd_frame, bool xa_mode)
       real_crc = EDCCrc32(cd_frame, 2064);
 
    if(expected_crc == real_crc)
-      return(1);
+      return 1;
 
    //printf("Bad EDC CRC:  Calculated:  %08x,  Recorded:  %08x\n", real_crc, expected_crc);
-   return(0);
+   return 0;
 }
 
 /***
