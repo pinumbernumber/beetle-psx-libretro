@@ -216,8 +216,8 @@ int MDEC_StateAction(StateMem *sm, int load, int data_only)
 
  if(load)
  {
-  InFIFO.SaveStatePostLoad();
-  OutFIFO.SaveStatePostLoad();
+  SimpleFIFO_SaveStatePostLoad(InFIFO);
+  SimpleFIFO_SaveStatePostLoad(OutFIFO);
  }
 
  return(ret);

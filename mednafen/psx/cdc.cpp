@@ -329,7 +329,7 @@ int PS_CDC::StateAction(StateMem *sm, int load, int data_only)
 
  if(load)
  {
-    DMABuffer.SaveStatePostLoad();
+    SimpleFIFO_SaveStatePostLoad(DMABuffer);
     SectorPipe_Pos %= SectorPipe_Count;
  }
  return(ret);

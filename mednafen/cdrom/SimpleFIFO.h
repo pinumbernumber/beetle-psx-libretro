@@ -32,6 +32,11 @@
   (fifo).write_pos = 0; \
   (fifo).in_count = 0
 
+#define SimpleFIFO_SaveStatePostLoad(fifo) \
+    (fifo).read_pos %= (fifo).size; \
+    (fifo).write_pos %= (fifo).size; \
+    (fifo).in_count %= ((fifo).size + 1)
+
 template<typename T>
 class SimpleFIFO
 {
@@ -57,12 +62,6 @@ class SimpleFIFO
        free(data);
  }
 
- INLINE void SaveStatePostLoad(void)
- {
-    read_pos %= size;
-    write_pos %= size;
-    in_count %= (size + 1);
- }
 
 
  INLINE T ReadUnit()

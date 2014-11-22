@@ -1562,7 +1562,7 @@ int PS_GPU::StateAction(StateMem *sm, int load, int data_only)
    if(load)
    {
       RecalcTexWindowLUT();
-      BlitterFIFO.SaveStatePostLoad();
+      SimpleFIFO_SaveStatePostLoad(BlitterFIFO);
 
       HorizStart &= 0xFFF;
       HorizEnd &= 0xFFF;
