@@ -49,14 +49,8 @@ class SPU_Sweep
 
  void Power(void);
 
- void WriteControl(uint16_t value);
- int16 ReadVolume(void);
-
- void WriteVolume(int16 value);
-
  void Clock(void);
 
- private:
  uint16_t Control;
  uint16_t Current;
  uint32_t Divider;
@@ -121,8 +115,6 @@ class PS_SPU
  void RunDecoder(SPU_Voice *voice);
 
  void CacheEnvelope(SPU_Voice *voice);
- void ResetEnvelope(SPU_Voice *voice);
- void ReleaseEnvelope(SPU_Voice *voice);
  void RunEnvelope(SPU_Voice *voice);
 
 
@@ -226,8 +218,6 @@ class PS_SPU
  int32_t ReverbCur;
 
  int32_t Get_Reverb_Offset(int32_t offset);
- int32_t RD_RVB(int16 raw_offs);
- void WR_RVB(int16 raw_offs, int32_t sample, int32_t extra_offs = 0);
 
  //nt32_t lastts;
  int32_t clock_divider;

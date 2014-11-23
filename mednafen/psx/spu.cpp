@@ -242,16 +242,6 @@ INLINE void SPU_Sweep::Power(void)
  Divider = 0;
 }
 
-INLINE void SPU_Sweep::WriteControl(uint16 value)
-{
- Control = value;
-}
-
-INLINE int16 SPU_Sweep::ReadVolume(void)
-{
- return((int16)Current);
-}
-
 void SPU_Sweep::Clock(void)
 {
  if(!(Control & 0x8000))
@@ -262,14 +252,13 @@ void SPU_Sweep::Clock(void)
 
  if(Control & 0x8000) 	// Sweep enabled
  {
+  int increment, divinco;
   const bool log_mode = (bool)(Control & 0x4000);
   const bool dec_mode = (bool)(Control & 0x2000);
   const bool inv_mode = (bool)(Control & 0x1000);
   const bool inv_increment = (dec_mode ^ inv_mode) | (dec_mode & log_mode);
   const uint16 vc_cv_xor = (inv_mode & !(dec_mode & log_mode)) ? 0xFFFF : 0x0000;
   const uint16 TestInvert = inv_mode ? 0xFFFF : 0x0000;
-  int increment;
-  int divinco;
 
   CalcVCDelta(0x7F, Control & 0x7F, log_mode, dec_mode, inv_increment, (int16)(Current ^ vc_cv_xor), increment, divinco);
   //printf("%d %d\n", divinco, increment);
@@ -303,12 +292,6 @@ void SPU_Sweep::Clock(void)
   }
  }
 }
-
-INLINE void SPU_Sweep::WriteVolume(int16 value)
-{
- Current = value;
-}
-
 
 //
 // Take care not to trigger SPU IRQ for the next block before its decoding start.
@@ -385,9 +368,8 @@ void PS_SPU::RunDecoder(SPU_Voice *voice)
    if(voice->DecodeFlags & 0x4)
    {
     if(!voice->IgnoreSampLA)
-    {
      voice->LoopAddr = voice->CurAddr;
-    }
+#if 0
     else
     {
      if(voice->LoopAddr != voice->CurAddr)
@@ -395,6 +377,7 @@ void PS_SPU::RunDecoder(SPU_Voice *voice)
       PSX_DBG(PSX_DBG_FLOOD, "[SPU] Ignore: LoopAddr=0x%08x, SampLA=0x%08x\n", voice->LoopAddr, voice->CurAddr);
      }
     }
+#endif
    }
    voice->CurAddr = (voice->CurAddr + 1) & 0x3FFFF;
   }
@@ -436,14 +419,13 @@ void PS_SPU::CacheEnvelope(SPU_Voice *voice)
 {
  uint32 raw = voice->ADSRControl;
  SPU_ADSR *ADSR = &voice->ADSR;
- int32 Sl, Dr, Ar, Rr, Sr;
 
- Sl = (raw >> 0) & 0x0F;
- Dr = (raw >> 4) & 0x0F;
- Ar = (raw >> 8) & 0x7F;
+ int32 Sl = (raw >> 0) & 0x0F;
+ int32 Dr = (raw >> 4) & 0x0F;
+ int32 Ar = (raw >> 8) & 0x7F;
 
- Rr = (raw >> 16) & 0x1F;
- Sr = (raw >> 22) & 0x7F;
+ int32 Rr = (raw >> 16) & 0x1F;
+ int32 Sr = (raw >> 22) & 0x7F;
 
 
  ADSR->AttackExp = (bool)(raw & (1 << 15));
@@ -459,22 +441,14 @@ void PS_SPU::CacheEnvelope(SPU_Voice *voice)
  ADSR->SustainLevel = (Sl + 1) << 11;
 }
 
-void PS_SPU::ResetEnvelope(SPU_Voice *voice)
-{
- SPU_ADSR *ADSR = &voice->ADSR;
+#define ResetEnvelope(voice) \
+ voice->ADSR.EnvLevel = 0; \
+ voice->ADSR.Divider = 0; \
+ voice->ADSR.Phase = ADSR_ATTACK
 
- ADSR->EnvLevel = 0;
- ADSR->Divider = 0;
- ADSR->Phase = ADSR_ATTACK;
-}
-
-void PS_SPU::ReleaseEnvelope(SPU_Voice *voice)
-{
- SPU_ADSR *ADSR = &voice->ADSR;
-
- ADSR->Divider = 0;
- ADSR->Phase = ADSR_RELEASE;
-}
+#define ReleaseEnvelope(voice) \
+ voice->ADSR.Divider = 0; \
+ voice->ADSR.Phase = ADSR_RELEASE
 
 
 void PS_SPU::RunEnvelope(SPU_Voice *voice)
@@ -570,7 +544,7 @@ static INLINE int16_t ReverbSat(int32_t samp)
    return(samp);
 }
 
-INLINE int32_t PS_SPU::Get_Reverb_Offset(int32_t in_offset)
+int32_t PS_SPU::Get_Reverb_Offset(int32_t in_offset)
 {
    int32_t offset = in_offset & 0x3FFFF;
    int32_t wa_size = 0x40000 - ReverbWA;
@@ -604,19 +578,9 @@ INLINE int32_t PS_SPU::Get_Reverb_Offset(int32_t in_offset)
    return(offset);
 }
 
-int32_t PS_SPU::RD_RVB(int16_t raw_offs)
-{
- //raw_offs = rand() & 0xFFFF;
+#define RD_RVB(raw_offs) ((int16)SPURAM[Get_Reverb_Offset((raw_offs) << 2)])
 
- return((int16)SPURAM[Get_Reverb_Offset(raw_offs << 2)]);
-}
-
-void PS_SPU::WR_RVB(int16_t raw_offs, int32_t sample, int32_t extra_offs)
-{
- //raw_offs = rand() & 0xFFFF;
-
- SPURAM[Get_Reverb_Offset((raw_offs << 2) + extra_offs)] = ReverbSat(sample);
-}
+#define WR_RVB(raw_offs, sample, extra_offs) SPURAM[Get_Reverb_Offset(((raw_offs) << 2) + (extra_offs))] = ReverbSat((sample))
 
 static INLINE int32_t Reverb4422(const int16_t *src)
 {
@@ -748,11 +712,11 @@ void PS_SPU::RunReverb(int32_t in_l, int32_t in_r, int32_t &out_l, int32_t &out_
   FB_B0 = RD_RVB(MIX_DEST_B0 - FB_SRC_B);
   FB_B1 = RD_RVB(MIX_DEST_B1 - FB_SRC_B);
 
-  WR_RVB(MIX_DEST_A0, ACC0 - ((FB_A0 * FB_ALPHA) >> 15));
-  WR_RVB(MIX_DEST_A1, ACC1 - ((FB_A1 * FB_ALPHA) >> 15));
+  WR_RVB(MIX_DEST_A0, ACC0 - ((FB_A0 * FB_ALPHA) >> 15), 0);
+  WR_RVB(MIX_DEST_A1, ACC1 - ((FB_A1 * FB_ALPHA) >> 15), 0);
 
-  WR_RVB(MIX_DEST_B0, (((int64)FB_ALPHA * ACC0) >> 15) - ((FB_A0 * (int16)(0x8000 ^ FB_ALPHA)) >> 15) - ((FB_B0 * FB_X) >> 15));
-  WR_RVB(MIX_DEST_B1, (((int64)FB_ALPHA * ACC1) >> 15) - ((FB_A1 * (int16)(0x8000 ^ FB_ALPHA)) >> 15) - ((FB_B1 * FB_X) >> 15));
+  WR_RVB(MIX_DEST_B0, (((int64)FB_ALPHA * ACC0) >> 15) - ((FB_A0 * (int16)(0x8000 ^ FB_ALPHA)) >> 15) - ((FB_B0 * FB_X) >> 15), 0);
+  WR_RVB(MIX_DEST_B1, (((int64)FB_ALPHA * ACC1) >> 15) - ((FB_A1 * (int16)(0x8000 ^ FB_ALPHA)) >> 15) - ((FB_B1 * FB_X) >> 15), 0);
  }
 
   // 
@@ -922,8 +886,8 @@ int32 PS_SPU::UpdateFromCDC(int32 clocks)
    }
 
 
-   l = (voice_pvs * voice->Sweep[0].ReadVolume()) >> 15;
-   r = (voice_pvs * voice->Sweep[1].ReadVolume()) >> 15;
+   l = (voice_pvs * (int16)voice->Sweep[0].Current) >> 15;
+   r = (voice_pvs * (int16)voice->Sweep[1].Current) >> 15;
 
    accum_l += l;
    accum_r += r;
@@ -1071,8 +1035,8 @@ int32 PS_SPU::UpdateFromCDC(int32 clocks)
   //MDFN_DispMessage("%d %d\n", MainVol[0], MainVol[1], ReverbVol[0], ReverbVol[1]);
 
   // FIXME: Dry volume versus everything else
-  output_l = (((accum_l * GlobalSweep[0].ReadVolume()) >> 16) + ((reverb_l * ReverbVol[0]) >> 15));
-  output_r = (((accum_r * GlobalSweep[1].ReadVolume()) >> 16) + ((reverb_r * ReverbVol[1]) >> 15));
+  output_l = (((accum_l * (int16)GlobalSweep[0].Current) >> 16) + ((reverb_l * ReverbVol[0]) >> 15));
+  output_r = (((accum_r * (int16)GlobalSweep[1].Current) >> 16) + ((reverb_r * ReverbVol[1]) >> 15));
 
   //output_l = reverb_l;
   //output_r = reverb_r;
@@ -1149,7 +1113,7 @@ void PS_SPU::Write(int32_t timestamp, uint32 A, uint16 V)
   if(A < 0x260)
   {
    SPU_Voice *voice = &Voices[(A - 0x200) >> 2];
-   voice->Sweep[(A & 2) >> 1].WriteVolume(V);
+   voice->Sweep[(A & 2) >> 1].Current = V;
   }
   else if(A < 0x280)
    AuxRegs[(A & 0x1F) >> 1] = V;
@@ -1165,7 +1129,7 @@ void PS_SPU::Write(int32_t timestamp, uint32 A, uint16 V)
   {
    case 0x00:
    case 0x02:
-	     voice->Sweep[(A & 2) >> 1].WriteControl(V);
+	     voice->Sweep[(A & 2) >> 1].Control = V;
 	     break;
 
    case 0x04: voice->Pitch = V;
@@ -1201,7 +1165,8 @@ void PS_SPU::Write(int32_t timestamp, uint32 A, uint16 V)
   switch(A & 0x7F)
   {
    case 0x00:
-   case 0x02: GlobalSweep[(A & 2) >> 1].WriteControl(V);
+   case 0x02:
+      GlobalSweep[(A & 2) >> 1].Control = V;
 	      break;
 
    case 0x04: ReverbVol[0] = (int16)V;
@@ -1310,7 +1275,7 @@ void PS_SPU::Write(int32_t timestamp, uint32 A, uint16 V)
 	      break;
 
    case 0x38:
-   case 0x3A: GlobalSweep[(A & 2) >> 1].WriteVolume(V);
+   case 0x3A: GlobalSweep[(A & 2) >> 1].Current = V;
 	      break;
   }
  }
@@ -1330,9 +1295,9 @@ uint16 PS_SPU::Read(int32_t timestamp, uint32 A)
   {
    SPU_Voice *voice = &Voices[(A - 0x200) >> 2];
 
-   //printf("Read: %08x %04x\n", A, voice->Sweep[(A & 2) >> 1].ReadVolume());
+   //printf("Read: %08x %04x\n", A, (int16)voice->Sweep[(A & 2) >> 1].Current);
 
-   return voice->Sweep[(A & 2) >> 1].ReadVolume();
+   return voice->Sweep[(A & 2) >> 1].Current;
   }
   else if(A < 0x280)
    return(AuxRegs[(A & 0x1F) >> 1]);
@@ -1381,7 +1346,8 @@ uint16 PS_SPU::Read(int32_t timestamp, uint32 A)
 	return(0);
 
    case 0x38:
-   case 0x3A: return(GlobalSweep[(A & 2) >> 1].ReadVolume());
+   case 0x3A:
+   return((int16)GlobalSweep[(A & 2) >> 1].Current);
   }
  }
 
@@ -1571,11 +1537,11 @@ uint32 PS_SPU::GetRegister(unsigned int which, char *special, const uint32 speci
 	break;
 
    case GSREG_V0_VOL_L:
-	ret = Voices[v].Sweep[0].ReadVolume() & 0xFFFF;
+	ret = (int16)Voices[v].Sweep[0].Current & 0xFFFF;
 	break;
 
    case GSREG_V0_VOL_R:
-	ret = Voices[v].Sweep[1].ReadVolume() & 0xFFFF;
+	ret = (int16)Voices[v].Sweep[1].Current & 0xFFFF;
 	break;
 
    case GSREG_V0_PITCH:
@@ -1640,11 +1606,11 @@ uint32 PS_SPU::GetRegister(unsigned int which, char *special, const uint32 speci
 	break;
 
   case GSREG_DRYVOL_L:
-	ret = GlobalSweep[0].ReadVolume() & 0xFFFF;
+	ret = (int16)GlobalSweep[0].Current & 0xFFFF;
 	break;
 
   case GSREG_DRYVOL_R:
-	ret = GlobalSweep[1].ReadVolume() & 0xFFFF;
+	ret = (int16)GlobalSweep[1].Current & 0xFFFF;
 	break;
 
   case GSREG_WETVOL_L:
@@ -1715,22 +1681,22 @@ void PS_SPU::SetRegister(unsigned int which, uint32 value)
 
   case GSREG_DRYVOL_CTRL_L:
 	Regs[0xC0] = value;
-	GlobalSweep[0].WriteControl(value);
+	GlobalSweep[0].Control = value;
 	//GlobalSweep[0].Control = value;
 	break;
 
   case GSREG_DRYVOL_CTRL_R:
 	Regs[0xC1] = value;
-	GlobalSweep[1].WriteControl(value);
+	GlobalSweep[1].Control = value;
 	//GlobalSweep[1].Control = value;
 	break;
 
   case GSREG_DRYVOL_L:
-	GlobalSweep[0].WriteVolume(value);
+	GlobalSweep[0].Current = value;
 	break;
 
   case GSREG_DRYVOL_R:
-	GlobalSweep[1].WriteVolume(value);
+	GlobalSweep[1].Current = value;
 	break;
 
   case GSREG_WETVOL_L:
