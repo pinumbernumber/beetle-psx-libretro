@@ -247,36 +247,36 @@ int InputDevice_DualShock::StateAction(StateMem* sm, int load, int data_only, co
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(cur_ana_button_state),
-  SFVAR(prev_ana_button_state),
-  SFVAR(combo_anatoggle_counter),
+  { &((cur_ana_button_state)), 1, 0x80000000 | 0x08000000, "cur_ana_button_state" },
+  { &((prev_ana_button_state)), 1, 0x80000000 | 0x08000000, "prev_ana_button_state" },
+  { &((combo_anatoggle_counter)), sizeof((combo_anatoggle_counter)), 0x80000000 | 0, "combo_anatoggle_counter" },
 
-  SFVAR(da_rumble_compat),
+  { &((da_rumble_compat)), 1, 0x80000000 | 0x08000000, "da_rumble_compat" },
 
-  SFVAR(analog_mode),
-  SFVAR(analog_mode_locked),
+  { &((analog_mode)), 1, 0x80000000 | 0x08000000, "analog_mode" },
+  { &((analog_mode_locked)), 1, 0x80000000 | 0x08000000, "analog_mode_locked" },
 
-  SFVAR(mad_munchkins),
-  SFARRAY(rumble_magic, sizeof(rumble_magic)),
+  { &((mad_munchkins)), 1, 0x80000000 | 0x08000000, "mad_munchkins" },
+  { ((rumble_magic)), (uint32)((sizeof(rumble_magic))), 0 | SF_FORCE_A8((rumble_magic)), "rumble_magic" },
 
-  SFARRAY(rumble_param, sizeof(rumble_param)),
+  { ((rumble_param)), (uint32)((sizeof(rumble_param))), 0 | SF_FORCE_A8((rumble_param)), "rumble_param" },
 
-  SFVAR(dtr),
+  { &((dtr)), 1, 0x80000000 | 0x08000000, "dtr" },
 
-  SFARRAY(buttons, sizeof(buttons)),
-  SFARRAY(&axes[0][0], sizeof(axes)),
+  { ((buttons)), (uint32)((sizeof(buttons))), 0 | SF_FORCE_A8((buttons)), "buttons" },
+  { ((&axes[0][0])), (uint32)((sizeof(axes))), 0 | SF_FORCE_A8((&axes[0][0])), "&axes[0][0]" },
 
-  SFVAR(command_phase),
-  SFVAR(bitpos),
-  SFVAR(receive_buffer),
+  { &((command_phase)), sizeof((command_phase)), 0x80000000 | 0, "command_phase" },
+  { &((bitpos)), sizeof((bitpos)), 0x80000000 | 0, "bitpos" },
+  { &((receive_buffer)), sizeof((receive_buffer)), 0x80000000 | 0, "receive_buffer" },
 
-  SFVAR(command),
+  { &((command)), sizeof((command)), 0x80000000 | 0, "command" },
 
-  SFARRAY(transmit_buffer, sizeof(transmit_buffer)),
-  SFVAR(transmit_pos),
-  SFVAR(transmit_count),
+  { ((transmit_buffer)), (uint32)((sizeof(transmit_buffer))), 0 | SF_FORCE_A8((transmit_buffer)), "transmit_buffer" },
+  { &((transmit_pos)), sizeof((transmit_pos)), 0x80000000 | 0, "transmit_pos" },
+  { &((transmit_count)), sizeof((transmit_count)), 0x80000000 | 0, "transmit_count" },
 
-  SFEND
+  { 0, 0, 0, 0 }
  };
  int ret = MDFNSS_StateAction(sm, load, StateRegs, section_name);
 
