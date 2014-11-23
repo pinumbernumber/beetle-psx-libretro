@@ -264,7 +264,7 @@ static const uint32_t addr_mask[8] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFF
 				     0x7FFFFFFF, 0x1FFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 
 template<typename T>
-INLINE T PS_CPU::ReadMemory(pscpu_timestamp_t &timestamp, uint32_t address, bool DS24, bool LWC_timing)
+INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, bool LWC_timing)
 {
    T ret;
 
@@ -291,7 +291,7 @@ INLINE T PS_CPU::ReadMemory(pscpu_timestamp_t &timestamp, uint32_t address, bool
 
    //assert(!(CP0.SR & 0x10000));
 
-   pscpu_timestamp_t lts = timestamp;
+   int32_t lts = timestamp;
 
    if(sizeof(T) == 1)
       ret = PSX_MemRead8(lts, address);
@@ -317,7 +317,7 @@ INLINE T PS_CPU::ReadMemory(pscpu_timestamp_t &timestamp, uint32_t address, bool
 }
 
 template<typename T>
-INLINE void PS_CPU::WriteMemory(pscpu_timestamp_t &timestamp, uint32_t address, uint32_t value, bool DS24)
+INLINE void PS_CPU::WriteMemory(int32_t &timestamp, uint32_t address, uint32_t value, bool DS24)
 {
    if(MDFN_LIKELY(!(CP0.SR & 0x10000)))
    {
@@ -450,9 +450,9 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32_t NPM)
 #define GPR_DEPRES_END ReadAbsorb[0] = back; }
 
 template<bool DebugMode, bool ILHMode>
-pscpu_timestamp_t PS_CPU::RunReal(pscpu_timestamp_t timestamp_in)
+int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
-   register pscpu_timestamp_t timestamp = timestamp_in;
+   register int32_t timestamp = timestamp_in;
 
    register uint32_t PC;
    register uint32_t new_PC;
@@ -649,7 +649,7 @@ SkipNPCStuff:	;
    return(timestamp);
 }
 
-pscpu_timestamp_t PS_CPU::Run(pscpu_timestamp_t timestamp_in, const bool ILHMode)
+int32_t PS_CPU::Run(int32_t timestamp_in, const bool ILHMode)
 {
 #ifdef HAVE_DEBUG
    if(CPUHook || ADDBT)
@@ -658,7 +658,7 @@ pscpu_timestamp_t PS_CPU::Run(pscpu_timestamp_t timestamp_in, const bool ILHMode
    return(RunReal<false, false>(timestamp_in));
 }
 
-void PS_CPU::SetCPUHook(void (*cpuh)(const pscpu_timestamp_t timestamp, uint32_t pc), void (*addbt)(uint32_t from, uint32_t to, bool exception))
+void PS_CPU::SetCPUHook(void (*cpuh)(const int32_t timestamp, uint32_t pc), void (*addbt)(uint32_t from, uint32_t to, bool exception))
 {
    ADDBT = addbt;
    CPUHook = cpuh;

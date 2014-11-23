@@ -107,14 +107,14 @@ class PS_SPU
  int StateAction(StateMem *sm, int load, int data_only);
 
  void Power(void);
- void Write(pscpu_timestamp_t timestamp, uint32_t A, uint16_t V);
- uint16_t Read(pscpu_timestamp_t timestamp, uint32_t A);
+ void Write(int32_t timestamp, uint32_t A, uint16_t V);
+ uint16_t Read(int32_t timestamp, uint32_t A);
 
  void StartFrame(double rate, uint32_t quality);
  int32_t EndFrame(int16 *SoundBuf);
 
  int32_t UpdateFromCDC(int32_t clocks);
- //pscpu_timestamp_t Update(pscpu_timestamp_t timestamp);
+ //int32_t Update(int32_t timestamp);
 
  private:
 
@@ -229,7 +229,7 @@ class PS_SPU
  int32_t RD_RVB(int16 raw_offs);
  void WR_RVB(int16 raw_offs, int32_t sample, int32_t extra_offs = 0);
 
- //pscpu_timestamp_t lastts;
+ //nt32_t lastts;
  int32_t clock_divider;
 
 

@@ -1038,7 +1038,7 @@ void PS_CDC::HandlePlayRead(void)
 
 }
 
-pscpu_timestamp_t PS_CDC::Update(const pscpu_timestamp_t timestamp)
+int32_t PS_CDC::Update(const int32_t timestamp)
 {
  int32 clocks = timestamp - lastts;
 
@@ -1258,7 +1258,7 @@ pscpu_timestamp_t PS_CDC::Update(const pscpu_timestamp_t timestamp)
  return(timestamp + CalcNextEvent());
 }
 
-void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
+void PS_CDC::Write(const int32_t timestamp, uint32 A, uint8 V)
 {
  A &= 0x3;
 
@@ -1427,7 +1427,7 @@ void PS_CDC::Write(const pscpu_timestamp_t timestamp, uint32 A, uint8 V)
  }
 }
 
-uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
+uint8 PS_CDC::Read(const int32_t timestamp, uint32 A)
 {
  uint8 ret = 0;
 
