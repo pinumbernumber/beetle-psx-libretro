@@ -416,31 +416,16 @@ void PS_SPU::RunDecoder(SPU_Voice *voice)
  }
 }
 
-void PS_SPU::CacheEnvelope(SPU_Voice *voice)
-{
- uint32 raw = voice->ADSRControl;
- SPU_ADSR *ADSR = &voice->ADSR;
-
- int32 Sl = (raw >> 0) & 0x0F;
- int32 Dr = (raw >> 4) & 0x0F;
- int32 Ar = (raw >> 8) & 0x7F;
-
- int32 Rr = (raw >> 16) & 0x1F;
- int32 Sr = (raw >> 22) & 0x7F;
-
-
- ADSR->AttackExp = (bool)(raw & (1 << 15));
- ADSR->ReleaseExp = (bool)(raw & (1 << 21));
- ADSR->SustainExp = (bool)(raw & (1 << 31));
- ADSR->SustainDec = (bool)(raw & (1 << 30));
-
- ADSR->AttackRate = Ar;
- ADSR->DecayRate = Dr << 2;
- ADSR->SustainRate = Sr;
- ADSR->ReleaseRate = Rr << 2;
-
- ADSR->SustainLevel = (Sl + 1) << 11;
-}
+#define CacheEnvelope(voice) \
+ voice->ADSR.AttackExp = (bool)(voice->ADSRControl & (1 << 15)); \
+ voice->ADSR.ReleaseExp = (bool)(voice->ADSRControl & (1 << 21)); \
+ voice->ADSR.SustainExp = (bool)(voice->ADSRControl & (1 << 31)); \
+ voice->ADSR.SustainDec = (bool)(voice->ADSRControl & (1 << 30)); \
+ voice->ADSR.AttackRate =  (voice->ADSRControl >> 8) & 0x7F;         /* Ar */ \
+ voice->ADSR.DecayRate =   ((voice->ADSRControl >> 4) & 0x0F) << 2;  /* Dr & 0x0F */ \
+ voice->ADSR.SustainRate = (voice->ADSRControl >> 22) & 0x7F;        /* Sr */ \
+ voice->ADSR.ReleaseRate = ((voice->ADSRControl >> 16) & 0x1F) << 2; /* Rr << 2 */ \
+ voice->ADSR.SustainLevel = (((voice->ADSRControl >> 0) & 0x0F) + 1) << 11         /* (Sl + 1) << 11 */
 
 #define ResetEnvelope(voice) \
  voice->ADSR.EnvLevel = 0; \

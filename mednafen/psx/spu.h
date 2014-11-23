@@ -104,8 +104,6 @@ class PS_SPU
  private:
 
  void RunDecoder(SPU_Voice *voice);
-
- void CacheEnvelope(SPU_Voice *voice);
  void RunEnvelope(SPU_Voice *voice);
 
 
