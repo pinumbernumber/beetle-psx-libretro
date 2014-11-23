@@ -5,7 +5,6 @@ else
    CORE_SOURCES := $(CORE_DIR)/dma.cpp \
 	$(CORE_DIR)/frontio.cpp \
 	$(CORE_DIR)/cpu.cpp \
-	$(CORE_DIR)/gte.cpp \
 	$(CORE_DIR)/dis.cpp \
 	$(CORE_DIR)/cdc.cpp \
 	$(CORE_DIR)/spu.cpp \
@@ -22,7 +21,8 @@ else
 	CORE_SOURCES_C := $(CORE_DIR)/sio.c \
 	$(CORE_DIR)/irq.c \
 	$(CORE_DIR)/timer.c \
-	$(CORE_DIR)/mdec.c
+	$(CORE_DIR)/mdec.c \
+	$(CORE_DIR)/gte.c
 endif
 
 ifeq ($(NEED_THREADING), 1)

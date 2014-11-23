@@ -44,11 +44,6 @@ static uint32_t ReciprocalTable[0x8000] =
 
 */
 
-#ifndef PSXDEV_GTE_TESTING
-namespace MDFN_IEN_PSX
-{
-#endif
-
 typedef struct
 {
    int16_t MX[3][3];
@@ -1120,9 +1115,7 @@ int32_t GTE_Instruction(uint32_t instr)
    switch(code)
    {
       default: 
-#ifndef PSXDEV_GTE_TESTING
-         PSX_WARNING("[GTE] Unknown instruction code: 0x%02x", code);
-#endif
+         //PSX_WARNING("[GTE] Unknown instruction code: 0x%02x", code);
          break;
 
       case 0x00:	// alternate?
@@ -1496,7 +1489,3 @@ int32_t GTE_Instruction(uint32_t instr)
 
    return(ret - 1);
 }
-
-#ifndef PSXDEV_GTE_TESTING
-}
-#endif

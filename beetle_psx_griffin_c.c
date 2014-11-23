@@ -32,3 +32,4 @@
 #include "mednafen/psx/irq.c"
 #include "mednafen/psx/mdec.c"
 #include "mednafen/psx/timer.c"
+#include "mednafen/psx/gte.c"
