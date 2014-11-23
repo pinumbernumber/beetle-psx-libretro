@@ -37,7 +37,6 @@ class PS_CDC
  uint8 Read(const pscpu_timestamp_t timestamp, uint32 A);
 
  bool DMACanRead(void);
- uint32 DMARead(void);
  void SoftReset(void);
 
  void GetCDAudio(int32 samples[2]);
@@ -80,7 +79,6 @@ class PS_CDC
  uint8 ResultsWP;	// Write position, 4 bit(0 ... 15).
  uint8 ResultsRP;	// Read position, 4 bit(0 ... 15).
 
- SimpleFIFOU8 *DMABuffer;
  uint8 SB[2340];
  uint32 SB_In;
 
@@ -272,5 +270,15 @@ class PS_CDC
 };
 
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+uint32 CDC_DMARead(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -45,6 +45,8 @@
 #include "cdc.h"
 #include "spu.h"
 
+static SimpleFIFOU8 *DMABuffer;
+
 using namespace CDUtility;
 
 namespace MDFN_IEN_PSX
@@ -1489,7 +1491,6 @@ uint8 PS_CDC::Read(const pscpu_timestamp_t timestamp, uint32 A)
  return(ret);
 }
 
-
 bool PS_CDC::DMACanRead(void)
 {
    if (DMABuffer)
@@ -1497,25 +1498,30 @@ bool PS_CDC::DMACanRead(void)
    return false;
 }
 
-uint32 PS_CDC::DMARead(void)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+uint32 CDC_DMARead(void)
 {
- uint32 data = 0;
+   int i;
+   uint32 data = 0;
 
- for(int i = 0; i < 4; i++)
- {
-  if(DMABuffer->in_count)
-  {
-   data |= SimpleFIFO_ReadUnit(DMABuffer) << (i * 8);
-   SimpleFIFO_ReadUnitIncrement(DMABuffer);
-  }
-  else
-  {
-   //assert(0);
-  }
- }
+   for(i = 0; i < 4; i++)
+   {
+      if(!DMABuffer->in_count)
+         continue;
 
- return(data);
+      data |= SimpleFIFO_ReadUnit(DMABuffer) << (i * 8);
+      SimpleFIFO_ReadUnitIncrement(DMABuffer);
+   }
+
+   return data;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 bool PS_CDC::CommandCheckDiscPresent(void)
 {
