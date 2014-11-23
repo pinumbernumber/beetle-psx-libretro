@@ -160,26 +160,26 @@ int InputDevice_Memcard::StateAction(StateMem* sm, int load, int data_only, cons
  // Don't save dirty_count.
  SFORMAT StateRegs[] =
  {
-  SFVAR(presence_new),
+  { &((presence_new)), 1, 0x80000000 | 0x08000000, "presence_new" },
 
-  SFARRAY(rw_buffer, sizeof(rw_buffer)),
-  SFVAR(write_xor),
+  { ((rw_buffer)), (uint32)((sizeof(rw_buffer))), 0 | 0, "rw_buffer" },
+  { &((write_xor)), sizeof((write_xor)), 0x80000000 | 0, "write_xor" },
 
-  SFVAR(dtr),
-  SFVAR(command_phase),
-  SFVAR(bitpos),
-  SFVAR(receive_buffer),
+  { &((dtr)), 1, 0x80000000 | 0x08000000, "dtr" },
+  { &((command_phase)), sizeof((command_phase)), 0x80000000 | 0, "command_phase" },
+  { &((bitpos)), sizeof((bitpos)), 0x80000000 | 0, "bitpos" },
+  { &((receive_buffer)), sizeof((receive_buffer)), 0x80000000 | 0, "receive_buffer" },
 
-  SFVAR(command),
-  SFVAR(addr),
-  SFVAR(calced_xor),
+  { &((command)), sizeof((command)), 0x80000000 | 0, "command" },
+  { &((addr)), sizeof((addr)), 0x80000000 | 0, "addr" },
+  { &((calced_xor)), sizeof((calced_xor)), 0x80000000 | 0, "calced_xor" },
 
-  SFVAR(transmit_buffer),
-  SFVAR(transmit_count),
+  { &((transmit_buffer)), sizeof((transmit_buffer)), 0x80000000 | 0, "transmit_buffer" },
+  { &((transmit_count)), sizeof((transmit_count)), 0x80000000 | 0, "transmit_count" },
 
-  SFVAR(data_used),
+  { &((data_used)), 1, 0x80000000 | 0x08000000, "data_used" },
 
-  SFEND
+  { 0, 0, 0, 0 }
  };
 
  SFORMAT CD_StateRegs[] =

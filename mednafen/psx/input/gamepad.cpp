@@ -74,21 +74,21 @@ int InputDevice_Gamepad::StateAction(StateMem* sm, int load, int data_only, cons
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(dtr),
+  { &((dtr)), 1, 0x80000000 | 0x08000000, "dtr" },
 
-  SFARRAY(buttons, sizeof(buttons)),
+  { ((buttons)), (uint32)((sizeof(buttons))), 0 | 0, "buttons" },
 
-  SFVAR(command_phase),
-  SFVAR(bitpos),
-  SFVAR(receive_buffer),
+  { &((command_phase)), sizeof((command_phase)), 0x80000000 | 0, "command_phase" },
+  { &((bitpos)), sizeof((bitpos)), 0x80000000 | 0, "bitpos" },
+  { &((receive_buffer)), sizeof((receive_buffer)), 0x80000000 | 0, "receive_buffer" },
 
-  SFVAR(command),
+  { &((command)), sizeof((command)), 0x80000000 | 0, "command" },
 
-  SFARRAY(transmit_buffer, sizeof(transmit_buffer)),
-  SFVAR(transmit_pos),
-  SFVAR(transmit_count),
+  { ((transmit_buffer)), (uint32)((sizeof(transmit_buffer))), 0 | 0, "transmit_buffer" },
+  { &((transmit_pos)), sizeof((transmit_pos)), 0x80000000 | 0, "transmit_pos" },
+  { &((transmit_count)), sizeof((transmit_count)), 0x80000000 | 0, "transmit_count" },
 
-  SFEND
+  { 0, 0, 0, 0 }
  };
  int ret = MDFNSS_StateAction(sm, load, StateRegs, section_name);
 
