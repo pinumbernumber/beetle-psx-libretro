@@ -1409,6 +1409,7 @@ void PS_CDC::Write(const int32_t timestamp, uint32 A, uint8 V)
 		{
 		 memcpy(DecodeVolume, Pending_DecodeVolume, sizeof(DecodeVolume));
 
+#if 0
 		 for(int i = 0; i < 2; i++)
 		 {
 		  for(int o = 0; o < 2; o++)
@@ -1416,6 +1417,7 @@ void PS_CDC::Write(const int32_t timestamp, uint32 A, uint8 V)
 		   //fprintf(stderr, "Input Channel %d, Output Channel %d -- Volume=%d\n", i, o, DecodeVolume[i][o]);
 		  }
 		 }
+#endif
 		}
 		break;
   }
