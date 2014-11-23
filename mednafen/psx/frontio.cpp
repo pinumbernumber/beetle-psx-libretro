@@ -32,7 +32,7 @@
 
 #include "input/multitap.h"
 
-#include "../mednafen/error.h"
+#include "../error.h"
 
 //#define PSX_FIODBGINFO(format, ...) { /* printf(format " -- timestamp=%d -- PAD temp\n", ## __VA_ARGS__, timestamp); */  }
 static void PSX_FIODBGINFO(const char *format, ...)
@@ -134,34 +134,34 @@ int FrontIO::StateAction(StateMem* sm, int load, int data_only)
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(ClockDivider),
+  { &((ClockDivider)), sizeof((ClockDivider)), 0x80000000 | 0, "ClockDivider" },
 
-  SFVAR(ReceivePending),
-  SFVAR(TransmitPending),
+  { &((ReceivePending)), 1, 0x80000000 | 0x08000000, "ReceivePending" },
+  { &((TransmitPending)), 1, 0x80000000 | 0x08000000, "TransmitPending" },
 
-  SFVAR(ReceiveInProgress),
-  SFVAR(TransmitInProgress),
+  { &((ReceiveInProgress)), 1, 0x80000000 | 0x08000000, "ReceiveInProgress" },
+  { &((TransmitInProgress)), 1, 0x80000000 | 0x08000000, "TransmitInProgress" },
 
-  SFVAR(ReceiveBufferAvail),
+  { &((ReceiveBufferAvail)), 1, 0x80000000 | 0x08000000, "ReceiveBufferAvail" },
 
-  SFVAR(ReceiveBuffer),
-  SFVAR(TransmitBuffer),
+  { &((ReceiveBuffer)), sizeof((ReceiveBuffer)), 0x80000000 | 0, "ReceiveBuffer" },
+  { &((TransmitBuffer)), sizeof((TransmitBuffer)), 0x80000000 | 0, "TransmitBuffer" },
 
-  SFVAR(ReceiveBitCounter),
-  SFVAR(TransmitBitCounter),
+  { &((ReceiveBitCounter)), sizeof((ReceiveBitCounter)), 0x80000000 | 0, "ReceiveBitCounter" },
+  { &((TransmitBitCounter)), sizeof((TransmitBitCounter)), 0x80000000 | 0, "TransmitBitCounter" },
 
-  SFVAR(Mode),
-  SFVAR(Control),
-  SFVAR(Baudrate),
+  { &((Mode)), sizeof((Mode)), 0x80000000 | 0, "Mode" },
+  { &((Control)), sizeof((Control)), 0x80000000 | 0, "Control" },
+  { &((Baudrate)), sizeof((Baudrate)), 0x80000000 | 0, "Baudrate" },
 
-  SFVAR(istatus),
+  { &((istatus)), 1, 0x80000000 | 0x08000000, "istatus" },
 
-  // FIXME: Step mode save states.
-  SFARRAY32(irq10_pulse_ts, sizeof(irq10_pulse_ts) / sizeof(irq10_pulse_ts[0])),
-  SFARRAY32(dsr_pulse_delay, sizeof(dsr_pulse_delay) / sizeof(dsr_pulse_delay[0])),
-  SFARRAY32(dsr_active_until_ts, sizeof(dsr_active_until_ts) / sizeof(dsr_active_until_ts[0])),
 
-  SFEND
+  { ((irq10_pulse_ts)), (uint32)(((sizeof(irq10_pulse_ts) / sizeof(irq10_pulse_ts[0]))) * sizeof(uint32)), 0x40000000 | 0, "irq10_pulse_ts" },
+  { ((dsr_pulse_delay)), (uint32)(((sizeof(dsr_pulse_delay) / sizeof(dsr_pulse_delay[0]))) * sizeof(uint32)), 0x40000000 | 0, "dsr_pulse_delay" },
+  { ((dsr_active_until_ts)), (uint32)(((sizeof(dsr_active_until_ts) / sizeof(dsr_active_until_ts[0]))) * sizeof(uint32)), 0x40000000 | 0, "dsr_active_until_ts" },
+
+  { 0, 0, 0, 0 }
  };
 
  int ret = MDFNSS_StateAction(sm, load, StateRegs, "FIO");
