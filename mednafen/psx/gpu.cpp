@@ -497,10 +497,7 @@ static INLINE bool LineSkipTest(PS_GPU* g, unsigned y)
  Store and do most math with interpolant coordinates and deltas as unsigned to avoid violating strict overflow(due to biasing),
  but when actually grabbing the coordinates, treat them as signed(with signed right shift) so we can do saturation properly.
 */
-static INLINE int32 COORD_GET_INT(int32 n)
-{
- return(n >> COORD_FBS);
-}
+#define COORD_GET_INT(n) ((n) >> COORD_FBS)
 
 struct i_group
 {
@@ -520,69 +517,58 @@ struct i_deltas
  uint32 dummy1[3];
 };
 
-static INLINE int64 MakePolyXFP(int32 x)
-{
- return ((int64)x << 32) + ((1LL << 32) - (1 << 11));
-}
+#define MakePolyXFP(x) (((int64)(x) << 32) + ((1LL << 32) - (1 << 11)))
 
 static INLINE int64 MakePolyXFPStep(int32 dx, int32 dy)
 {
- int64 ret;
- int64 dx_ex = (int64)dx << 32;
+   int64 dx_ex = (int64)dx << 32;
 
- if(dx_ex < 0)
-  dx_ex -= dy - 1;
+   if(dx_ex < 0)
+      dx_ex -= dy - 1;
 
- if(dx_ex > 0)
-  dx_ex += dy - 1;
+   if(dx_ex > 0)
+      dx_ex += dy - 1;
 
- ret = dx_ex / dy;
-
- return(ret);
+   return (dx_ex / dy);
 }
 
-static INLINE int32 GetPolyXFP_Int(int64 xfp)
-{
- return(xfp >> 32);
-}
+#define GetPolyXFP_Int(xfp) ((xfp) >> 32)
 
-//#define CALCIS(x,y) ( A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y) )
-#define CALCIS(x,y) (((B.x - A.x) * (C.y - B.y)) - ((C.x - B.x) * (B.y - A.y)))
-static INLINE bool CalcIDeltas(i_deltas &idl, const tri_vertex &A, const tri_vertex &B, const tri_vertex &C)
+#define CALCIS(x,y) (((B->x - A->x) * (C->y - B->y)) - ((C->x - B->x) * (B->y - A->y)))
+
+static INLINE bool CalcIDeltas(i_deltas *idl, const tri_vertex *A, const tri_vertex *B, const tri_vertex *C)
 {
- const unsigned sa = 32;
- int64 num = ((int64)COORD_MF_INT(1)) << sa;
+ // 32 is const SA
+ int64 num = ((int64)COORD_MF_INT(1)) << 32;
  int64 denom = CALCIS(x, y);
- int64 one_div;
+ int64 one_div = num / denom;
 
  if(!denom)
   return(false);
 
- one_div = num / denom;
+ idl->dr_dx = ((one_div * CALCIS(r, y)) + 0x00000000) >> 32;
+ idl->dr_dy = ((one_div * CALCIS(x, r)) + 0x00000000) >> 32;
 
- idl.dr_dx = ((one_div * CALCIS(r, y)) + 0x00000000) >> sa;
- idl.dr_dy = ((one_div * CALCIS(x, r)) + 0x00000000) >> sa;
+ idl->dg_dx = ((one_div * CALCIS(g, y)) + 0x00000000) >> 32;
+ idl->dg_dy = ((one_div * CALCIS(x, g)) + 0x00000000) >> 32;
 
- idl.dg_dx = ((one_div * CALCIS(g, y)) + 0x00000000) >> sa;
- idl.dg_dy = ((one_div * CALCIS(x, g)) + 0x00000000) >> sa;
+ idl->db_dx = ((one_div * CALCIS(b, y)) + 0x00000000) >> 32;
+ idl->db_dy = ((one_div * CALCIS(x, b)) + 0x00000000) >> 32;
 
- idl.db_dx = ((one_div * CALCIS(b, y)) + 0x00000000) >> sa;
- idl.db_dy = ((one_div * CALCIS(x, b)) + 0x00000000) >> sa;
+ idl->du_dx = ((one_div * CALCIS(u, y)) + 0x00000000) >> 32;
+ idl->du_dy = ((one_div * CALCIS(x, u)) + 0x00000000) >> 32;
 
- idl.du_dx = ((one_div * CALCIS(u, y)) + 0x00000000) >> sa;
- idl.du_dy = ((one_div * CALCIS(x, u)) + 0x00000000) >> sa;
+ idl->dv_dx = ((one_div * CALCIS(v, y)) + 0x00000000) >> 32;
+ idl->dv_dy = ((one_div * CALCIS(x, v)) + 0x00000000) >> 32;
 
- idl.dv_dx = ((one_div * CALCIS(v, y)) + 0x00000000) >> sa;
- idl.dv_dy = ((one_div * CALCIS(x, v)) + 0x00000000) >> sa;
+ // idl->du_dx = ((int64)CALCIS(u, y) << COORD_FBS) / denom;
+ // idl->du_dy = ((int64)CALCIS(x, u) << COORD_FBS) / denom;
 
- // idl.du_dx = ((int64)CALCIS(u, y) << COORD_FBS) / denom;
- // idl.du_dy = ((int64)CALCIS(x, u) << COORD_FBS) / denom;
-
- // idl.dv_dx = ((int64)CALCIS(v, y) << COORD_FBS) / denom;
- // idl.dv_dy = ((int64)CALCIS(x, v) << COORD_FBS) / denom;
+ // idl->dv_dx = ((int64)CALCIS(v, y) << COORD_FBS) / denom;
+ // idl->dv_dy = ((int64)CALCIS(x, v) << COORD_FBS) / denom;
 
  //printf("Denom=%lld - CIS_UY=%d, CIS_XU=%d, CIS_VY=%d, CIS_XV=%d\n", denom, CALCIS(u, y), CALCIS(x, u), CALCIS(v, y), CALCIS(x, v));
- //printf("  du_dx=0x%08x, du_dy=0x%08x --- dv_dx=0x%08x, dv_dy=0x%08x\n", idl.du_dx, idl.du_dy, idl.dv_dx, idl.dv_dy);
+ //printf("  du_dx=0x%08x, du_dy=0x%08x --- dv_dx=0x%08x, dv_dy=0x%08x\n", idl->du_dx, idl->du_dy, idl->dv_dx, idl->dv_dy);
 
  return(true);
 }
@@ -765,7 +751,7 @@ void PS_GPU::DrawTriangle(tri_vertex *vertices, uint32 clut)
   return;
  }
 
- if(!CalcIDeltas(idl, vertices[0], vertices[1], vertices[2]))
+ if(!CalcIDeltas(&idl, &vertices[0], &vertices[1], &vertices[2]))
   return;
 
  // [0] should be top vertex, [2] should be bottom vertex, [1] should be off to the side vertex.
