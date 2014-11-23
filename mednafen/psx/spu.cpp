@@ -130,8 +130,12 @@ void PS_SPU::Power(void)
 
   Voices[i].IgnoreSampLA = false;
 
-  Voices[i].Sweep[0].Power();
-  Voices[i].Sweep[1].Power();
+  Voices[i].Sweep[0].Control = 0;
+  Voices[i].Sweep[0].Current = 0;
+  Voices[i].Sweep[0].Divider = 0;
+  Voices[i].Sweep[1].Control = 0;
+  Voices[i].Sweep[1].Current = 0;
+  Voices[i].Sweep[1].Divider = 0;
 
   Voices[i].Pitch = 0;
   Voices[i].CurPhase = 0;
@@ -149,8 +153,12 @@ void PS_SPU::Power(void)
   memset(&Voices[i].ADSR, 0, sizeof(SPU_ADSR));
  }
 
- GlobalSweep[0].Power();
- GlobalSweep[1].Power();
+ GlobalSweep[0].Control = 0;
+ GlobalSweep[0].Current = 0;
+ GlobalSweep[0].Divider = 0;
+ GlobalSweep[1].Control = 0;
+ GlobalSweep[1].Current = 0;
+ GlobalSweep[1].Divider = 0;
 
  NoiseDivider = 0;
  NoiseCounter = 0;
@@ -235,58 +243,51 @@ static INLINE void CalcVCDelta(const uint8 zs, uint8 speed,bool log_mode,
 }
 
 
-INLINE void SPU_Sweep::Power(void)
+void SPU_Sweep_Clock(SPU_Sweep *sweep)
 {
- Control = 0;
- Current = 0;
- Divider = 0;
-}
-
-void SPU_Sweep::Clock(void)
-{
- if(!(Control & 0x8000))
+ if(!(sweep->Control & 0x8000))
  {
-  Current = (Control & 0x7FFF) << 1;
+  sweep->Current = (sweep->Control & 0x7FFF) << 1;
   return;
  }
 
- if(Control & 0x8000) 	// Sweep enabled
+ if(sweep->Control & 0x8000) 	// Sweep enabled
  {
   int increment, divinco;
-  const bool log_mode = (bool)(Control & 0x4000);
-  const bool dec_mode = (bool)(Control & 0x2000);
-  const bool inv_mode = (bool)(Control & 0x1000);
+  const bool log_mode = (bool)(sweep->Control & 0x4000);
+  const bool dec_mode = (bool)(sweep->Control & 0x2000);
+  const bool inv_mode = (bool)(sweep->Control & 0x1000);
   const bool inv_increment = (dec_mode ^ inv_mode) | (dec_mode & log_mode);
   const uint16 vc_cv_xor = (inv_mode & !(dec_mode & log_mode)) ? 0xFFFF : 0x0000;
   const uint16 TestInvert = inv_mode ? 0xFFFF : 0x0000;
 
-  CalcVCDelta(0x7F, Control & 0x7F, log_mode, dec_mode, inv_increment, (int16)(Current ^ vc_cv_xor), increment, divinco);
+  CalcVCDelta(0x7F, sweep->Control & 0x7F, log_mode, dec_mode, inv_increment, (int16)(sweep->Current ^ vc_cv_xor), increment, divinco);
   //printf("%d %d\n", divinco, increment);
 
-  if((dec_mode & !(inv_mode & log_mode)) && ((Current & 0x8000) == (inv_mode ? 0x0000 : 0x8000) || (Current == 0)))
+  if((dec_mode & !(inv_mode & log_mode)) && ((sweep->Current & 0x8000) == (inv_mode ? 0x0000 : 0x8000) || (sweep->Current == 0)))
   {
    //
    // Not sure if this condition should stop the Divider adding or force the increment value to 0.
    //
-   Current = 0;
+   sweep->Current = 0;
   }
   else
   {
-   Divider += divinco;
+   sweep->Divider += divinco;
 
-   if(Divider & 0x8000)
+   if(sweep->Divider & 0x8000)
    {
-    Divider = 0;
+    sweep->Divider = 0;
 
-    if(dec_mode || ((Current ^ TestInvert) != 0x7FFF))
+    if(dec_mode || ((sweep->Current ^ TestInvert) != 0x7FFF))
     {
-     uint16 PrevCurrent = Current;
-     Current = Current + increment;
+     uint16 PrevCurrent = sweep->Current;
+     sweep->Current = sweep->Current + increment;
 
-     //printf("%04x %04x\n", PrevCurrent, Current);
+     //printf("%04x %04x\n", PrevCurrent, sweep->Current);
 
-     if(!dec_mode && ((Current ^ PrevCurrent) & 0x8000) && ((Current ^ TestInvert) & 0x8000))
-      Current = 0x7FFF ^ TestInvert;
+     if(!dec_mode && ((sweep->Current ^ PrevCurrent) & 0x8000) && ((sweep->Current ^ TestInvert) & 0x8000))
+      sweep->Current = 0x7FFF ^ TestInvert;
     }
    }
   }
@@ -895,7 +896,7 @@ int32 PS_SPU::UpdateFromCDC(int32 clocks)
 
    // Run sweep
    for(int lr = 0; lr < 2; lr++)
-    voice->Sweep[lr].Clock();
+    SPU_Sweep_Clock(&voice->Sweep[lr]);
 
    // Increment stuff
    if(!voice->DecodePlayDelay)
@@ -1050,7 +1051,7 @@ int32 PS_SPU::UpdateFromCDC(int32 clocks)
 
   // Clock global sweep
   for(int lr = 0; lr < 2; lr++)
-   GlobalSweep[lr].Clock();
+   SPU_Sweep_Clock(&GlobalSweep[lr]);
  }
 
  //assert(clock_divider < 768);

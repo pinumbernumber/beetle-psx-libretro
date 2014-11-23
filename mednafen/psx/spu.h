@@ -38,23 +38,14 @@ struct SPU_ADSR
  int32_t SustainLevel;	// (Sl + 1) << 11
 };
 
-class PS_SPU;
-class SPU_Sweep
+struct SPU_Sweep
 {
- friend class PS_SPU;		// For save states - FIXME(remove in future?)
-
- public:
- SPU_Sweep() { }
- ~SPU_Sweep() { }
-
- void Power(void);
-
- void Clock(void);
-
  uint16_t Control;
  uint16_t Current;
  uint32_t Divider;
 };
+
+void SPU_Sweep_Clock(SPU_Sweep *sweep);
 
 struct SPU_Voice
 {
