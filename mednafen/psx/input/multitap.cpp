@@ -148,27 +148,27 @@ int InputDevice_Multitap::StateAction(StateMem* sm, int load, int data_only, con
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(dtr),
+  { &((dtr)), 1, 0x80000000 | 0x08000000, "dtr" },
 
-  SFVAR(selected_device),
-  SFVAR(full_mode_setting),
+  { &((selected_device)), sizeof((selected_device)), 0x80000000 | 0, "selected_device" },
+  { &((full_mode_setting)), 1, 0x80000000 | 0x08000000, "full_mode_setting" },
 
-  SFVAR(full_mode),
-  SFVAR(mc_mode),
+  { &((full_mode)), 1, 0x80000000 | 0x08000000, "full_mode" },
+  { &((mc_mode)), 1, 0x80000000 | 0x08000000, "mc_mode" },
 
-  SFVAR(fm_dp),
-  SFARRAY(&fm_buffer[0][0], sizeof(fm_buffer) / sizeof(fm_buffer[0][0])),
+  { &((fm_dp)), sizeof((fm_dp)), 0x80000000 | 0, "fm_dp" },
+  { ((&fm_buffer[0][0])), (uint32)((sizeof(fm_buffer) / sizeof(fm_buffer[0][0]))), 0 | 0, "&fm_buffer[0][0]" },
 
-  SFVAR(fm_deferred_error_temp),
-  SFVAR(fm_deferred_error),
-  SFVAR(fm_command_error),
+  { &((fm_deferred_error_temp)), 1, 0x80000000 | 0x08000000, "fm_deferred_error_temp" },
+  { &((fm_deferred_error)), 1, 0x80000000 | 0x08000000, "fm_deferred_error" },
+  { &((fm_command_error)), 1, 0x80000000 | 0x08000000, "fm_command_error" },
 
-  SFVAR(command),
-  SFVAR(receive_buffer),
-  SFVAR(bit_counter),
-  SFVAR(byte_counter),
+  { &((command)), sizeof((command)), 0x80000000 | 0, "command" },
+  { &((receive_buffer)), sizeof((receive_buffer)), 0x80000000 | 0, "receive_buffer" },
+  { &((bit_counter)), sizeof((bit_counter)), 0x80000000 | 0, "bit_counter" },
+  { &((byte_counter)), sizeof((byte_counter)), 0x80000000 | 0, "byte_counter" },
 
-  SFEND
+  { 0, 0, 0, 0 }
  };
  int ret = MDFNSS_StateAction(sm, load, StateRegs, section_name);
 

@@ -123,11 +123,13 @@ void InputDevice_Gamepad::SetDTR(bool new_dtr)
   transmit_pos = 0;
   transmit_count = 0;
  }
+#if 0
  else if(dtr && !new_dtr)
  {
   //if(bitpos || transmit_count)
   // printf("[PAD] Abort communication!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
  }
+#endif
 
  dtr = new_dtr;
 }
