@@ -157,7 +157,6 @@ static uint64_t Memcard_PrevDC[8];
 static int64_t Memcard_SaveDelay[8];
 
 PS_CPU *CPU = NULL;
-PS_SPU *SPU = NULL;
 PS_GPU *GPU = NULL;
 PS_CDC *CDC = NULL;
 FrontIO *FIO = NULL;
@@ -519,8 +518,8 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
                //if(timestamp >= events[PSX_EVENT__SYNFIRST].next->event_time)
                // PSX_EventHandler(timestamp);
 
-               SPU->Write(timestamp, A | 0, V);
-               SPU->Write(timestamp, A | 2, V >> 16);
+               SPU_Write(timestamp, A | 0, V);
+               SPU_Write(timestamp, A | 2, V >> 16);
             }
             else
             {
@@ -529,7 +528,7 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
                if(timestamp >= events[PSX_EVENT__SYNFIRST].next->event_time)
                   PSX_EventHandler(timestamp);
 
-               V = SPU->Read(timestamp, A) | (SPU->Read(timestamp, A | 2) << 16);
+               V = SPU_Read(timestamp, A) | (SPU_Read(timestamp, A | 2) << 16);
             }
          }
          else
@@ -541,7 +540,7 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
                //if(timestamp >= events[PSX_EVENT__SYNFIRST].next->event_time)
                // PSX_EventHandler(timestamp);
 
-               SPU->Write(timestamp, A & ~1, V);
+               SPU_Write(timestamp, A & ~1, V);
             }
             else
             {
@@ -550,7 +549,7 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
                if(timestamp >= events[PSX_EVENT__SYNFIRST].next->event_time)
                   PSX_EventHandler(timestamp);
 
-               V = SPU->Read(timestamp, A & ~1);
+               V = SPU_Read(timestamp, A & ~1);
             }
          }
          return;
@@ -1341,7 +1340,6 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
    }
 
    CPU = new PS_CPU();
-   SPU = new PS_SPU();
    GPU = new PS_GPU(region == REGION_EU, sls, sle);
    CDC = new PS_CDC();
    FIO = new FrontIO(emulate_memcard, emulate_multitap);
@@ -1663,9 +1661,7 @@ static void Cleanup(void)
       delete CDC;
    CDC = NULL;
 
-   if(SPU)
-      delete SPU;
-   SPU = NULL;
+   SPU_Free();
 
    if(GPU)
       delete GPU;
@@ -1773,7 +1769,7 @@ static int StateAction(StateMem *sm, int load, int data_only)
    ret &= CDC->StateAction(sm, load, data_only);
    ret &= MDEC_StateAction(sm, load, data_only);
    ret &= GPU->StateAction(sm, load, data_only);
-   ret &= SPU->StateAction(sm, load, data_only);
+   ret &= SPU_StateAction(sm, load, data_only);
 
    ret &= FIO->StateAction(sm, load, data_only);
    
