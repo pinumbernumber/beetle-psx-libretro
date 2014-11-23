@@ -132,6 +132,8 @@ int32 PS_CDC::CalcNextEvent(void)
  return(next_event);
 }
 
+#define RecalcIRQ() IRQ_Assert(IRQ_CD, (bool)(IRQBuffer & (IRQOutTestMask & 0x1F)))
+
 void PS_CDC::SoftReset(void)
 {
  ClearAudioBuffers();
@@ -343,46 +345,33 @@ void PS_CDC::ResetTS(void)
  lastts = 0;
 }
 
-void PS_CDC::RecalcIRQ(void)
-{
- IRQ_Assert(IRQ_CD, (bool)(IRQBuffer & (IRQOutTestMask & 0x1F)));
-}
-//static int32 doom_ts;
-void PS_CDC::WriteIRQ(uint8 V)
-{
- assert(CDCReadyReceiveCounter <= 0);
- assert(!IRQBuffer);
 
- //PSX_WARNING("[CDC] ***IRQTHINGY: 0x%02x -- %u", V, doom_ts);
+#ifdef NDEBUG
+#define WriteIRQ(V) \
+ /* PSX_WARNING("[CDC] ***IRQTHINGY: 0x%02x -- %u", V, doom_ts); */ \
+ CDCReadyReceiveCounter = 2000; /* 1024; */ \
+ IRQBuffer = V; \
+ RecalcIRQ()
+#else
+#define WriteIRQ(V) \
+ assert(CDCReadyReceiveCounter <= 0); \
+ assert(!IRQBuffer); \
+ /* PSX_WARNING("[CDC] ***IRQTHINGY: 0x%02x -- %u", V, doom_ts); */ \
+ CDCReadyReceiveCounter = 2000; /* 1024; */ \
+ IRQBuffer = V; \
+ RecalcIRQ()
+#endif
 
- CDCReadyReceiveCounter = 2000; //1024;
+#define BeginResults() \
+ /* TODO: test semantics on real thing. */ \
+ ResultsIn = 0; \
+ ResultsWP = 0; \
+ ResultsRP = 0
 
- IRQBuffer = V;
- RecalcIRQ();
-}
-
-void PS_CDC::BeginResults(void)
-{
- //if(ResultsIn)
- // {
- // printf("Cleared %d results. IRQBuffer=0x%02x\n", ResultsIn, IRQBuffer);
- //}
-
- // TODO: test semantics on real thing.
- ResultsIn = 0;
- ResultsWP = 0;
- ResultsRP = 0;
-}
-
-void PS_CDC::WriteResult(uint8 V)
-{
- ResultsBuffer[ResultsWP] = V;
- ResultsWP = (ResultsWP + 1) & 0xF;
- ResultsIn = (ResultsIn + 1) & 0x1F;
-
- if(!ResultsIn)
-  PSX_WARNING("[CDC] Results buffer overflow!");
-}
+#define WriteResult(V) \
+ ResultsBuffer[ResultsWP] = V; \
+ ResultsWP = (ResultsWP + 1) & 0xF; \
+ ResultsIn = (ResultsIn + 1) & 0x1F
 
 uint8 PS_CDC::ReadResult(void)
 {
@@ -2307,9 +2296,13 @@ int32 PS_CDC::Command_ID_Part2(void)
  }
 
  if(IsPSXDisc)
+ {
   WriteIRQ(CDCIRQ_COMPLETE);
+ }
  else
+ {
   WriteIRQ(CDCIRQ_DISC_ERROR);
+ }
 
  return(0);
 }

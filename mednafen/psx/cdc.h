@@ -94,7 +94,6 @@ class PS_CDC
  bool HeaderBufValid;
  uint8 HeaderBuf[12];
 
- void RecalcIRQ(void);
  enum
  {
   CDCIRQ_NONE = 0,
@@ -122,9 +121,6 @@ class PS_CDC
 				// between IRQBuffer being cleared to when we allow new results to come in.  (The real thing should be like this too,
 				// but the mechanism is probably more nuanced and complex and ugly and I like anchovy pizza)
 
- void BeginResults(void);
- void WriteIRQ(uint8);
- void WriteResult(uint8);
  uint8 ReadResult(void);
 
  uint8 FilterFile;

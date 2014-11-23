@@ -42,8 +42,14 @@ static void PSX_FIODBGINFO(const char *format, ...)
 namespace MDFN_IEN_PSX
 {
 
-InputDevice::InputDevice() : chair_r(0), chair_g(0), chair_b(0), draw_chair(0), chair_x(-1000), chair_y(-1000)
+InputDevice::InputDevice()
 {
+   chair_r    = 0;
+   chair_g    = 0;
+   chair_b    = 0;
+   draw_chair = 0;
+   chair_x    = -1000;
+   chair_y    = -1000;
 }
 
 InputDevice::~InputDevice()
@@ -273,7 +279,7 @@ static INLINE unsigned EP_to_SP(bool emulate_multitap[2], unsigned ep)
    {
       if(ep == 0)
          return(0);
-      else if(ep < 5)
+      if(ep < 5)
          return(ep - 1);
       return(ep - 4);
    }
