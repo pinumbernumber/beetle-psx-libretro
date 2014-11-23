@@ -17,7 +17,7 @@ void DMA_Power(void);
 void DMA_Init(void);
 void DMA_Kill(void);
 
-int DMA_StateAction(StateMem *sm, int load, int data_only);
+int DMA_StateAction(void *data, int load, int data_only);
 
 }
 

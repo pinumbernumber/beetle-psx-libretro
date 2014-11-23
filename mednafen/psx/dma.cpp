@@ -744,36 +744,64 @@ uint32_t DMA_Read(const int32_t timestamp, uint32_t A)
    return ret;
 }
 
-#define SFDMACH(n)	SFVARN(DMACH[n].BaseAddr, #n "BaseAddr"),		\
-			SFVARN(DMACH[n].BlockControl, #n "BlockControl"),	\
-			SFVARN(DMACH[n].ChanControl, #n "ChanControl"),		\
-			SFVARN(DMACH[n].CurAddr, #n "CurAddr"),			\
-			SFVARN(DMACH[n].WordCounter, #n "WordCounter"),		\
-			SFVARN(DMACH[n].ClockCounter, #n "ClockCounter")
-
-int DMA_StateAction(StateMem *sm, int load, int data_only)
+int DMA_StateAction(void *data, int load, int data_only)
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(DMACycleCounter),
-  SFVAR(DMAControl),
-  SFVAR(DMAIntControl),
-  SFVAR(DMAIntStatus),
-  SFVAR(IRQOut),
+  { &((DMACycleCounter)), sizeof((DMACycleCounter)), 0x80000000 | 0, "DMACycleCounter" },
+  { &((DMAControl)), sizeof((DMAControl)), 0x80000000 | 0, "DMAControl" },
+  { &((DMAIntControl)), sizeof((DMAIntControl)), 0x80000000 | 0, "DMAIntControl" },
+  { &((DMAIntStatus)), sizeof((DMAIntStatus)), 0x80000000 | 0, "DMAIntStatus" },
+  { &((IRQOut)), 1, 0x80000000 | 0x08000000, "IRQOut" },
 
 
-  SFDMACH(0),
-  SFDMACH(1),
-  SFDMACH(2),
-  SFDMACH(3),
-  SFDMACH(4),
-  SFDMACH(5),
-  SFDMACH(6),
+  { &(DMACH[0].BaseAddr), sizeof(DMACH[0].BaseAddr), 0x80000000 | 0, "0" "BaseAddr" },
+  { &(DMACH[0].BlockControl), sizeof(DMACH[0].BlockControl), 0x80000000 | 0, "0" "BlockControl" },
+  { &(DMACH[0].ChanControl), sizeof(DMACH[0].ChanControl), 0x80000000 | 0, "0" "ChanControl" },
+  { &(DMACH[0].CurAddr), sizeof(DMACH[0].CurAddr), 0x80000000 | 0, "0" "CurAddr" },
+  { &(DMACH[0].WordCounter), sizeof(DMACH[0].WordCounter), 0x80000000 | 0, "0" "WordCounter" },
+  { &(DMACH[0].ClockCounter), sizeof(DMACH[0].ClockCounter), 0x80000000 | 0, "0" "ClockCounter" },
+  { &(DMACH[1].BaseAddr), sizeof(DMACH[1].BaseAddr), 0x80000000 | 0, "1" "BaseAddr" },
+  { &(DMACH[1].BlockControl), sizeof(DMACH[1].BlockControl), 0x80000000 | 0, "1" "BlockControl" },
+  { &(DMACH[1].ChanControl), sizeof(DMACH[1].ChanControl), 0x80000000 | 0, "1" "ChanControl" },
+  { &(DMACH[1].CurAddr), sizeof(DMACH[1].CurAddr), 0x80000000 | 0, "1" "CurAddr" },
+  { &(DMACH[1].WordCounter), sizeof(DMACH[1].WordCounter), 0x80000000 | 0, "1" "WordCounter" },
+  { &(DMACH[1].ClockCounter), sizeof(DMACH[1].ClockCounter), 0x80000000 | 0, "1" "ClockCounter" },
+  { &(DMACH[2].BaseAddr), sizeof(DMACH[2].BaseAddr), 0x80000000 | 0, "2" "BaseAddr" },
+  { &(DMACH[2].BlockControl), sizeof(DMACH[2].BlockControl), 0x80000000 | 0, "2" "BlockControl" },
+  { &(DMACH[2].ChanControl), sizeof(DMACH[2].ChanControl), 0x80000000 | 0, "2" "ChanControl" },
+  { &(DMACH[2].CurAddr), sizeof(DMACH[2].CurAddr), 0x80000000 | 0, "2" "CurAddr" },
+  { &(DMACH[2].WordCounter), sizeof(DMACH[2].WordCounter), 0x80000000 | 0, "2" "WordCounter" },
+  { &(DMACH[2].ClockCounter), sizeof(DMACH[2].ClockCounter), 0x80000000 | 0, "2" "ClockCounter" },
+  { &(DMACH[3].BaseAddr), sizeof(DMACH[3].BaseAddr), 0x80000000 | 0, "3" "BaseAddr" },
+  { &(DMACH[3].BlockControl), sizeof(DMACH[3].BlockControl), 0x80000000 | 0, "3" "BlockControl" },
+  { &(DMACH[3].ChanControl), sizeof(DMACH[3].ChanControl), 0x80000000 | 0, "3" "ChanControl" },
+  { &(DMACH[3].CurAddr), sizeof(DMACH[3].CurAddr), 0x80000000 | 0, "3" "CurAddr" },
+  { &(DMACH[3].WordCounter), sizeof(DMACH[3].WordCounter), 0x80000000 | 0, "3" "WordCounter" },
+  { &(DMACH[3].ClockCounter), sizeof(DMACH[3].ClockCounter), 0x80000000 | 0, "3" "ClockCounter" },
+  { &(DMACH[4].BaseAddr), sizeof(DMACH[4].BaseAddr), 0x80000000 | 0, "4" "BaseAddr" },
+  { &(DMACH[4].BlockControl), sizeof(DMACH[4].BlockControl), 0x80000000 | 0, "4" "BlockControl" },
+  { &(DMACH[4].ChanControl), sizeof(DMACH[4].ChanControl), 0x80000000 | 0, "4" "ChanControl" },
+  { &(DMACH[4].CurAddr), sizeof(DMACH[4].CurAddr), 0x80000000 | 0, "4" "CurAddr" },
+  { &(DMACH[4].WordCounter), sizeof(DMACH[4].WordCounter), 0x80000000 | 0, "4" "WordCounter" },
+  { &(DMACH[4].ClockCounter),  sizeof(DMACH[4].ClockCounter), 0x80000000 | 0, "4" "ClockCounter" },
+  { &(DMACH[5].BaseAddr), sizeof(DMACH[5].BaseAddr), 0x80000000 | 0, "5" "BaseAddr" },
+  { &(DMACH[5].BlockControl), sizeof(DMACH[5].BlockControl), 0x80000000 | 0, "5" "BlockControl" },
+  { &(DMACH[5].ChanControl), sizeof(DMACH[5].ChanControl), 0x80000000 | 0, "5" "ChanControl" },
+  { &(DMACH[5].CurAddr), sizeof(DMACH[5].CurAddr), 0x80000000 | 0, "5" "CurAddr" },
+  { &(DMACH[5].WordCounter), sizeof(DMACH[5].WordCounter), 0x80000000 | 0, "5" "WordCounter" },
+  { &(DMACH[5].ClockCounter), sizeof(DMACH[5].ClockCounter), 0x80000000 | 0, "5" "ClockCounter" },
+  { &(DMACH[6].BaseAddr), sizeof(DMACH[6].BaseAddr), 0x80000000 | 0, "6" "BaseAddr" },
+  { &(DMACH[6].BlockControl), sizeof(DMACH[6].BlockControl), 0x80000000 | 0, "6" "BlockControl" },
+  { &(DMACH[6].ChanControl), sizeof(DMACH[6].ChanControl), 0x80000000 | 0, "6" "ChanControl" },
+  { &(DMACH[6].CurAddr), sizeof(DMACH[6].CurAddr), 0x80000000 | 0, "6" "CurAddr" },
+  { &(DMACH[6].WordCounter), sizeof(DMACH[6].WordCounter), 0x80000000 | 0, "6" "WordCounter" },
+  { &(DMACH[6].ClockCounter), sizeof(DMACH[6].ClockCounter), 0x80000000 | 0, "6" "ClockCounter" },
 
-  SFEND
+  { 0, 0, 0, 0 }
  };
 
- int ret = MDFNSS_StateAction(sm, load, StateRegs, "DMA");
+ int ret = MDFNSS_StateAction(data, load, StateRegs, "DMA");
 
  if(load)
  {
