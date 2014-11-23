@@ -373,15 +373,10 @@ void PS_CDC::ResetTS(void)
  ResultsWP = (ResultsWP + 1) & 0xF; \
  ResultsIn = (ResultsIn + 1) & 0x1F
 
-uint8 PS_CDC::ReadResult(void)
-{
- uint8 ret = ResultsBuffer[ResultsRP];
-
- ResultsRP = (ResultsRP + 1) & 0xF;
- ResultsIn = (ResultsIn - 1) & 0x1F;
-
- return ret;
-}
+#define ReadResult(result) \
+ result = ResultsBuffer[ResultsRP]; \
+ ResultsRP = (ResultsRP + 1) & 0xF; \
+ ResultsIn = (ResultsIn - 1) & 0x1F; \
 
 uint8 PS_CDC::MakeStatus(bool cmd_error)
 {
@@ -1459,35 +1454,31 @@ uint8 PS_CDC::Read(const int32_t timestamp, uint32 A)
  {
   switch(A & 0x3)
   {
-   case 0x01:
-	ret = ReadResult();
-	break;
+     case 0x01:
+        ReadResult(ret);
+        break;
 
-   case 0x02:
-	//PSX_WARNING("[CDC] DMA Buffer manual read");
-	if(DMABuffer->in_count)
-   {
-      ret = SimpleFIFO_ReadUnit(DMABuffer);
-      SimpleFIFO_ReadUnitIncrement(DMABuffer);
-   }
+     case 0x02:
+        //PSX_WARNING("[CDC] DMA Buffer manual read");
+        if(DMABuffer->in_count)
+        {
+           ret = SimpleFIFO_ReadUnit(DMABuffer);
+           SimpleFIFO_ReadUnitIncrement(DMABuffer);
+        }
 #if 0
-	else
-	{
-	 PSX_WARNING("[CDC] CD data transfer port read, but no data present!");
-	}
+        else
+        {
+           PSX_WARNING("[CDC] CD data transfer port read, but no data present!");
+        }
 #endif
-	break;
+        break;
 
-   case 0x03:
-	if(RegSelector & 0x1)
-	{
-	 ret = 0xE0 | IRQBuffer;
-	}
-	else
-	{
-	 ret = 0xFF;
-	}
-	break;
+     case 0x03:
+        if(RegSelector & 0x1)
+           ret = 0xE0 | IRQBuffer;
+        else
+           ret = 0xFF;
+        break;
   }
  }
 
