@@ -183,7 +183,7 @@ class PS_CPU
 
  uint32_t Exception(uint32_t code, uint32_t PC, const uint32_t NPM) MDFN_WARN_UNUSED_RESULT;
 
- template<bool DebugMode, bool ILHMode> int32_t RunReal(int32_t timestamp_in);
+ int32_t RunReal(int32_t timestamp_in);
 
  template<typename T> T PeekMemory(uint32_t address) MDFN_COLD;
  template<typename T> T ReadMemory(int32_t &timestamp, uint32_t address, bool DS24 = false, bool LWC_timing = false);

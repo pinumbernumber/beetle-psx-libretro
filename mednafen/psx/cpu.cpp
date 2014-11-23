@@ -449,7 +449,6 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32_t NPM)
 #define GPR_RES(n) { unsigned tn = (n); ReadAbsorb[tn] = 0; }
 #define GPR_DEPRES_END ReadAbsorb[0] = back; }
 
-template<bool DebugMode, bool ILHMode>
 int32_t PS_CPU::RunReal(int32_t timestamp_in)
 {
    register int32_t timestamp = timestamp_in;
@@ -479,7 +478,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
          GPR[0] = 0;
 
 #ifdef HAVE_DEBUG
-         if(DebugMode && CPUHook)
+         if(CPUHook)
          {
             ACTIVE_TO_BACKING;
 
@@ -598,7 +597,7 @@ int32_t PS_CPU::RunReal(int32_t timestamp_in)
             new_PC_mask = (mask) & ~3;			\
             /* Lower bits of new_PC_mask being clear signifies being in a branch delay slot. (overloaded behavior for performance) */	\
             \
-            if(DebugMode && ADDBT)                 	\
+            if(ADDBT)                 	\
             {						\
                ADDBT(PC, (PC & new_PC_mask) + new_PC, false);	\
             }						\
@@ -653,9 +652,9 @@ int32_t PS_CPU::Run(int32_t timestamp_in, const bool ILHMode)
 {
 #ifdef HAVE_DEBUG
    if(CPUHook || ADDBT)
-      return(RunReal<true, false>(timestamp_in));
+      return(RunReal(timestamp_in));
 #endif
-   return(RunReal<false, false>(timestamp_in));
+   return(RunReal(timestamp_in));
 }
 
 void PS_CPU::SetCPUHook(void (*cpuh)(const int32_t timestamp, uint32_t pc), void (*addbt)(uint32_t from, uint32_t to, bool exception))
@@ -666,48 +665,30 @@ void PS_CPU::SetCPUHook(void (*cpuh)(const int32_t timestamp, uint32_t pc), void
 
 uint32_t PS_CPU::GetRegister(unsigned int which, char *special, const uint32_t special_len)
 {
-   uint32_t ret = 0;
-
    if(which >= GSREG_GPR && which < (GSREG_GPR + 32))
       return GPR[which];
 
    switch(which)
    {
       case GSREG_PC:
-         ret = BACKED_PC;
-         break;
-
+         return BACKED_PC;
       case GSREG_PC_NEXT:
-         ret = BACKED_new_PC;
-         break;
-
+         return BACKED_new_PC;
       case GSREG_IN_BD_SLOT:
-         ret = !(BACKED_new_PC_mask & 3);
-         break;
-
+         return !(BACKED_new_PC_mask & 3);
       case GSREG_LO:
-         ret = LO;
-         break;
-
+         return LO;
       case GSREG_HI:
-         ret = HI;
-         break;
-
+         return HI;
       case GSREG_SR:
-         ret = CP0.SR;
-         break;
-
+         return CP0.SR;
       case GSREG_CAUSE:
-         ret = CP0.CAUSE;
-         break;
-
+         return CP0.CAUSE;
       case GSREG_EPC:
-         ret = CP0.EPC;
-         break;
-
+         return CP0.EPC;
    }
 
-   return ret;
+   return 0;
 }
 
 void PS_CPU::SetRegister(unsigned int which, uint32_t value)
@@ -799,9 +780,7 @@ uint32_t PS_CPU::PeekMem32(uint32_t address)
 // FIXME: should we breakpoint on an illegal address?  And with LWC2/SWC2 if CP2 isn't enabled?
 void PS_CPU::CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr)
 {
- uint32_t opf;
-
- opf = instr & 0x3F;
+ uint32_t opf = instr & 0x3F;
 
  if(instr & (0x3F << 26))
   opf = 0x40 | (instr >> 26);
