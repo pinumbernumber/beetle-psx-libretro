@@ -78,8 +78,8 @@ int InputDevice_DualAnalog::StateAction(StateMem* sm, int load, int data_only, c
  {
   { &((dtr)), 1, 0x80000000 | 0x08000000, "dtr" },
 
-  { ((buttons)), (uint32)((sizeof(buttons))), 0 | SF_FORCE_A8((buttons)), "buttons" },
-  { ((&axes[0][0])), (uint32)((sizeof(axes))), 0 | SF_FORCE_A8((&axes[0][0])), "&axes[0][0]" },
+  { ((buttons)), (uint32)((sizeof(buttons))), 0 | 0, "buttons" },
+  { ((&axes[0][0])), (uint32)((sizeof(axes))), 0 | 0, "&axes[0][0]" },
 
   { &((command_phase)), sizeof((command_phase)), 0x80000000 | 0, "command_phase" },
   { &((bitpos)), sizeof((bitpos)), 0x80000000 | 0, "bitpos" },
@@ -87,7 +87,7 @@ int InputDevice_DualAnalog::StateAction(StateMem* sm, int load, int data_only, c
 
   { &((command)), sizeof((command)), 0x80000000 | 0, "command" },
 
-  { ((transmit_buffer)), (uint32)((sizeof(transmit_buffer))), 0 | SF_FORCE_A8((transmit_buffer)), "transmit_buffer" },
+  { ((transmit_buffer)), (uint32)((sizeof(transmit_buffer))), 0 | 0, "transmit_buffer" },
   { &((transmit_pos)), sizeof((transmit_pos)), 0x80000000 | 0, "transmit_pos" },
   { &((transmit_count)), sizeof((transmit_count)), 0x80000000 | 0, "transmit_count" },
 
