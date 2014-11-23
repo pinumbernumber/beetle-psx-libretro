@@ -15,10 +15,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef PSXDEV_GTE_TESTING
-#include "psx.h"
+#include "../mednafen-types.h"
+#include "../state-common.h"
 #include "gte.h"
-#endif
 
 #include "../clamp.h"
 
@@ -203,49 +202,49 @@ int GTE_StateAction(StateMem *sm, int load, int data_only)
 {
    SFORMAT StateRegs[] =
    {
-      SFARRAY32(CR, 32),
-      SFVAR(FLAGS),
+      { ((CR)), (uint32)(((32)) * sizeof(uint32)), 0x40000000 | 0, "CR" },
+      { &((FLAGS)), sizeof((FLAGS)), 0x80000000 | 0, "FLAGS" },
 
-      SFARRAY16(&Matrices.Raw16[0][0], 4 * 10),
+      { ((&Matrices.Raw16[0][0])), (uint32)(((4 * 10)) * sizeof(uint16)), 0x20000000 | 0, "&Matrices.Raw16[0][0]" },
 
-      SFARRAY32(&CRVectors.All[0][0], 4 * 4),
+      { ((&CRVectors.All[0][0])), (uint32)(((4 * 4)) * sizeof(uint32)), 0x40000000 | 0, "&CRVectors.All[0][0]" },
 
-      SFVAR(OFX),
-      SFVAR(OFY),
-      SFVAR(H),
-      SFVAR(DQA),
-      SFVAR(DQB),
+      { &((OFX)), sizeof((OFX)), 0x80000000 | 0, "OFX" },
+      { &((OFY)), sizeof((OFY)), 0x80000000 | 0, "OFY" },
+      { &((H)), sizeof((H)), 0x80000000 | 0, "H" },
+      { &((DQA)), sizeof((DQA)), 0x80000000 | 0, "DQA" },
+      { &((DQB)), sizeof((DQB)), 0x80000000 | 0, "DQB" },
 
-      SFVAR(ZSF3),
-      SFVAR(ZSF4),
-      SFARRAY16(&Vectors[0][0], 3 * 4),
+      { &((ZSF3)), sizeof((ZSF3)), 0x80000000 | 0, "ZSF3" },
+      { &((ZSF4)), sizeof((ZSF4)), 0x80000000 | 0, "ZSF4" },
+      { ((&Vectors[0][0])), (uint32)(((3 * 4)) * sizeof(uint16)), 0x20000000 | 0, "&Vectors[0][0]" },
 
-      SFARRAY(RGB.Raw8, 4),
-      SFVAR(OTZ),
-      SFARRAY16(IR, 4),
+      { ((RGB.Raw8)), (uint32)((4)), 0 | 0, "RGB.Raw8" },
+      { &((OTZ)), sizeof((OTZ)), 0x80000000 | 0, "OTZ" },
+      { ((IR)), (uint32)(((4)) * sizeof(uint16)), 0x20000000 | 0, "IR" },
 
-      SFVAR(XY_FIFO[0].X),
-      SFVAR(XY_FIFO[0].Y),
-      SFVAR(XY_FIFO[1].X),
-      SFVAR(XY_FIFO[1].Y),
-      SFVAR(XY_FIFO[2].X),
-      SFVAR(XY_FIFO[2].Y),
-      SFVAR(XY_FIFO[3].X),
-      SFVAR(XY_FIFO[3].Y),
+      { &((XY_FIFO[0].X)), sizeof((XY_FIFO[0].X)), 0x80000000 | 0, "XY_FIFO[0].X" },
+      { &((XY_FIFO[0].Y)), sizeof((XY_FIFO[0].Y)), 0x80000000 | 0, "XY_FIFO[0].Y" },
+      { &((XY_FIFO[1].X)), sizeof((XY_FIFO[1].X)), 0x80000000 | 0, "XY_FIFO[1].X" },
+      { &((XY_FIFO[1].Y)), sizeof((XY_FIFO[1].Y)), 0x80000000 | 0, "XY_FIFO[1].Y" },
+      { &((XY_FIFO[2].X)), sizeof((XY_FIFO[2].X)), 0x80000000 | 0, "XY_FIFO[2].X" },
+      { &((XY_FIFO[2].Y)), sizeof((XY_FIFO[2].Y)), 0x80000000 | 0, "XY_FIFO[2].Y" },
+      { &((XY_FIFO[3].X)), sizeof((XY_FIFO[3].X)), 0x80000000 | 0, "XY_FIFO[3].X" },
+      { &((XY_FIFO[3].Y)), sizeof((XY_FIFO[3].Y)), 0x80000000 | 0, "XY_FIFO[3].Y" },
 
-      SFARRAY16(Z_FIFO, 4),
+      { ((Z_FIFO)), (uint32)(((4)) * sizeof(uint16)), 0x20000000 | 0, "Z_FIFO" },
 
-      SFARRAY(RGB_FIFO[0].Raw8, 4),
-      SFARRAY(RGB_FIFO[1].Raw8, 4),
-      SFARRAY(RGB_FIFO[2].Raw8, 4),
+      { ((RGB_FIFO[0].Raw8)), (uint32)((4)), 0 | 0, "RGB_FIFO[0].Raw8" },
+      { ((RGB_FIFO[1].Raw8)), (uint32)((4)), 0 | 0, "RGB_FIFO[1].Raw8" },
+      { ((RGB_FIFO[2].Raw8)), (uint32)((4)), 0 | 0, "RGB_FIFO[2].Raw8" },
 
-      SFARRAY32(MAC, 4),
+      { ((MAC)), (uint32)(((4)) * sizeof(uint32)), 0x40000000 | 0, "MAC" },
 
-      SFVAR(LZCS),
-      SFVAR(LZCR),
-      SFVAR(Reg23),
+      { &((LZCS)), sizeof((LZCS)), 0x80000000 | 0, "LZCS" },
+      { &((LZCR)), sizeof((LZCR)), 0x80000000 | 0, "LZCR" },
+      { &((Reg23)),sizeof((Reg23)), 0x80000000 | 0, "Reg23" },
 
-      SFEND
+      { 0, 0, 0, 0 }
    };
    int ret = MDFNSS_StateAction(sm, load, StateRegs, "GTE");
 
