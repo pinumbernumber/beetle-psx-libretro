@@ -224,108 +224,108 @@ int PS_CDC::StateAction(StateMem *sm, int load, int data_only)
  { &((DiscChanged)), 1, 0x80000000 | 0x08000000, "DiscChanged" },
  { &((DiscStartupDelay)), sizeof((DiscStartupDelay)), 0x80000000 | 0, "DiscStartupDelay" },
 
- { ((&AudioBuffer.Samples[0][0])), (uint32)(((sizeof(AudioBuffer.Samples) / sizeof(AudioBuffer.Samples[0][0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&AudioBuffer.Samples[0][0])), "&AudioBuffer.Samples[0][0]" },
- { &((AudioBuffer.Size)), SF_IS_BOOL(&((AudioBuffer.Size))) ? 1 : sizeof((AudioBuffer.Size)), 0x80000000 | (SF_IS_BOOL(&((AudioBuffer.Size))) ? 0x08000000 : 0), "AudioBuffer.Size" },
- { &((AudioBuffer.Freq)), SF_IS_BOOL(&((AudioBuffer.Freq))) ? 1 : sizeof((AudioBuffer.Freq)), 0x80000000 | (SF_IS_BOOL(&((AudioBuffer.Freq))) ? 0x08000000 : 0), "AudioBuffer.Freq" },
- { &((AudioBuffer.ReadPos)), SF_IS_BOOL(&((AudioBuffer.ReadPos))) ? 1 : sizeof((AudioBuffer.ReadPos)), 0x80000000 | (SF_IS_BOOL(&((AudioBuffer.ReadPos))) ? 0x08000000 : 0), "AudioBuffer.ReadPos" },
+ { ((&AudioBuffer.Samples[0][0])), (uint32)(((sizeof(AudioBuffer.Samples) / sizeof(AudioBuffer.Samples[0][0]))) * sizeof(uint16)), 0x20000000 | 0, "&AudioBuffer.Samples[0][0]" },
+ { &((AudioBuffer.Size)), sizeof((AudioBuffer.Size)), 0x80000000 | 0, "AudioBuffer.Size" },
+ { &((AudioBuffer.Freq)), sizeof((AudioBuffer.Freq)), 0x80000000 | 0, "AudioBuffer.Freq" },
+ { &((AudioBuffer.ReadPos)), sizeof((AudioBuffer.ReadPos)), 0x80000000 | 0, "AudioBuffer.ReadPos" },
 
- { ((&Pending_DecodeVolume[0][0])), (uint32)((2 * 2)), 0 | SF_FORCE_A8((&Pending_DecodeVolume[0][0])), "&Pending_DecodeVolume[0][0]" },
- { ((&DecodeVolume[0][0])), (uint32)((2 * 2)), 0 | SF_FORCE_A8((&DecodeVolume[0][0])), "&DecodeVolume[0][0]" },
+ { ((&Pending_DecodeVolume[0][0])), (uint32)((2 * 2)), 0 | 0, "&Pending_DecodeVolume[0][0]" },
+ { ((&DecodeVolume[0][0])), (uint32)((2 * 2)), 0 | 0, "&DecodeVolume[0][0]" },
 
- { ((&ADPCM_ResampBuf[0][0])), (uint32)(((sizeof(ADPCM_ResampBuf) / sizeof(ADPCM_ResampBuf[0][0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&ADPCM_ResampBuf[0][0])), "&ADPCM_ResampBuf[0][0]" },
- { &((ADPCM_ResampCurPhase)), SF_IS_BOOL(&((ADPCM_ResampCurPhase))) ? 1 : sizeof((ADPCM_ResampCurPhase)), 0x80000000 | (SF_IS_BOOL(&((ADPCM_ResampCurPhase))) ? 0x08000000 : 0), "ADPCM_ResampCurPhase" },
- { &((ADPCM_ResampCurPos)), SF_IS_BOOL(&((ADPCM_ResampCurPos))) ? 1 : sizeof((ADPCM_ResampCurPos)), 0x80000000 | (SF_IS_BOOL(&((ADPCM_ResampCurPos))) ? 0x08000000 : 0), "ADPCM_ResampCurPos" },
-
-
-
- { &((RegSelector)), SF_IS_BOOL(&((RegSelector))) ? 1 : sizeof((RegSelector)), 0x80000000 | (SF_IS_BOOL(&((RegSelector))) ? 0x08000000 : 0), "RegSelector" },
- { ((ArgsBuf)), (uint32)((16)), 0 | SF_FORCE_A8((ArgsBuf)), "ArgsBuf" },
- { &((ArgsWP)), SF_IS_BOOL(&((ArgsWP))) ? 1 : sizeof((ArgsWP)), 0x80000000 | (SF_IS_BOOL(&((ArgsWP))) ? 0x08000000 : 0), "ArgsWP" },
- { &((ArgsRP)), SF_IS_BOOL(&((ArgsRP))) ? 1 : sizeof((ArgsRP)), 0x80000000 | (SF_IS_BOOL(&((ArgsRP))) ? 0x08000000 : 0), "ArgsRP" },
-
- { &((ArgsReceiveLatch)), SF_IS_BOOL(&((ArgsReceiveLatch))) ? 1 : sizeof((ArgsReceiveLatch)), 0x80000000 | (SF_IS_BOOL(&((ArgsReceiveLatch))) ? 0x08000000 : 0), "ArgsReceiveLatch" },
- { ((ArgsReceiveBuf)), (uint32)((32)), 0 | SF_FORCE_A8((ArgsReceiveBuf)), "ArgsReceiveBuf" },
- { &((ArgsReceiveIn)), SF_IS_BOOL(&((ArgsReceiveIn))) ? 1 : sizeof((ArgsReceiveIn)), 0x80000000 | (SF_IS_BOOL(&((ArgsReceiveIn))) ? 0x08000000 : 0), "ArgsReceiveIn" },
-
- { ((ResultsBuffer)), (uint32)((16)), 0 | SF_FORCE_A8((ResultsBuffer)), "ResultsBuffer" },
- { &((ResultsIn)), SF_IS_BOOL(&((ResultsIn))) ? 1 : sizeof((ResultsIn)), 0x80000000 | (SF_IS_BOOL(&((ResultsIn))) ? 0x08000000 : 0), "ResultsIn" },
- { &((ResultsWP)), SF_IS_BOOL(&((ResultsWP))) ? 1 : sizeof((ResultsWP)), 0x80000000 | (SF_IS_BOOL(&((ResultsWP))) ? 0x08000000 : 0), "ResultsWP" },
- { &((ResultsRP)), SF_IS_BOOL(&((ResultsRP))) ? 1 : sizeof((ResultsRP)), 0x80000000 | (SF_IS_BOOL(&((ResultsRP))) ? 0x08000000 : 0), "ResultsRP" },
+ { ((&ADPCM_ResampBuf[0][0])), (uint32)(((sizeof(ADPCM_ResampBuf) / sizeof(ADPCM_ResampBuf[0][0]))) * sizeof(uint16)), 0x20000000 | 0, "&ADPCM_ResampBuf[0][0]" },
+ { &((ADPCM_ResampCurPhase)), sizeof((ADPCM_ResampCurPhase)), 0x80000000 | 0, "ADPCM_ResampCurPhase" },
+ { &((ADPCM_ResampCurPos)), sizeof((ADPCM_ResampCurPos)), 0x80000000 | 0, "ADPCM_ResampCurPos" },
 
 
 
+ { &((RegSelector)), sizeof((RegSelector)), 0x80000000 | 0, "RegSelector" },
+ { ((ArgsBuf)), (uint32)((16)), 0 | 0, "ArgsBuf" },
+ { &((ArgsWP)), sizeof((ArgsWP)), 0x80000000 | 0, "ArgsWP" },
+ { &((ArgsRP)), sizeof((ArgsRP)), 0x80000000 | 0, "ArgsRP" },
 
-  { ((DMABuffer->data)), (uint32)((DMABuffer->size)), 0 | SF_FORCE_A8((DMABuffer->data)), "&DMABuffer.data[0]" },
-  { &((DMABuffer->read_pos)), SF_IS_BOOL(&((DMABuffer->read_pos))) ? 1 : sizeof((DMABuffer->read_pos)), 0x80000000 | (SF_IS_BOOL(&((DMABuffer->read_pos))) ? 0x08000000 : 0), "DMABuffer.read_pos" },
-  { &((DMABuffer->write_pos)), SF_IS_BOOL(&((DMABuffer->write_pos))) ? 1 : sizeof((DMABuffer->write_pos)), 0x80000000 | (SF_IS_BOOL(&((DMABuffer->write_pos))) ? 0x08000000 : 0), "DMABuffer.write_pos" },
-  { &((DMABuffer->in_count)), SF_IS_BOOL(&((DMABuffer->in_count))) ? 1 : sizeof((DMABuffer->in_count)), 0x80000000 | (SF_IS_BOOL(&((DMABuffer->in_count))) ? 0x08000000 : 0), "DMABuffer.in_count" },
+ { &((ArgsReceiveLatch)), sizeof((ArgsReceiveLatch)), 0x80000000 | 0, "ArgsReceiveLatch" },
+ { ((ArgsReceiveBuf)), (uint32)((32)), 0 | 0, "ArgsReceiveBuf" },
+ { &((ArgsReceiveIn)), sizeof((ArgsReceiveIn)), 0x80000000 | 0, "ArgsReceiveIn" },
+
+ { ((ResultsBuffer)), (uint32)((16)), 0 | 0, "ResultsBuffer" },
+ { &((ResultsIn)), sizeof((ResultsIn)), 0x80000000 | 0, "ResultsIn" },
+ { &((ResultsWP)), sizeof((ResultsWP)), 0x80000000 | 0, "ResultsWP" },
+ { &((ResultsRP)), sizeof((ResultsRP)), 0x80000000 | 0, "ResultsRP" },
 
 
 
 
-  { ((SB)), (uint32)((sizeof(SB) / sizeof(SB[0]))), 0 | SF_FORCE_A8((SB)), "SB" },
-  { &((SB_In)), SF_IS_BOOL(&((SB_In))) ? 1 : sizeof((SB_In)), 0x80000000 | (SF_IS_BOOL(&((SB_In))) ? 0x08000000 : 0), "SB_In" },
-
-  { ((&SectorPipe[0][0])), (uint32)((sizeof(SectorPipe) / sizeof(SectorPipe[0][0]))), 0 | SF_FORCE_A8((&SectorPipe[0][0])), "&SectorPipe[0][0]" },
-  { &((SectorPipe_Pos)), SF_IS_BOOL(&((SectorPipe_Pos))) ? 1 : sizeof((SectorPipe_Pos)), 0x80000000 | (SF_IS_BOOL(&((SectorPipe_Pos))) ? 0x08000000 : 0), "SectorPipe_Pos" },
-  { &((SectorPipe_In)), SF_IS_BOOL(&((SectorPipe_In))) ? 1 : sizeof((SectorPipe_In)), 0x80000000 | (SF_IS_BOOL(&((SectorPipe_In))) ? 0x08000000 : 0), "SectorPipe_In" },
-
-  { ((SubQBuf)), (uint32)((sizeof(SubQBuf) / sizeof(SubQBuf[0]))), 0 | SF_FORCE_A8((SubQBuf)), "SubQBuf" },
-  { ((SubQBuf_Safe)), (uint32)((sizeof(SubQBuf_Safe) / sizeof(SubQBuf_Safe[0]))), 0 | SF_FORCE_A8((SubQBuf_Safe)), "SubQBuf_Safe" },
-
-  { &((SubQChecksumOK)), SF_IS_BOOL(&((SubQChecksumOK))) ? 1 : sizeof((SubQChecksumOK)), 0x80000000 | (SF_IS_BOOL(&((SubQChecksumOK))) ? 0x08000000 : 0), "SubQChecksumOK" },
-
-  { &((HeaderBufValid)), SF_IS_BOOL(&((HeaderBufValid))) ? 1 : sizeof((HeaderBufValid)), 0x80000000 | (SF_IS_BOOL(&((HeaderBufValid))) ? 0x08000000 : 0), "HeaderBufValid" },
-  { ((HeaderBuf)), (uint32)((sizeof(HeaderBuf) / sizeof(HeaderBuf[0]))), 0 | SF_FORCE_A8((HeaderBuf)), "HeaderBuf" },
-
-  { &((IRQBuffer)), SF_IS_BOOL(&((IRQBuffer))) ? 1 : sizeof((IRQBuffer)), 0x80000000 | (SF_IS_BOOL(&((IRQBuffer))) ? 0x08000000 : 0), "IRQBuffer" },
-  { &((IRQOutTestMask)), SF_IS_BOOL(&((IRQOutTestMask))) ? 1 : sizeof((IRQOutTestMask)), 0x80000000 | (SF_IS_BOOL(&((IRQOutTestMask))) ? 0x08000000 : 0), "IRQOutTestMask" },
-  { &((CDCReadyReceiveCounter)), SF_IS_BOOL(&((CDCReadyReceiveCounter))) ? 1 : sizeof((CDCReadyReceiveCounter)), 0x80000000 | (SF_IS_BOOL(&((CDCReadyReceiveCounter))) ? 0x08000000 : 0), "CDCReadyReceiveCounter" },
-
-  { &((FilterFile)), SF_IS_BOOL(&((FilterFile))) ? 1 : sizeof((FilterFile)), 0x80000000 | (SF_IS_BOOL(&((FilterFile))) ? 0x08000000 : 0), "FilterFile" },
-  { &((FilterChan)), SF_IS_BOOL(&((FilterChan))) ? 1 : sizeof((FilterChan)), 0x80000000 | (SF_IS_BOOL(&((FilterChan))) ? 0x08000000 : 0), "FilterChan" },
-
-  { &((PendingCommand)), SF_IS_BOOL(&((PendingCommand))) ? 1 : sizeof((PendingCommand)), 0x80000000 | (SF_IS_BOOL(&((PendingCommand))) ? 0x08000000 : 0), "PendingCommand" },
-  { &((PendingCommandPhase)), SF_IS_BOOL(&((PendingCommandPhase))) ? 1 : sizeof((PendingCommandPhase)), 0x80000000 | (SF_IS_BOOL(&((PendingCommandPhase))) ? 0x08000000 : 0), "PendingCommandPhase" },
-  { &((PendingCommandCounter)), SF_IS_BOOL(&((PendingCommandCounter))) ? 1 : sizeof((PendingCommandCounter)), 0x80000000 | (SF_IS_BOOL(&((PendingCommandCounter))) ? 0x08000000 : 0), "PendingCommandCounter" },
-
-  { &((SPUCounter)), SF_IS_BOOL(&((SPUCounter))) ? 1 : sizeof((SPUCounter)), 0x80000000 | (SF_IS_BOOL(&((SPUCounter))) ? 0x08000000 : 0), "SPUCounter" },
-
-  { &((Mode)), SF_IS_BOOL(&((Mode))) ? 1 : sizeof((Mode)), 0x80000000 | (SF_IS_BOOL(&((Mode))) ? 0x08000000 : 0), "Mode" },
-  { &((DriveStatus)), SF_IS_BOOL(&((DriveStatus))) ? 1 : sizeof((DriveStatus)), 0x80000000 | (SF_IS_BOOL(&((DriveStatus))) ? 0x08000000 : 0), "DriveStatus" },
-  { &((StatusAfterSeek)), SF_IS_BOOL(&((StatusAfterSeek))) ? 1 : sizeof((StatusAfterSeek)), 0x80000000 | (SF_IS_BOOL(&((StatusAfterSeek))) ? 0x08000000 : 0), "StatusAfterSeek" },
-  { &((Forward)), SF_IS_BOOL(&((Forward))) ? 1 : sizeof((Forward)), 0x80000000 | (SF_IS_BOOL(&((Forward))) ? 0x08000000 : 0), "Forward" },
-  { &((Backward)), SF_IS_BOOL(&((Backward))) ? 1 : sizeof((Backward)), 0x80000000 | (SF_IS_BOOL(&((Backward))) ? 0x08000000 : 0), "Backward" },
-  { &((Muted)), SF_IS_BOOL(&((Muted))) ? 1 : sizeof((Muted)), 0x80000000 | (SF_IS_BOOL(&((Muted))) ? 0x08000000 : 0), "Muted" },
-
-  { &((PlayTrackMatch)), SF_IS_BOOL(&((PlayTrackMatch))) ? 1 : sizeof((PlayTrackMatch)), 0x80000000 | (SF_IS_BOOL(&((PlayTrackMatch))) ? 0x08000000 : 0), "PlayTrackMatch" },
-
-  { &((PSRCounter)), SF_IS_BOOL(&((PSRCounter))) ? 1 : sizeof((PSRCounter)), 0x80000000 | (SF_IS_BOOL(&((PSRCounter))) ? 0x08000000 : 0), "PSRCounter" },
-
-  { &((CurSector)), SF_IS_BOOL(&((CurSector))) ? 1 : sizeof((CurSector)), 0x80000000 | (SF_IS_BOOL(&((CurSector))) ? 0x08000000 : 0), "CurSector" },
+  { ((DMABuffer->data)), (uint32)((DMABuffer->size)), 0 | 0, "&DMABuffer.data[0]" },
+  { &((DMABuffer->read_pos)), sizeof((DMABuffer->read_pos)), 0x80000000 | 0, "DMABuffer.read_pos" },
+  { &((DMABuffer->write_pos)), sizeof((DMABuffer->write_pos)), 0x80000000 | 0, "DMABuffer.write_pos" },
+  { &((DMABuffer->in_count)), sizeof((DMABuffer->in_count)), 0x80000000 | 0, "DMABuffer.in_count" },
 
 
-  { &((AsyncIRQPending)), SF_IS_BOOL(&((AsyncIRQPending))) ? 1 : sizeof((AsyncIRQPending)), 0x80000000 | (SF_IS_BOOL(&((AsyncIRQPending))) ? 0x08000000 : 0), "AsyncIRQPending" },
-  { ((AsyncResultsPending)), (uint32)((sizeof(AsyncResultsPending) / sizeof(AsyncResultsPending[0]))), 0 | SF_FORCE_A8((AsyncResultsPending)), "AsyncResultsPending" },
-  { &((AsyncResultsPendingCount)), SF_IS_BOOL(&((AsyncResultsPendingCount))) ? 1 : sizeof((AsyncResultsPendingCount)), 0x80000000 | (SF_IS_BOOL(&((AsyncResultsPendingCount))) ? 0x08000000 : 0), "AsyncResultsPendingCount" },
-
-  { &((SeekTarget)), SF_IS_BOOL(&((SeekTarget))) ? 1 : sizeof((SeekTarget)), 0x80000000 | (SF_IS_BOOL(&((SeekTarget))) ? 0x08000000 : 0), "SeekTarget" },
 
 
+  { ((SB)), (uint32)((sizeof(SB) / sizeof(SB[0]))), 0 | 0, "SB" },
+  { &((SB_In)), sizeof((SB_In)), 0x80000000 | 0, "SB_In" },
+
+  { ((&SectorPipe[0][0])), (uint32)((sizeof(SectorPipe) / sizeof(SectorPipe[0][0]))), 0 | 0, "&SectorPipe[0][0]" },
+  { &((SectorPipe_Pos)), sizeof((SectorPipe_Pos)), 0x80000000 | 0, "SectorPipe_Pos" },
+  { &((SectorPipe_In)), sizeof((SectorPipe_In)), 0x80000000 | 0, "SectorPipe_In" },
+
+  { ((SubQBuf)), (uint32)((sizeof(SubQBuf) / sizeof(SubQBuf[0]))), 0 | 0, "SubQBuf" },
+  { ((SubQBuf_Safe)), (uint32)((sizeof(SubQBuf_Safe) / sizeof(SubQBuf_Safe[0]))), 0 | 0, "SubQBuf_Safe" },
+
+  { &((SubQChecksumOK)), 1, 0x80000000 | 0x08000000, "SubQChecksumOK" },
+
+  { &((HeaderBufValid)), 1, 0x80000000 | 0x08000000, "HeaderBufValid" },
+  { ((HeaderBuf)), (uint32)((sizeof(HeaderBuf) / sizeof(HeaderBuf[0]))), 0 | 0, "HeaderBuf" },
+
+  { &((IRQBuffer)), sizeof((IRQBuffer)), 0x80000000 | 0, "IRQBuffer" },
+  { &((IRQOutTestMask)), sizeof((IRQOutTestMask)), 0x80000000 | 0, "IRQOutTestMask" },
+  { &((CDCReadyReceiveCounter)), sizeof((CDCReadyReceiveCounter)), 0x80000000 | 0, "CDCReadyReceiveCounter" },
+
+  { &((FilterFile)), sizeof((FilterFile)), 0x80000000 | 0, "FilterFile" },
+  { &((FilterChan)), sizeof((FilterChan)), 0x80000000 | 0, "FilterChan" },
+
+  { &((PendingCommand)), sizeof((PendingCommand)), 0x80000000 | 0, "PendingCommand" },
+  { &((PendingCommandPhase)), sizeof((PendingCommandPhase)), 0x80000000 | 0, "PendingCommandPhase" },
+  { &((PendingCommandCounter)), sizeof((PendingCommandCounter)), 0x80000000 | 0, "PendingCommandCounter" },
+
+  { &((SPUCounter)), sizeof((SPUCounter)), 0x80000000 | 0, "SPUCounter" },
+
+  { &((Mode)), sizeof((Mode)), 0x80000000 | 0, "Mode" },
+  { &((DriveStatus)), sizeof((DriveStatus)), 0x80000000 | 0, "DriveStatus" },
+  { &((StatusAfterSeek)), sizeof((StatusAfterSeek)), 0x80000000 | 0, "StatusAfterSeek" },
+  { &((Forward)), 1, 0x80000000 | 0x08000000, "Forward" },
+  { &((Backward)), 1, 0x80000000 | 0x08000000, "Backward" },
+  { &((Muted)), 1, 0x80000000 | 0x08000000, "Muted" },
+
+  { &((PlayTrackMatch)), sizeof((PlayTrackMatch)), 0x80000000 | 0, "PlayTrackMatch" },
+
+  { &((PSRCounter)), sizeof((PSRCounter)), 0x80000000 | 0, "PSRCounter" },
+
+  { &((CurSector)), sizeof((CurSector)), 0x80000000 | 0, "CurSector" },
+
+
+  { &((AsyncIRQPending)), sizeof((AsyncIRQPending)), 0x80000000 | 0, "AsyncIRQPending" },
+  { ((AsyncResultsPending)), (uint32)((sizeof(AsyncResultsPending) / sizeof(AsyncResultsPending[0]))), 0 | 0, "AsyncResultsPending" },
+  { &((AsyncResultsPendingCount)), sizeof((AsyncResultsPendingCount)), 0x80000000 | 0, "AsyncResultsPendingCount" },
+
+  { &((SeekTarget)), sizeof((SeekTarget)), 0x80000000 | 0, "SeekTarget" },
 
 
 
 
 
-  { &((CommandLoc)), SF_IS_BOOL(&((CommandLoc))) ? 1 : sizeof((CommandLoc)), 0x80000000 | (SF_IS_BOOL(&((CommandLoc))) ? 0x08000000 : 0), "CommandLoc" },
-  { &((CommandLoc_Dirty)), SF_IS_BOOL(&((CommandLoc_Dirty))) ? 1 : sizeof((CommandLoc_Dirty)), 0x80000000 | (SF_IS_BOOL(&((CommandLoc_Dirty))) ? 0x08000000 : 0), "CommandLoc_Dirty" },
-  { ((&xa_previous[0][0])), (uint32)(((sizeof(xa_previous) / sizeof(xa_previous[0][0]))) * sizeof(uint16)), 0x20000000 | SF_FORCE_A16((&xa_previous[0][0])), "&xa_previous[0][0]" },
 
-  { &((xa_cur_set)), SF_IS_BOOL(&((xa_cur_set))) ? 1 : sizeof((xa_cur_set)), 0x80000000 | (SF_IS_BOOL(&((xa_cur_set))) ? 0x08000000 : 0), "xa_cur_set" },
-  { &((xa_cur_file)), SF_IS_BOOL(&((xa_cur_file))) ? 1 : sizeof((xa_cur_file)), 0x80000000 | (SF_IS_BOOL(&((xa_cur_file))) ? 0x08000000 : 0), "xa_cur_file" },
-  { &((xa_cur_chan)), SF_IS_BOOL(&((xa_cur_chan))) ? 1 : sizeof((xa_cur_chan)), 0x80000000 | (SF_IS_BOOL(&((xa_cur_chan))) ? 0x08000000 : 0), "xa_cur_chan" },
 
-  { &((ReportLastF)), SF_IS_BOOL(&((ReportLastF))) ? 1 : sizeof((ReportLastF)), 0x80000000 | (SF_IS_BOOL(&((ReportLastF))) ? 0x08000000 : 0), "ReportLastF" },
+  { &((CommandLoc)), sizeof((CommandLoc)), 0x80000000 | 0, "CommandLoc" },
+  { &((CommandLoc_Dirty)), 1, 0x80000000 | 0x08000000, "CommandLoc_Dirty" },
+  { ((&xa_previous[0][0])), (uint32)(((sizeof(xa_previous) / sizeof(xa_previous[0][0]))) * sizeof(uint16)), 0x20000000 | 0, "&xa_previous[0][0]" },
+
+  { &((xa_cur_set)), 1, 0x80000000 | 0x08000000, "xa_cur_set" },
+  { &((xa_cur_file)), sizeof((xa_cur_file)), 0x80000000 | 0, "xa_cur_file" },
+  { &((xa_cur_chan)), sizeof((xa_cur_chan)), 0x80000000 | 0, "xa_cur_chan" },
+
+  { &((ReportLastF)), sizeof((ReportLastF)), 0x80000000 | 0, "ReportLastF" },
 
   { 0, 0, 0, 0 }
  };
