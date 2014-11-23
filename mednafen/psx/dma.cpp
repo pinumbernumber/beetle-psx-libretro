@@ -66,9 +66,6 @@ enum
 //
 // GPU next event, std::max<128, wait_time>, or something similar, for handling FIFO.
 
-namespace MDFN_IEN_PSX
-{
-
 static int32_t DMACycleCounter;
 
 static uint32_t DMAControl;
@@ -143,7 +140,7 @@ void DMA_Power(void)
  RecalcIRQOut();
 }
 
-void PSX_SetDMASuckSuck(unsigned);
+extern void PSX_SetDMASuckSuck(unsigned);
 
 static INLINE bool ChCan(const unsigned ch, const uint32_t CRModeCache)
 {
@@ -157,7 +154,7 @@ static INLINE bool ChCan(const unsigned ch, const uint32_t CRModeCache)
          return(MDEC_DMACanRead());
       case CH_GPU: 
          if(CRModeCache & 0x1)
-            return(GPU->DMACanWrite());
+            return(MDFN_IEN_PSX::GPU->DMACanWrite());
          return(true);
       case CH_CDC:
       case CH_SPU:
@@ -216,7 +213,7 @@ static void RecalcHalt(void)
    if((DMACH[1].WordCounter || (DMACH[1].ChanControl & (1 << 24))) && (DMACH[1].ChanControl & 0x200) && (DMACH[1].WordCounter || MDEC_DMACanRead()))
       Halt = true;
 
-   if((DMACH[2].WordCounter || (DMACH[2].ChanControl & (1 << 24))) && (DMACH[2].ChanControl & 0x200) && ((DMACH[2].ChanControl & 0x1) && (DMACH[2].WordCounter || GPU->DMACanWrite())))
+   if((DMACH[2].WordCounter || (DMACH[2].ChanControl & (1 << 24))) && (DMACH[2].ChanControl & 0x200) && ((DMACH[2].ChanControl & 0x1) && (DMACH[2].WordCounter || MDFN_IEN_PSX::GPU->DMACanWrite())))
       Halt = true;
 
    if((DMACH[3].WordCounter || (DMACH[3].ChanControl & (1 << 24))) && !(DMACH[3].ChanControl & 0x100))
@@ -272,9 +269,9 @@ static INLINE void ChRW(const unsigned ch, const uint32_t CRModeCache, uint32_t 
 
       case CH_GPU:
          if(CRModeCache & 0x1)
-            GPU->WriteDMA(*V);
+            MDFN_IEN_PSX::GPU->WriteDMA(*V);
          else
-            *V = GPU->ReadDMA();
+            *V = MDFN_IEN_PSX::GPU->ReadDMA();
          break;
 
       case CH_CDC:
@@ -387,7 +384,7 @@ static INLINE void RunChannelI(const unsigned ch, const uint32_t CRModeCache, in
                break;
             }
 
-            header = MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
+            header = MDFN_IEN_PSX::MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
             DMACH[ch].CurAddr = (DMACH[ch].CurAddr + 4) & 0xFFFFFF;
 
             DMACH[ch].WordCounter = header >> 24;
@@ -442,12 +439,12 @@ static INLINE void RunChannelI(const unsigned ch, const uint32_t CRModeCache, in
          }
 
          if(CRModeCache & 0x1)
-            vtmp = MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
+            vtmp = MDFN_IEN_PSX::MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
 
          ChRW(ch, CRModeCache, &vtmp, &voffs);
 
          if(!(CRModeCache & 0x1))
-            MainRAM.WriteU32((DMACH[ch].CurAddr + (voffs << 2)) & 0x1FFFFC, vtmp);
+            MDFN_IEN_PSX::MainRAM.WriteU32((DMACH[ch].CurAddr + (voffs << 2)) & 0x1FFFFC, vtmp);
       }
 
       if(CRModeCache & 0x2)
@@ -578,7 +575,7 @@ int32_t DMA_Update(const int32_t timestamp)
    int32_t clocks = timestamp - lastts;
    lastts = timestamp;
 
-   GPU->Update(timestamp);
+   MDFN_IEN_PSX::GPU->Update(timestamp);
    MDEC_Run(clocks);
 
    for (i = 0; i < 7; i++)
@@ -632,7 +629,7 @@ void DMA_Write(const int32_t timestamp, uint32_t A, uint32_t V)
             break;
 
          default:
-            PSX_WARNING("[DMA] Unknown write: %08x %08x", A, V);
+            //PSX_WARNING("[DMA] Unknown write: %08x %08x", A, V);
             break;
       }
       return;
@@ -666,7 +663,7 @@ void DMA_Write(const int32_t timestamp, uint32_t A, uint32_t V)
                DMACH[ch].ClockCounter = (1 << 30);
                RunChannel(timestamp, 1, ch);
                DMACH[ch].ClockCounter = 0;
-               PSX_WARNING("[DMA] Forced stop for channel %d -- scanline=%d", ch, GPU->GetScanlineNum());
+               PSX_WARNING("[DMA] Forced stop for channel %d -- scanline=%d", ch, MDFN_IEN_PSX::GPU->GetScanlineNum());
                //MDFN_DispMessage("[DMA] Forced stop for channel %d", ch);
 #endif
             }
@@ -679,7 +676,7 @@ void DMA_Write(const int32_t timestamp, uint32_t A, uint32_t V)
             if(!(OldCC & (1 << 24)) && (V & (1 << 24)))
             {
                //if(ch == 0 || ch == 1)
-               // PSX_WARNING("[DMA] Started DMA for channel=%d --- CHCR=0x%08x --- BCR=0x%08x --- scanline=%d", ch, DMACH[ch].ChanControl, DMACH[ch].BlockControl, GPU->GetScanlineNum());
+               // PSX_WARNING("[DMA] Started DMA for channel=%d --- CHCR=0x%08x --- BCR=0x%08x --- scanline=%d", ch, DMACH[ch].ChanControl, DMACH[ch].BlockControl, MDFN_IEN_PSX::GPU->GetScanlineNum());
 
                DMACH[ch].WordCounter = 0;
                DMACH[ch].ClockCounter = 0;
@@ -700,7 +697,7 @@ void DMA_Write(const int32_t timestamp, uint32_t A, uint32_t V)
          }
          break;
    }
-   PSX_SetEventNT(PSX_EVENT_DMA, timestamp + CalcNextEvent(0x10000000));
+   PSX_SetEventNT(MDFN_IEN_PSX::PSX_EVENT_DMA, timestamp + CalcNextEvent(0x10000000));
 }
 
 uint32_t DMA_Read(const int32_t timestamp, uint32_t A)
@@ -712,9 +709,11 @@ uint32_t DMA_Read(const int32_t timestamp, uint32_t A)
    {
       switch(A & 0xC)
       {
+#if 0
          default:
             PSX_WARNING("[DMA] Unknown read: %08x", A);
             break;
+#endif
          case 0x0:
             ret = DMAControl;
             break;
@@ -809,7 +808,4 @@ int DMA_StateAction(void *data, int load, int data_only)
  }
 
  return(ret);
-}
-
-
 }

@@ -70,6 +70,12 @@ enum
 
 extern "C" void MDEC_Kill(void);
 
+static unsigned sucksuck = 0;
+void PSX_SetDMASuckSuck(unsigned suckage)
+{
+ sucksuck = suckage;
+}
+
 namespace MDFN_IEN_PSX
 {
 #if PSX_DBGPRINT_ENABLE
@@ -428,11 +434,6 @@ void PSX_RequestMLExit(void)
 
 void DMA_CheckReadDebug(uint32_t A);
 
-static unsigned sucksuck = 0;
-void PSX_SetDMASuckSuck(unsigned suckage)
-{
- sucksuck = suckage;
-}
 
 
 // Remember to update MemPeek<>() when we change address decoding in MemRW()

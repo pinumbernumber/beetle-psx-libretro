@@ -1,9 +1,6 @@
 #ifndef __MDFN_PSX_DMA_H
 #define __MDFN_PSX_DMA_H
 
-namespace MDFN_IEN_PSX
-{
-
 bool DMA_GPUWriteActive(void);
 
 int32_t DMA_Update(const int32_t timestamp);
@@ -18,7 +15,5 @@ void DMA_Init(void);
 void DMA_Kill(void);
 
 int DMA_StateAction(void *data, int load, int data_only);
-
-}
 
 #endif
