@@ -512,18 +512,13 @@ void PS_SPU::RunEnvelope(SPU_Voice *voice)
  }
 }
 
-static INLINE void CheckIRQAddr(uint32 addr)
-{
-   if(SPUControl & 0x40)
-   {
-      if(IRQAddr == addr)
-      {
-         //SPUIRQ_DBG("SPU IRQ (ALT): 0x%06x", addr);
-         IRQAsserted = true;
-         IRQ_Assert(IRQ_SPU, IRQAsserted);
-      }
+#define CheckIRQAddr(addr) \
+   if((SPUControl & 0x40) && (IRQAddr == (addr))) \
+   { \
+      /* SPUIRQ_DBG("SPU IRQ (ALT): 0x%06x", addr); */ \
+      IRQAsserted = true; \
+      IRQ_Assert(IRQ_SPU, IRQAsserted); \
    }
-}
 
 static INLINE void WriteSPURAM(uint32 addr, uint16 value)
 {
