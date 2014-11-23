@@ -19,6 +19,7 @@
 #include "../state-common.h"
 #include "timer.h"
 #include "irq.h"
+#include <string.h>
 
 /*
  Notes(some of it may be incomplete or wrong in subtle ways)

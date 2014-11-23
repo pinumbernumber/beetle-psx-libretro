@@ -123,4 +123,12 @@ typedef unsigned char   Boolean; /* 0 or 1 */
  #error "Define MSB_FIRST or LSB_FIRST!"
 #endif
 
+#ifndef min
+#  define min(x,y)  ((x)>(y)?(y):(x))
+#endif
+
+#ifndef max
+#  define max(x,y)  ((x)<(y)?(y):(x))
+#endif
+
 #endif

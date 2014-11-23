@@ -21,6 +21,8 @@
 
 #include "../clamp.h"
 
+#include <string.h>
+
 static uint32_t ReciprocalTable[0x8000] =
 {
  #include "gte_divrecip.inc"

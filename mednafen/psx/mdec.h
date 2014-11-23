@@ -1,6 +1,8 @@
 #ifndef __MDFN_PSX_MDEC_H
 #define __MDFN_PSX_MDEC_H
 
+#include <boolean.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

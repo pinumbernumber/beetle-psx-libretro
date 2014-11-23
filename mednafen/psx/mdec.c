@@ -60,6 +60,7 @@
 
 #include "../cdrom/SimpleFIFO.h"
 #include <math.h>
+#include <string.h>
 
 #if defined(__SSE2__)
 #include <xmmintrin.h>

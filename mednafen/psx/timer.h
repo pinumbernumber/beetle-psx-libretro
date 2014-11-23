@@ -1,6 +1,8 @@
 #ifndef __MDFN_PSX_TIMER_H
 #define __MDFN_PSX_TIMER_H
 
+#include <boolean.h>
+
 enum
 {
  TIMER_GSREG_COUNTER0 = 0x00,
