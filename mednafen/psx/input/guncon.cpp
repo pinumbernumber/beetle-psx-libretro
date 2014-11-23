@@ -118,33 +118,33 @@ int InputDevice_GunCon::StateAction(StateMem* sm, int load, int data_only, const
 {
    SFORMAT StateRegs[] =
    {
-      SFVAR(dtr),
+      { &((dtr)), 1, 0x80000000 | 0x08000000, "dtr" },
 
-      SFVAR(buttons),
-      SFVAR(trigger_eff),
-      SFVAR(trigger_noclear),
-      SFVAR(hit_x),
-      SFVAR(hit_y),
+      { &((buttons)), sizeof((buttons)), 0x80000000 | 0, "buttons" },
+      { &((trigger_eff)), 1, 0x80000000 | 0x08000000, "trigger_eff" },
+      { &((trigger_noclear)), 1, 0x80000000 | 0x08000000, "trigger_noclear" },
+      { &((hit_x)), sizeof((hit_x)), 0x80000000 | 0, "hit_x" },
+      { &((hit_y)), sizeof((hit_y)), 0x80000000 | 0, "hit_y" },
 
-      SFVAR(nom_x),
-      SFVAR(nom_y),
-      SFVAR(os_shot_counter),
-      SFVAR(prev_oss),
+      { &((nom_x)), sizeof((nom_x)), 0x80000000 | 0, "nom_x" },
+      { &((nom_y)), sizeof((nom_y)), 0x80000000 | 0, "nom_y" },
+      { &((os_shot_counter)), sizeof((os_shot_counter)), 0x80000000 | 0, "os_shot_counter" },
+      { &((prev_oss)), 1, 0x80000000 | 0x08000000, "prev_oss" },
 
-      SFVAR(command_phase),
-      SFVAR(bitpos),
-      SFVAR(receive_buffer),
+      { &((command_phase)), sizeof((command_phase)), 0x80000000 | 0, "command_phase" },
+      { &((bitpos)), sizeof((bitpos)), 0x80000000 | 0, "bitpos" },
+      { &((receive_buffer)), sizeof((receive_buffer)), 0x80000000 | 0, "receive_buffer" },
 
-      SFVAR(command),
+      { &((command)), sizeof((command)), 0x80000000 | 0, "command" },
 
-      SFARRAY(transmit_buffer, sizeof(transmit_buffer)),
-      SFVAR(transmit_pos),
-      SFVAR(transmit_count),
+      { ((transmit_buffer)), (uint32)((sizeof(transmit_buffer))), 0 | 0, "transmit_buffer" },
+      { &((transmit_pos)), sizeof((transmit_pos)), 0x80000000 | 0, "transmit_pos" },
+      { &((transmit_count)), sizeof((transmit_count)), 0x80000000 | 0, "transmit_count" },
 
-      SFVAR(prev_vsync),
-      SFVAR(line_counter),
+      { &((prev_vsync)), 1, 0x80000000 | 0x08000000, "prev_vsync" },
+      { &((line_counter)), sizeof((line_counter)), 0x80000000 | 0, "line_counter" },
 
-      SFEND
+      { 0, 0, 0, 0 }
    };
    int ret = MDFNSS_StateAction(sm, load, StateRegs, section_name);
 
