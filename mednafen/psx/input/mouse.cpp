@@ -110,26 +110,26 @@ int InputDevice_Mouse::StateAction(StateMem* sm, int load, int data_only, const 
 {
  SFORMAT StateRegs[] =
  {
-  SFVAR(clear_timeout),
+  { &((clear_timeout)), sizeof((clear_timeout)), 0x80000000 | 0, "clear_timeout" },
 
-  SFVAR(dtr),
+  { &((dtr)), 1, 0x80000000 | 0x08000000, "dtr" },
 
-  SFVAR(button),
-  SFVAR(button_post_mask),
-  SFVAR(accum_xdelta),
-  SFVAR(accum_ydelta),
+  { &((button)), sizeof((button)), 0x80000000 | 0, "button" },
+  { &((button_post_mask)), sizeof((button_post_mask)), 0x80000000 | 0, "button_post_mask" },
+  { &((accum_xdelta)), sizeof((accum_xdelta)), 0x80000000 | 0, "accum_xdelta" },
+  { &((accum_ydelta)), sizeof((accum_ydelta)), 0x80000000 | 0, "accum_ydelta" },
 
-  SFVAR(command_phase),
-  SFVAR(bitpos),
-  SFVAR(receive_buffer),
+  { &((command_phase)), sizeof((command_phase)), 0x80000000 | 0, "command_phase" },
+  { &((bitpos)), sizeof((bitpos)), 0x80000000 | 0, "bitpos" },
+  { &((receive_buffer)), sizeof((receive_buffer)), 0x80000000 | 0, "receive_buffer" },
 
-  SFVAR(command),
+  { &((command)), sizeof((command)), 0x80000000 | 0, "command" },
 
-  SFARRAY(transmit_buffer, sizeof(transmit_buffer)),
-  SFVAR(transmit_pos),
-  SFVAR(transmit_count),
+  { ((transmit_buffer)), (uint32)((sizeof(transmit_buffer))), 0 | 0, "transmit_buffer" },
+  { &((transmit_pos)), sizeof((transmit_pos)), 0x80000000 | 0, "transmit_pos" },
+  { &((transmit_count)), sizeof((transmit_count)), 0x80000000 | 0, "transmit_count" },
 
-  SFEND
+  { 0, 0, 0, 0 }
  };
  int ret = MDFNSS_StateAction(sm, load, StateRegs, section_name);
 
