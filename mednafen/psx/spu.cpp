@@ -76,6 +76,12 @@
 uint32_t IntermediateBufferPos;
 int16_t IntermediateBuffer[4096][2];
 
+static uint32_t RWAddr;
+static uint16_t SPUControl;
+static uint16_t SPURAM[524288 / sizeof(uint16)];
+static uint32_t IRQAddr;
+static bool IRQAsserted;
+
 //#define SPUIRQ_DBG(format, ...) { printf("[SPUIRQDBG] " format " -- Voice 22 CA=0x%06x,LA=0x%06x\n", ## __VA_ARGS__, Voices[22].CurAddr, Voices[22].LoopAddr); }
 
 static INLINE void SPUIRQ_DBG(const char *fmt, ...)
@@ -187,7 +193,8 @@ void PS_SPU::Power(void)
  IRQAsserted = false;
 }
 
-static INLINE void CalcVCDelta(const uint8 zs, uint8 speed, bool log_mode, bool dec_mode, bool inv_increment, int16 Current, int &increment, int &divinco)
+static INLINE void CalcVCDelta(const uint8 zs, uint8 speed,bool log_mode,
+      bool dec_mode, bool inv_increment, int16 Current, int &increment, int &divinco)
 {
   increment = (7 - (speed & 0x3));
 
@@ -531,30 +538,30 @@ void PS_SPU::RunEnvelope(SPU_Voice *voice)
  }
 }
 
-INLINE void PS_SPU::CheckIRQAddr(uint32 addr)
+static INLINE void CheckIRQAddr(uint32 addr)
 {
- if(SPUControl & 0x40)
- {
-  if(IRQAddr == addr)
-  {
-   //SPUIRQ_DBG("SPU IRQ (ALT): 0x%06x", addr);
-   IRQAsserted = true;
-   IRQ_Assert(IRQ_SPU, IRQAsserted);
-  }
- }
+   if(SPUControl & 0x40)
+   {
+      if(IRQAddr == addr)
+      {
+         //SPUIRQ_DBG("SPU IRQ (ALT): 0x%06x", addr);
+         IRQAsserted = true;
+         IRQ_Assert(IRQ_SPU, IRQAsserted);
+      }
+   }
 }
 
-INLINE void PS_SPU::WriteSPURAM(uint32 addr, uint16 value)
+static INLINE void WriteSPURAM(uint32 addr, uint16 value)
 {
- CheckIRQAddr(addr);
+   CheckIRQAddr(addr);
 
- SPURAM[addr] = value;
+   SPURAM[addr] = value;
 }
 
-INLINE uint16 PS_SPU::ReadSPURAM(uint32 addr)
+static INLINE uint16 ReadSPURAM(uint32 addr)
 {
- CheckIRQAddr(addr);
- return(SPURAM[addr]);
+   CheckIRQAddr(addr);
+   return(SPURAM[addr]);
 }
 
 #include "spu_reverb.inc"
@@ -874,24 +881,26 @@ int32 PS_SPU::UpdateFromCDC(int32 clocks)
  return clock_divider;
 }
 
-void PS_SPU::WriteDMA(uint32 V)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void SPU_WriteDMA(uint32 V)
 {
- //SPUIRQ_DBG("DMA Write, RWAddr after=0x%06x", RWAddr);
- WriteSPURAM(RWAddr, V);
- RWAddr = (RWAddr + 1) & 0x3FFFF;
+   //SPUIRQ_DBG("DMA Write, RWAddr after=0x%06x", RWAddr);
+   WriteSPURAM(RWAddr, V);
+   RWAddr = (RWAddr + 1) & 0x3FFFF;
 
- WriteSPURAM(RWAddr, V >> 16);
- RWAddr = (RWAddr + 1) & 0x3FFFF;
+   WriteSPURAM(RWAddr, V >> 16);
+   RWAddr = (RWAddr + 1) & 0x3FFFF;
 
 
- CheckIRQAddr(RWAddr);
+   CheckIRQAddr(RWAddr);
 }
 
-uint32 PS_SPU::ReadDMA(void)
+uint32 SPU_ReadDMA(void)
 {
- uint32 ret;
-
- ret = (uint16)ReadSPURAM(RWAddr);
+ uint32 ret = (uint16)ReadSPURAM(RWAddr);
  RWAddr = (RWAddr + 1) & 0x3FFFF;
 
  ret |= (uint32)(uint16)ReadSPURAM(RWAddr) << 16;
@@ -903,6 +912,11 @@ uint32 PS_SPU::ReadDMA(void)
 
  return(ret);
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 
 void PS_SPU::Write(pscpu_timestamp_t timestamp, uint32 A, uint16 V)
 {

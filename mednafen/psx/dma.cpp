@@ -325,9 +325,9 @@ static INLINE void ChRW(const unsigned ch, const uint32_t CRModeCache, uint32_t 
          extra_cyc_overhead = 47;	// Should be closer to 69, average, but actual timing is...complicated.
 
          if(CRModeCache & 0x1)
-            SPU->WriteDMA(*V);
+            SPU_WriteDMA(*V);
          else
-            *V = SPU->ReadDMA();
+            *V = SPU_ReadDMA();
          break;
 
       case CH_FIVE:

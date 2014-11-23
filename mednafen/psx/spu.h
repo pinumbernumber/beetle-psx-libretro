@@ -110,9 +110,6 @@ class PS_SPU
  void Write(pscpu_timestamp_t timestamp, uint32_t A, uint16_t V);
  uint16_t Read(pscpu_timestamp_t timestamp, uint32_t A);
 
- void WriteDMA(uint32_t V);
- uint32_t ReadDMA(void);
-
  void StartFrame(double rate, uint32_t quality);
  int32_t EndFrame(int16 *SoundBuf);
 
@@ -120,10 +117,6 @@ class PS_SPU
  //pscpu_timestamp_t Update(pscpu_timestamp_t timestamp);
 
  private:
-
- void CheckIRQAddr(uint32_t addr);
- void WriteSPURAM(uint32_t addr, uint16_t value);
- uint16_t ReadSPURAM(uint32_t addr);
 
  void RunDecoder(SPU_Voice *voice);
 
@@ -156,12 +149,6 @@ class PS_SPU
  int32_t CDVol[2];
  int32_t ExternVol[2];
  
- uint32_t IRQAddr;
-
- uint32_t RWAddr;
-
- uint16_t SPUControl;
-
  uint32_t VoiceOn;
  uint32_t VoiceOff;
 
@@ -242,12 +229,9 @@ class PS_SPU
  int32_t RD_RVB(int16 raw_offs);
  void WR_RVB(int16 raw_offs, int32_t sample, int32_t extra_offs = 0);
 
- bool IRQAsserted;
-
  //pscpu_timestamp_t lastts;
  int32_t clock_divider;
 
- uint16_t SPURAM[524288 / sizeof(uint16)];
 
  int last_rate;
  uint32_t last_quality;
@@ -340,5 +324,16 @@ class PS_SPU
 
 
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void SPU_WriteDMA(uint32_t V);
+uint32 SPU_ReadDMA(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
