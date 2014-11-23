@@ -964,6 +964,7 @@ void PS_CDC::HandlePlayRead(void)
     }
     else
     {
+#if 0
      // maybe if(!(Mode & 0x30)) too?
      if(!(buf[12 + 6] & 0x20))
      {
@@ -973,7 +974,6 @@ void PS_CDC::HandlePlayRead(void)
       }
      }
 
-#if 0
      if(!(Mode & 0x30) && (buf[12 + 6] & 0x20))
       PSX_WARNING("[CDC] BORK: %d", CurSector);
 #endif
