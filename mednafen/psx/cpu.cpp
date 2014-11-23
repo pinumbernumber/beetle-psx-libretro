@@ -105,11 +105,6 @@ static INLINE void RecalcIPCache(void)
       IPCache = 0x80;
 }
 
-void PS_CPU::SetHalt(bool status)
-{
-   Halted = status;
-   RecalcIPCache();
-}
 
 void PS_CPU::Power(void)
 {
@@ -223,6 +218,12 @@ void CPU_AssertIRQ(int which, bool asserted)
    if(asserted)
       CP0.CAUSE |= 1 << (10 + which);
 
+   RecalcIPCache();
+}
+
+void CPU_SetHalt(bool status)
+{
+   Halted = status;
    RecalcIPCache();
 }
 

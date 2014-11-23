@@ -15,10 +15,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <boolean.h>
 #include "psx.h"
 #include "mdec.h"
 #include "cdc.h"
 #include "spu.h"
+
+/* forward decls */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void CPU_SetHalt(bool status);
+
+#ifdef __cplusplus
+}
+#endif
 
 //#include <map>
 
@@ -228,7 +241,7 @@ static void RecalcHalt(void)
 
    PSX_SetDMASuckSuck(tmp);
 
-   CPU->SetHalt(Halt);
+   CPU_SetHalt(Halt);
 }
 
 
@@ -653,9 +666,9 @@ void DMA_Write(const pscpu_timestamp_t timestamp, uint32_t A, uint32_t V)
                DMACH[ch].ClockCounter = (1 << 30);
                RunChannel(timestamp, 1, ch);
                DMACH[ch].ClockCounter = 0;
-#endif
                PSX_WARNING("[DMA] Forced stop for channel %d -- scanline=%d", ch, GPU->GetScanlineNum());
                //MDFN_DispMessage("[DMA] Forced stop for channel %d", ch);
+#endif
             }
 
             if(ch == 6)

@@ -69,7 +69,6 @@ class PS_CPU
  void Power(void);
 
 
- void SetHalt(bool status);
 
  // TODO eventually: factor BIU address decoding directly in the CPU core somehow without hurting speed.
  void SetBIU(uint32_t val);
@@ -230,6 +229,8 @@ extern "C" {
 
 // which ranges 0-5, inclusive
 void CPU_AssertIRQ(int which, bool asserted);
+
+void SetHalt(bool status);
 
 #ifdef __cplusplus
 }
