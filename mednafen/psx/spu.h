@@ -155,10 +155,6 @@ struct SPU_Voice
  SPU_ADSR ADSR;
 };
 
-namespace MDFN_IEN_PSX
-{
-
-
 void SPU_Sweep_Clock(SPU_Sweep *sweep);
 
 
@@ -181,8 +177,6 @@ void SPU_StartFrame(double rate, uint32_t quality);
 int32_t SPU_EndFrame(int16 *SoundBuf);
 
 int32_t SPU_UpdateFromCDC(int32_t clocks);
-
-}
 
 #ifdef __cplusplus
 extern "C" {

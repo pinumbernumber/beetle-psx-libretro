@@ -188,9 +188,6 @@ static INLINE void SPUIRQ_DBG(const char *fmt, ...)
 {
 }
 
-namespace MDFN_IEN_PSX
-{
-
 static const int16 FIR_Table[256][4] =
 {
  #include "spu_fir_table.inc"
@@ -1058,7 +1055,7 @@ int32 SPU_UpdateFromCDC(int32 clocks)
    int32 cda_raw[2];
    int32 cdav[2];
 
-   CDC->GetCDAudio(cda_raw);	// PS_CDC::GetCDAudio() guarantees the variables passed by reference will be set to 0,
+   MDFN_IEN_PSX::CDC->GetCDAudio(cda_raw);	// PS_CDC::GetCDAudio() guarantees the variables passed by reference will be set to 0,
 				// and that their range shall be -32768 through 32767.
 
    WriteSPURAM(CWA | 0x000, cda_raw[0]);
@@ -1325,7 +1322,8 @@ void SPU_Write(int32_t timestamp, uint32 A, uint16 V)
 	      CheckIRQAddr(RWAddr);
 	      break;
 
-   case 0x2C: PSX_WARNING("[SPU] Global reg 0x2c set: 0x%04x", V);
+   case 0x2C:
+         //PSX_WARNING("[SPU] Global reg 0x2c set: 0x%04x", V);
 	      break;
 
    case 0x30: CDVol[0] = V;
@@ -1351,9 +1349,8 @@ void SPU_Write(int32_t timestamp, uint32 A, uint16 V)
 
 uint16 SPU_Read(int32_t timestamp, uint32 A)
 {
+ //PSX_DBGINFO("[SPU] Read: %08x", A);
  A &= 0x3FF;
-
- PSX_DBGINFO("[SPU] Read: %08x", A);
 
  if(A >= 0x200)
  {
@@ -1392,9 +1389,9 @@ uint16 SPU_Read(int32_t timestamp, uint32 A)
    case 0x26: //PSX_WARNING("[SPU] RWADDR Read");
 	      break;
 
-   case 0x28: PSX_WARNING("[SPU] SPURAM Read port(?) Read");
-
+   case 0x28:
 	      {
+         //PSX_WARNING("[SPU] SPURAM Read port(?) Read");
 	       uint16 ret = ReadSPURAM(RWAddr);
 
 	       RWAddr = (RWAddr + 1) & 0x3FFFF;
@@ -1859,6 +1856,4 @@ void SPU_SetRegister(unsigned int which, uint32 value)
 
 
  }
-}
-
 }
