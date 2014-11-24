@@ -164,7 +164,6 @@ static int64_t Memcard_SaveDelay[8];
 
 PS_CPU *CPU = NULL;
 PS_GPU *GPU = NULL;
-PS_CDC *CDC = NULL;
 
 static MultiAccessSizeMem<512 * 1024, uint32, false> *BIOSROM = NULL;
 static MultiAccessSizeMem<65536, uint32, false> *PIOMem = NULL;
@@ -315,7 +314,7 @@ void PSX_SetEventNT(const int type, const int32_t next_timestamp)
 void ForceEventUpdates(const int32_t timestamp)
 {
    PSX_SetEventNT(PSX_EVENT_GPU, GPU->Update(timestamp));
-   PSX_SetEventNT(PSX_EVENT_CDC, CDC->Update(timestamp));
+   PSX_SetEventNT(PSX_EVENT_CDC, CDC_Update(timestamp));
 
    PSX_SetEventNT(PSX_EVENT_TIMER, TIMER_Update(timestamp));
 
@@ -374,7 +373,7 @@ bool MDFN_FASTCALL PSX_EventHandler(const int32_t timestamp)
             nt = GPU->Update(e->event_time);
             break;
          case PSX_EVENT_CDC:
-            nt = CDC->Update(e->event_time);
+            nt = CDC_Update(e->event_time);
             break;
          case PSX_EVENT_TIMER:
             nt = TIMER_Update(e->event_time);
@@ -565,9 +564,9 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
          }
 
          if(IsWrite)
-            CDC->Write(timestamp, A & 0x3, V);
+            CDC_Write(timestamp, A & 0x3, V);
          else
-            V = CDC->Read(timestamp, A & 0x3);
+            V = CDC_Read(timestamp, A & 0x3);
 
          return;
       }
@@ -1003,9 +1002,9 @@ static void PSX_Power(void)
    SIO_Power();
 
    MDEC_Power();
-   CDC->Power();
+   CDC_Power();
    GPU->Power();
-   //SPU->Power();	// Called from CDC->Power()
+   //SPU->Power();	// Called from CDC_Power()
    IRQ_Power();
 
    ForceEventUpdates(0);
@@ -1341,7 +1340,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
 
    CPU = new PS_CPU();
    GPU = new PS_GPU(region == REGION_EU, sls, sle);
-   CDC = new PS_CDC();
+   CDC_New();
    FrontIO_New(emulate_memcard, emulate_multitap);
 
    FrontIO_SetAMCT(MDFN_GetSettingB("psx.input.analog_mode_ct"));
@@ -1367,8 +1366,8 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
       CD_SelectedDisc = -1;
    }
 
-   CDC->SetDisc(true, NULL, NULL);
-   CDC->SetDisc(CD_TrayOpen, (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? (*cdifs)[CD_SelectedDisc] : NULL,
+   CDC_SetDisc(true, NULL, NULL);
+   CDC_SetDisc(CD_TrayOpen, (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? (*cdifs)[CD_SelectedDisc] : NULL,
          (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? cdifs_scex_ids[CD_SelectedDisc] : NULL);
 
 
@@ -1658,9 +1657,7 @@ static void Cleanup(void)
 
    MDEC_Kill();
 
-   if(CDC)
-      delete CDC;
-   CDC = NULL;
+   CDC_Free();
 
    SPU_Free();
 
@@ -1754,7 +1751,7 @@ static int StateAction(StateMem *sm, int load, int data_only)
       if(!cdifs || CD_SelectedDisc >= (int)cdifs->size())
          CD_SelectedDisc = -1;
 
-      CDC->SetDisc(CD_TrayOpen, (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? (*cdifs)[CD_SelectedDisc] : NULL,
+      CDC_SetDisc(CD_TrayOpen, (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? (*cdifs)[CD_SelectedDisc] : NULL,
             (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? cdifs_scex_ids[CD_SelectedDisc] : NULL);
    }
 
@@ -1765,7 +1762,7 @@ static int StateAction(StateMem *sm, int load, int data_only)
    ret &= TIMER_StateAction(sm, load, data_only);
    ret &= SIO_StateAction(sm, load, data_only);
 
-   ret &= CDC->StateAction(sm, load, data_only);
+   ret &= CDC_StateAction(sm, load, data_only);
    ret &= MDEC_StateAction(sm, load, data_only);
    ret &= GPU->StateAction(sm, load, data_only);
    ret &= SPU_StateAction(sm, load, data_only);
@@ -1800,7 +1797,7 @@ static void CDInsertEject(void)
    else
       MDFN_DispMessage(_("Virtual CD Drive Tray Closed"));
 
-   CDC->SetDisc(CD_TrayOpen, (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? (*cdifs)[CD_SelectedDisc] : NULL,
+   CDC_SetDisc(CD_TrayOpen, (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? (*cdifs)[CD_SelectedDisc] : NULL,
          (CD_SelectedDisc >= 0 && !CD_TrayOpen) ? cdifs_scex_ids[CD_SelectedDisc] : NULL);
 }
 
@@ -2999,7 +2996,7 @@ void retro_run(void)
    espec->SoundBufSize = IntermediateBufferPos;
    IntermediateBufferPos = 0;
 
-   CDC->ResetTS();
+   CDC_ResetTS();
    TIMER_ResetTS();
    DMA_ResetTS();
    GPU->ResetTS();

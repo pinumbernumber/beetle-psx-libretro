@@ -1310,7 +1310,7 @@ int32 SPU_UpdateFromCDC(int32 clocks)
    int32 cda_raw[2];
    int32 cdav[2];
 
-   MDFN_IEN_PSX::CDC->GetCDAudio(cda_raw);	// PS_CDC::GetCDAudio() guarantees the variables passed by reference will be set to 0,
+   CDC_GetCDAudio(cda_raw);	// PS_CDC::GetCDAudio() guarantees the variables passed by reference will be set to 0,
 				// and that their range shall be -32768 through 32767.
 
    WriteSPURAM(CWA | 0x000, cda_raw[0]);
