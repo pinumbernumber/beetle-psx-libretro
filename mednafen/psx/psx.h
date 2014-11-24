@@ -102,12 +102,7 @@ namespace MDFN_IEN_PSX
 
 namespace MDFN_IEN_PSX
 {
- class PS_CDC;
- class PS_SPU;
-
  extern PS_CPU *CPU;
- extern PS_CDC *CDC;
- extern PS_SPU *SPU;
  extern MultiAccessSizeMem<2048 * 1024, uint32_t, false> MainRAM;
 };
 
