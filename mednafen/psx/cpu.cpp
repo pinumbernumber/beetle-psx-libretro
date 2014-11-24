@@ -90,8 +90,6 @@ PS_CPU::~PS_CPU()
 void PS_CPU::SetFastMap(void *region_mem, uint32_t region_address, uint32_t region_size)
 {
    uint64_t A;
-   // FAST_MAP_SHIFT
-   // FAST_MAP_PSIZE
 
    for(A = region_address; A < (uint64)region_address + region_size; A += FAST_MAP_PSIZE)
       FastMap[A >> FAST_MAP_SHIFT] = ((uint8_t *)region_mem - region_address);
@@ -283,8 +281,7 @@ INLINE T PS_CPU::ReadMemory(int32_t &timestamp, uint32_t address, bool DS24, boo
 
       if(DS24)
          return ScratchRAM.ReadU24(address & 0x3FF);
-      else
-         return ScratchRAM.Read<T>(address & 0x3FF);
+      return ScratchRAM.Read<T>(address & 0x3FF);
    }
 
    timestamp += (ReadFudge >> 4) & 2;
@@ -396,11 +393,13 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32_t NPM)
 
    assert(code < 16);
 
+#if 0
    if(code != EXCEPTION_INT && code != EXCEPTION_BP && code != EXCEPTION_SYSCALL)
    {
       PSX_DBG(PSX_DBG_WARNING, "Exception: %08x @ PC=0x%08x(IBDS=%d) -- IPCache=0x%02x -- IPEND=0x%02x -- SR=0x%08x ; IRQC_Status=0x%04x -- IRQC_Mask=0x%04x\n", code, PC, InBDSlot, IPCache, (CP0.CAUSE >> 8) & 0xFF, CP0.SR,
             IRQ_GetRegister(IRQ_GSREG_STATUS, NULL, 0), IRQ_GetRegister(IRQ_GSREG_MASK, NULL, 0));
    }
+#endif
 
    if(CP0.SR & (1 << 22))	// BEV
       handler = 0xBFC00180;
