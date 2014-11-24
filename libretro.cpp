@@ -163,7 +163,6 @@ static uint64_t Memcard_PrevDC[8];
 static int64_t Memcard_SaveDelay[8];
 
 PS_CPU *CPU = NULL;
-PS_GPU *GPU = NULL;
 
 static MultiAccessSizeMem<512 * 1024, uint32, false> *BIOSROM = NULL;
 static MultiAccessSizeMem<65536, uint32, false> *PIOMem = NULL;
@@ -313,7 +312,7 @@ void PSX_SetEventNT(const int type, const int32_t next_timestamp)
 // Called from debug.cpp too.
 void ForceEventUpdates(const int32_t timestamp)
 {
-   PSX_SetEventNT(PSX_EVENT_GPU, GPU->Update(timestamp));
+   PSX_SetEventNT(PSX_EVENT_GPU, GPU_Update(timestamp));
    PSX_SetEventNT(PSX_EVENT_CDC, CDC_Update(timestamp));
 
    PSX_SetEventNT(PSX_EVENT_TIMER, TIMER_Update(timestamp));
@@ -370,7 +369,7 @@ bool MDFN_FASTCALL PSX_EventHandler(const int32_t timestamp)
          default:
             abort();
          case PSX_EVENT_GPU:
-            nt = GPU->Update(e->event_time);
+            nt = GPU_Update(e->event_time);
             break;
          case PSX_EVENT_CDC:
             nt = CDC_Update(e->event_time);
@@ -577,9 +576,9 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
             timestamp++;
 
          if(IsWrite)
-            GPU->Write(timestamp, A, V);
+            GPU_Write(timestamp, A, V);
          else
-            V = GPU->Read(timestamp, A);
+            V = GPU_Read(timestamp, A);
 
          return;
       }
@@ -1003,7 +1002,7 @@ static void PSX_Power(void)
 
    MDEC_Power();
    CDC_Power();
-   GPU->Power();
+   GPU_Power();
    //SPU->Power();	// Called from CDC_Power()
    IRQ_Power();
 
@@ -1339,7 +1338,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
    }
 
    CPU = new PS_CPU();
-   GPU = new PS_GPU(region == REGION_EU, sls, sle);
+   GPU_New(region == REGION_EU, sls, sle);
    CDC_New();
    FrontIO_New(emulate_memcard, emulate_multitap);
 
@@ -1353,7 +1352,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
 
    DMA_Init();
 
-   GPU->FillVideoParams(&EmulatedPSX);
+   GPU_FillVideoParams(&EmulatedPSX);
 
    if(cdifs)
    {
@@ -1661,9 +1660,7 @@ static void Cleanup(void)
 
    SPU_Free();
 
-   if(GPU)
-      delete GPU;
-   GPU = NULL;
+   GPU_Free();
 
    if(CPU)
       delete CPU;
@@ -1764,7 +1761,7 @@ static int StateAction(StateMem *sm, int load, int data_only)
 
    ret &= CDC_StateAction(sm, load, data_only);
    ret &= MDEC_StateAction(sm, load, data_only);
-   ret &= GPU->StateAction(sm, load, data_only);
+   ret &= GPU_StateAction(sm, load, data_only);
    ret &= SPU_StateAction(sm, load, data_only);
 
    ret &= FrontIO_StateAction(sm, load, data_only);
@@ -2980,7 +2977,7 @@ void retro_run(void)
    espec->SoundBufSize = 0;
 
    FrontIO_UpdateInput();
-   GPU->StartFrame(espec);
+   GPU_StartFrame(espec);
 
    Running = -1;
    timestamp = CPU->Run(timestamp, false);
@@ -2988,10 +2985,13 @@ void retro_run(void)
    assert(timestamp);
 
    ForceEventUpdates(timestamp);
-   if(GPU->GetScanlineNum() < 100)
-      PSX_DBG(PSX_DBG_ERROR, "[BUUUUUUUG] Frame timing end glitch; scanline=%u, st=%u\n", GPU->GetScanlineNum(), timestamp);
 
-   //printf("scanline=%u, st=%u\n", GPU->GetScanlineNum(), timestamp);
+#if 0
+   if(GPU_GetScanlineNum() < 100)
+      PSX_DBG(PSX_DBG_ERROR, "[BUUUUUUUG] Frame timing end glitch; scanline=%u, st=%u\n", GPU_GetScanlineNum(), timestamp);
+#endif
+
+   //printf("scanline=%u, st=%u\n", GPU_GetScanlineNum(), timestamp);
 
    espec->SoundBufSize = IntermediateBufferPos;
    IntermediateBufferPos = 0;
@@ -2999,7 +2999,7 @@ void retro_run(void)
    CDC_ResetTS();
    TIMER_ResetTS();
    DMA_ResetTS();
-   GPU->ResetTS();
+   GPU_ResetTS();
    FrontIO_ResetTS();
 
    RebaseTS(timestamp);

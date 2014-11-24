@@ -154,7 +154,7 @@ static INLINE bool ChCan(const unsigned ch, const uint32_t CRModeCache)
          return(MDEC_DMACanRead());
       case CH_GPU: 
          if(CRModeCache & 0x1)
-            return(MDFN_IEN_PSX::GPU->DMACanWrite());
+            return(GPU_DMACanWrite());
          return(true);
       case CH_CDC:
       case CH_SPU:
@@ -213,7 +213,7 @@ static void RecalcHalt(void)
    if((DMACH[1].WordCounter || (DMACH[1].ChanControl & (1 << 24))) && (DMACH[1].ChanControl & 0x200) && (DMACH[1].WordCounter || MDEC_DMACanRead()))
       Halt = true;
 
-   if((DMACH[2].WordCounter || (DMACH[2].ChanControl & (1 << 24))) && (DMACH[2].ChanControl & 0x200) && ((DMACH[2].ChanControl & 0x1) && (DMACH[2].WordCounter || MDFN_IEN_PSX::GPU->DMACanWrite())))
+   if((DMACH[2].WordCounter || (DMACH[2].ChanControl & (1 << 24))) && (DMACH[2].ChanControl & 0x200) && ((DMACH[2].ChanControl & 0x1) && (DMACH[2].WordCounter || GPU_DMACanWrite())))
       Halt = true;
 
    if((DMACH[3].WordCounter || (DMACH[3].ChanControl & (1 << 24))) && !(DMACH[3].ChanControl & 0x100))
@@ -269,9 +269,9 @@ static INLINE void ChRW(const unsigned ch, const uint32_t CRModeCache, uint32_t 
 
       case CH_GPU:
          if(CRModeCache & 0x1)
-            MDFN_IEN_PSX::GPU->WriteDMA(*V);
+            GPU_WriteDMA(*V);
          else
-            *V = MDFN_IEN_PSX::GPU->ReadDMA();
+            *V = GPU_ReadDMA();
          break;
 
       case CH_CDC:
@@ -575,7 +575,7 @@ int32_t DMA_Update(const int32_t timestamp)
    int32_t clocks = timestamp - lastts;
    lastts = timestamp;
 
-   MDFN_IEN_PSX::GPU->Update(timestamp);
+   GPU_Update(timestamp);
    MDEC_Run(clocks);
 
    for (i = 0; i < 7; i++)
@@ -663,7 +663,7 @@ void DMA_Write(const int32_t timestamp, uint32_t A, uint32_t V)
                DMACH[ch].ClockCounter = (1 << 30);
                RunChannel(timestamp, 1, ch);
                DMACH[ch].ClockCounter = 0;
-               PSX_WARNING("[DMA] Forced stop for channel %d -- scanline=%d", ch, MDFN_IEN_PSX::GPU->GetScanlineNum());
+               PSX_WARNING("[DMA] Forced stop for channel %d -- scanline=%d", ch, GPU_GetScanlineNum());
                //MDFN_DispMessage("[DMA] Forced stop for channel %d", ch);
 #endif
             }
@@ -676,7 +676,7 @@ void DMA_Write(const int32_t timestamp, uint32_t A, uint32_t V)
             if(!(OldCC & (1 << 24)) && (V & (1 << 24)))
             {
                //if(ch == 0 || ch == 1)
-               // PSX_WARNING("[DMA] Started DMA for channel=%d --- CHCR=0x%08x --- BCR=0x%08x --- scanline=%d", ch, DMACH[ch].ChanControl, DMACH[ch].BlockControl, MDFN_IEN_PSX::GPU->GetScanlineNum());
+               // PSX_WARNING("[DMA] Started DMA for channel=%d --- CHCR=0x%08x --- BCR=0x%08x --- scanline=%d", ch, DMACH[ch].ChanControl, DMACH[ch].BlockControl, GPU_GetScanlineNum());
 
                DMACH[ch].WordCounter = 0;
                DMACH[ch].ClockCounter = 0;
