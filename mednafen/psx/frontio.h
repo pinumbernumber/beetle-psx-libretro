@@ -61,96 +61,37 @@ class InputDevice
  int32 chair_x, chair_y;
 };
 
-class FrontIO
-{
- public:
+void FrontIO_New(bool emulate_memcards_[8], bool emulate_multitap_[2]);
+void FrontIO_Free();
 
- FrontIO(bool emulate_memcards_[8], bool emulate_multitap_[2]);
- ~FrontIO();
+void FrontIO_Power(void);
+void FrontIO_Write(int32_t timestamp, uint32_t A, uint32_t V);
+uint32_t FrontIO_Read(int32_t timestamp, uint32_t A);
+int32_t FrontIO_CalcNextEventTS(int32_t timestamp, int32_t next_event);
+int32_t FrontIO_Update(int32_t timestamp);
+void FrontIO_ResetTS(void);
 
- void Power(void);
- void Write(int32_t timestamp, uint32_t A, uint32_t V);
- uint32_t Read(int32_t timestamp, uint32_t A);
- int32_t CalcNextEventTS(int32_t timestamp, int32_t next_event);
- int32_t Update(int32_t timestamp);
- void ResetTS(void);
+bool FrontIO_RequireNoFrameskip(void);
 
- bool RequireNoFrameskip(void);
- void GPULineHook(const int32_t timestamp, const int32_t line_timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider);
+void FrontIO_GPULineHook(const int32_t timestamp,
+      const int32_t line_timestamp, bool vsync,
+      uint32 *pixels, const MDFN_PixelFormat* const format,
+      const unsigned width, const unsigned pix_clock_offset,
+      const unsigned pix_clock, const unsigned pix_clock_divider);
 
- void UpdateInput(void);
- void SetInput(unsigned int port, const char *type, void *ptr);
- void SetAMCT(bool enabled);
- void SetCrosshairsColor(unsigned port, uint32_t color);
+void FrontIO_UpdateInput(void);
+void FrontIO_SetInput(unsigned int port, const char *type, void *ptr);
+void FrontIO_SetAMCT(bool enabled);
+void FrontIO_SetCrosshairsColor(unsigned port, uint32_t color);
 
- InputDevice *GetMemcardDevice(unsigned int which);
- uint64_t GetMemcardDirtyCount(unsigned int which);
- void LoadMemcard(unsigned int which, const char *path);
- void LoadMemcard(unsigned int which);
- void SaveMemcard(unsigned int which, const char *path); //, bool force_save = false);
- void SaveMemcard(unsigned int which);
+InputDevice *FrontIO_GetMemcardDevice(unsigned int which);
+uint64_t FrontIO_GetMemcardDirtyCount(unsigned int which);
+void FrontIO_LoadMemcard(unsigned int which, const char *path);
+void FrontIO_LoadMemcard(unsigned int which);
+void FrontIO_SaveMemcard(unsigned int which, const char *path); //, bool force_save = false);
+void FrontIO_SaveMemcard(unsigned int which);
 
- int StateAction(StateMem* sm, int load, int data_only);
-
- private:
-
- void DoDSRIRQ(void);
- void CheckStartStopPending(int32_t timestamp, bool skip_event_set = false);
-
- void MapDevicesToPorts(void);
-
- bool emulate_memcards[8];
- bool emulate_multitap[2];
-
- InputDevice *Ports[2];
- InputDevice *MCPorts[2];
-
- InputDevice *DummyDevice;
- InputDevice_Multitap *DevicesTap[2];
-
- InputDevice *Devices[8];
- void *DeviceData[8];
-
- InputDevice *DevicesMC[8];
-
- //
- //
- //
-
- int32_t ClockDivider;
-
- bool ReceivePending;
- bool TransmitPending;
-
- bool ReceiveInProgress;
- bool TransmitInProgress;
-
- bool ReceiveBufferAvail;
-
- uint8_t ReceiveBuffer;
- uint8_t TransmitBuffer;
-
- int32_t ReceiveBitCounter;
- int32_t TransmitBitCounter;
-
- uint16_t Mode;
- uint16_t Control;
- uint16_t Baudrate;
-
-
- bool istatus;
- //
- //
- int32_t irq10_pulse_ts[2];
-
- int32_t dsr_pulse_delay[4];
- int32_t dsr_active_until_ts[4];
- int32_t lastts;
- //
- //
- bool amct_enabled;
- uint32_t chair_colors[8];
-};
+int FrontIO_StateAction(StateMem* sm, int load, int data_only);
 
 extern InputInfoStruct FIO_InputInfo;
 

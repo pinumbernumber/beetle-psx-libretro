@@ -165,7 +165,6 @@ static int64_t Memcard_SaveDelay[8];
 PS_CPU *CPU = NULL;
 PS_GPU *GPU = NULL;
 PS_CDC *CDC = NULL;
-FrontIO *FIO = NULL;
 
 static MultiAccessSizeMem<512 * 1024, uint32, false> *BIOSROM = NULL;
 static MultiAccessSizeMem<65536, uint32, false> *PIOMem = NULL;
@@ -322,7 +321,7 @@ void ForceEventUpdates(const int32_t timestamp)
 
    PSX_SetEventNT(PSX_EVENT_DMA, DMA_Update(timestamp));
 
-   PSX_SetEventNT(PSX_EVENT_FIO, FIO->Update(timestamp));
+   PSX_SetEventNT(PSX_EVENT_FIO, FrontIO_Update(timestamp));
 
    CPU->SetEventNT(events[PSX_EVENT__SYNFIRST].next->event_time);
 }
@@ -384,7 +383,7 @@ bool MDFN_FASTCALL PSX_EventHandler(const int32_t timestamp)
             nt = DMA_Update(e->event_time);
             break;
          case PSX_EVENT_FIO:
-            nt = FIO->Update(e->event_time);
+            nt = FrontIO_Update(e->event_time);
             break;
       }
 #if PSX_EVENT_SYSTEM_CHECKS
@@ -628,9 +627,9 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
             timestamp++;
 
          if(IsWrite)
-            FIO->Write(timestamp, A, V);
+            FrontIO_Write(timestamp, A, V);
          else
-            V = FIO->Read(timestamp, A);
+            V = FrontIO_Read(timestamp, A);
          return;
       }
 
@@ -1000,7 +999,7 @@ static void PSX_Power(void)
 
    DMA_Power();
 
-   FIO->Power();
+   FrontIO_Power();
    SIO_Power();
 
    MDEC_Power();
@@ -1015,7 +1014,7 @@ static void PSX_Power(void)
 
 void PSX_GPULineHook(const int32_t timestamp, const int32_t line_timestamp, bool vsync, uint32_t *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider)
 {
-   FIO->GPULineHook(timestamp, line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
+   FrontIO_GPULineHook(timestamp, line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
 }
 
 }
@@ -1343,13 +1342,14 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
    CPU = new PS_CPU();
    GPU = new PS_GPU(region == REGION_EU, sls, sle);
    CDC = new PS_CDC();
-   FIO = new FrontIO(emulate_memcard, emulate_multitap);
-   FIO->SetAMCT(MDFN_GetSettingB("psx.input.analog_mode_ct"));
+   FrontIO_New(emulate_memcard, emulate_multitap);
+
+   FrontIO_SetAMCT(MDFN_GetSettingB("psx.input.analog_mode_ct"));
    for(unsigned i = 0; i < 8; i++)
    {
       char buf[64];
       snprintf(buf, sizeof(buf), "psx.input.port%u.gun_chairs", i + 1);
-      FIO->SetCrosshairsColor(i, MDFN_GetSettingUI(buf));
+      FrontIO_SetCrosshairsColor(i, MDFN_GetSettingUI(buf));
    }
 
    DMA_Init();
@@ -1427,7 +1427,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
 
    if (!use_mednafen_memcard0_method)
    {
-      FIO->LoadMemcard(0);
+      FrontIO_LoadMemcard(0);
       i = 1;
    }
 
@@ -1435,12 +1435,12 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
    {
       char ext[64];
       snprintf(ext, sizeof(ext), "%d.mcr", i);
-      FIO->LoadMemcard(i, MDFN_MakeFName(MDFNMKF_SAV, 0, ext).c_str());
+      FrontIO_LoadMemcard(i, MDFN_MakeFName(MDFNMKF_SAV, 0, ext).c_str());
    }
 
    for(i = 0; i < 8; i++)
    {
-      Memcard_PrevDC[i] = FIO->GetMemcardDirtyCount(i);
+      Memcard_PrevDC[i] = FrontIO_GetMemcardDirtyCount(i);
       Memcard_SaveDelay[i] = -1;
    }
 
@@ -1672,9 +1672,7 @@ static void Cleanup(void)
       delete CPU;
    CPU = NULL;
 
-   if(FIO)
-      delete FIO;
-   FIO = NULL;
+   FrontIO_Free();
 
    DMA_Kill();
 
@@ -1696,7 +1694,7 @@ static void CloseGame(void)
    {
       if (i == 0 && !use_mednafen_memcard0_method)
       {
-         FIO->SaveMemcard(i);
+         FrontIO_SaveMemcard(i);
          continue;
       }
 
@@ -1707,7 +1705,7 @@ static void CloseGame(void)
          char ext[64];
          snprintf(ext, sizeof(ext), "%d.mcr", i);
 
-         FIO->SaveMemcard(i, MDFN_MakeFName(MDFNMKF_SAV, 0, ext).c_str());
+         FrontIO_SaveMemcard(i, MDFN_MakeFName(MDFNMKF_SAV, 0, ext).c_str());
       }
       catch(std::exception &e)
       {
@@ -1721,7 +1719,7 @@ static void CloseGame(void)
 
 static void SetInput(int port, const char *type, void *ptr)
 {
-   FIO->SetInput(port, type, ptr);
+   FrontIO_SetInput(port, type, ptr);
 }
 
 static int StateAction(StateMem *sm, int load, int data_only)
@@ -1772,7 +1770,7 @@ static int StateAction(StateMem *sm, int load, int data_only)
    ret &= GPU->StateAction(sm, load, data_only);
    ret &= SPU_StateAction(sm, load, data_only);
 
-   ret &= FIO->StateAction(sm, load, data_only);
+   ret &= FrontIO_StateAction(sm, load, data_only);
    
    ret &= IRQ_StateAction(sm, load, data_only);	// Do it last.
 
@@ -2948,7 +2946,7 @@ void retro_run(void)
   
    if (setting_apply_analog_toggle)
    {
-      FIO->SetAMCT(setting_psx_analog_toggle);
+      FrontIO_SetAMCT(setting_psx_analog_toggle);
       setting_apply_analog_toggle = false;
    }
 
@@ -2984,7 +2982,7 @@ void retro_run(void)
    espec->MasterCycles = 0;
    espec->SoundBufSize = 0;
 
-   FIO->UpdateInput();
+   FrontIO_UpdateInput();
    GPU->StartFrame(espec);
 
    Running = -1;
@@ -3005,7 +3003,7 @@ void retro_run(void)
    TIMER_ResetTS();
    DMA_ResetTS();
    GPU->ResetTS();
-   FIO->ResetTS();
+   FrontIO_ResetTS();
 
    RebaseTS(timestamp);
 
@@ -3014,7 +3012,7 @@ void retro_run(void)
    // Save memcards if dirty.
    for(int i = 0; i < players; i++)
    {
-      uint64_t new_dc = FIO->GetMemcardDirtyCount(i);
+      uint64_t new_dc = FrontIO_GetMemcardDirtyCount(i);
 
       if(new_dc > Memcard_PrevDC[i])
       {
@@ -3032,7 +3030,7 @@ void retro_run(void)
 
             if (i == 0 && !use_mednafen_memcard0_method)
             {
-               FIO->SaveMemcard(i);
+               FrontIO_SaveMemcard(i);
                Memcard_SaveDelay[i] = -1;
                Memcard_PrevDC[i] = 0;
                continue;
@@ -3040,7 +3038,7 @@ void retro_run(void)
 
             char ext[64];
             snprintf(ext, sizeof(ext), "%d.mcr", i);
-            FIO->SaveMemcard(i, MDFN_MakeFName(MDFNMKF_SAV, 0, ext).c_str());
+            FrontIO_SaveMemcard(i, MDFN_MakeFName(MDFNMKF_SAV, 0, ext).c_str());
             Memcard_SaveDelay[i] = -1;
             Memcard_PrevDC[i] = 0;
          }
@@ -3336,7 +3334,7 @@ void *retro_get_memory_data(unsigned type)
          if (use_mednafen_memcard0_method)
             data = NULL;
          else
-            data = FIO->GetMemcardDevice(0)->GetNVData();
+            data = FrontIO_GetMemcardDevice(0)->GetNVData();
          break;
       default:
          data = NULL;

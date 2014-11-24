@@ -39,6 +39,52 @@ static void PSX_FIODBGINFO(const char *format, ...)
 {
 }
 
+static bool emulate_memcards[8];
+static bool emulate_multitap[2];
+
+static MDFN_IEN_PSX::InputDevice *Ports[2];
+static MDFN_IEN_PSX::InputDevice *MCPorts[2];
+
+static MDFN_IEN_PSX::InputDevice *DummyDevice;
+static MDFN_IEN_PSX::InputDevice_Multitap *DevicesTap[2];
+
+static MDFN_IEN_PSX::InputDevice *DevicesMC[8];
+static MDFN_IEN_PSX::InputDevice *Devices[8];
+
+static void *DeviceData[8];
+
+static int32_t ClockDivider;
+
+static bool ReceivePending;
+static bool TransmitPending;
+
+static bool ReceiveInProgress;
+static bool TransmitInProgress;
+
+static bool ReceiveBufferAvail;
+
+static uint8_t ReceiveBuffer;
+static uint8_t TransmitBuffer;
+
+static int32_t ReceiveBitCounter;
+static int32_t TransmitBitCounter;
+
+static uint16_t Mode;
+static uint16_t Control;
+static uint16_t Baudrate;
+
+static bool istatus;
+ //
+ //
+static int32_t irq10_pulse_ts[2];
+
+static int32_t dsr_pulse_delay[4];
+static int32_t dsr_active_until_ts[4];
+static int32_t lastts;
+
+static bool amct_enabled;
+static uint32_t chair_colors[8];
+
 namespace MDFN_IEN_PSX
 {
 
@@ -136,72 +182,72 @@ INLINE void InputDevice::DrawCrosshairs(uint32 *pixels, const MDFN_PixelFormat* 
    }
 }
 
-int FrontIO::StateAction(StateMem* sm, int load, int data_only)
+int FrontIO_StateAction(StateMem* sm, int load, int data_only)
 {
- SFORMAT StateRegs[] =
- {
-  { &((ClockDivider)), sizeof((ClockDivider)), 0x80000000 | 0, "ClockDivider" },
+   SFORMAT StateRegs[] =
+   {
+      { &((ClockDivider)), sizeof((ClockDivider)), 0x80000000 | 0, "ClockDivider" },
 
-  { &((ReceivePending)), 1, 0x80000000 | 0x08000000, "ReceivePending" },
-  { &((TransmitPending)), 1, 0x80000000 | 0x08000000, "TransmitPending" },
+      { &((ReceivePending)), 1, 0x80000000 | 0x08000000, "ReceivePending" },
+      { &((TransmitPending)), 1, 0x80000000 | 0x08000000, "TransmitPending" },
 
-  { &((ReceiveInProgress)), 1, 0x80000000 | 0x08000000, "ReceiveInProgress" },
-  { &((TransmitInProgress)), 1, 0x80000000 | 0x08000000, "TransmitInProgress" },
+      { &((ReceiveInProgress)), 1, 0x80000000 | 0x08000000, "ReceiveInProgress" },
+      { &((TransmitInProgress)), 1, 0x80000000 | 0x08000000, "TransmitInProgress" },
 
-  { &((ReceiveBufferAvail)), 1, 0x80000000 | 0x08000000, "ReceiveBufferAvail" },
+      { &((ReceiveBufferAvail)), 1, 0x80000000 | 0x08000000, "ReceiveBufferAvail" },
 
-  { &((ReceiveBuffer)), sizeof((ReceiveBuffer)), 0x80000000 | 0, "ReceiveBuffer" },
-  { &((TransmitBuffer)), sizeof((TransmitBuffer)), 0x80000000 | 0, "TransmitBuffer" },
+      { &((ReceiveBuffer)), sizeof((ReceiveBuffer)), 0x80000000 | 0, "ReceiveBuffer" },
+      { &((TransmitBuffer)), sizeof((TransmitBuffer)), 0x80000000 | 0, "TransmitBuffer" },
 
-  { &((ReceiveBitCounter)), sizeof((ReceiveBitCounter)), 0x80000000 | 0, "ReceiveBitCounter" },
-  { &((TransmitBitCounter)), sizeof((TransmitBitCounter)), 0x80000000 | 0, "TransmitBitCounter" },
+      { &((ReceiveBitCounter)), sizeof((ReceiveBitCounter)), 0x80000000 | 0, "ReceiveBitCounter" },
+      { &((TransmitBitCounter)), sizeof((TransmitBitCounter)), 0x80000000 | 0, "TransmitBitCounter" },
 
-  { &((Mode)), sizeof((Mode)), 0x80000000 | 0, "Mode" },
-  { &((Control)), sizeof((Control)), 0x80000000 | 0, "Control" },
-  { &((Baudrate)), sizeof((Baudrate)), 0x80000000 | 0, "Baudrate" },
+      { &((Mode)), sizeof((Mode)), 0x80000000 | 0, "Mode" },
+      { &((Control)), sizeof((Control)), 0x80000000 | 0, "Control" },
+      { &((Baudrate)), sizeof((Baudrate)), 0x80000000 | 0, "Baudrate" },
 
-  { &((istatus)), 1, 0x80000000 | 0x08000000, "istatus" },
+      { &((istatus)), 1, 0x80000000 | 0x08000000, "istatus" },
 
 
-  { ((irq10_pulse_ts)), (uint32)(((sizeof(irq10_pulse_ts) / sizeof(irq10_pulse_ts[0]))) * sizeof(uint32)), 0x40000000 | 0, "irq10_pulse_ts" },
-  { ((dsr_pulse_delay)), (uint32)(((sizeof(dsr_pulse_delay) / sizeof(dsr_pulse_delay[0]))) * sizeof(uint32)), 0x40000000 | 0, "dsr_pulse_delay" },
-  { ((dsr_active_until_ts)), (uint32)(((sizeof(dsr_active_until_ts) / sizeof(dsr_active_until_ts[0]))) * sizeof(uint32)), 0x40000000 | 0, "dsr_active_until_ts" },
+      { ((irq10_pulse_ts)), (uint32)(((sizeof(irq10_pulse_ts) / sizeof(irq10_pulse_ts[0]))) * sizeof(uint32)), 0x40000000 | 0, "irq10_pulse_ts" },
+      { ((dsr_pulse_delay)), (uint32)(((sizeof(dsr_pulse_delay) / sizeof(dsr_pulse_delay[0]))) * sizeof(uint32)), 0x40000000 | 0, "dsr_pulse_delay" },
+      { ((dsr_active_until_ts)), (uint32)(((sizeof(dsr_active_until_ts) / sizeof(dsr_active_until_ts[0]))) * sizeof(uint32)), 0x40000000 | 0, "dsr_active_until_ts" },
 
-  { 0, 0, 0, 0 }
- };
+      { 0, 0, 0, 0 }
+   };
 
- int ret = MDFNSS_StateAction(sm, load, StateRegs, "FIO");
+   int ret = MDFNSS_StateAction(sm, load, StateRegs, "FIO");
 
- for(unsigned i = 0; i < 8; i++)
- {
-  char tmpbuf[32];
-  snprintf(tmpbuf, sizeof(tmpbuf), "FIODEV%u", i);
+   for(unsigned i = 0; i < 8; i++)
+   {
+      char tmpbuf[32];
+      snprintf(tmpbuf, sizeof(tmpbuf), "FIODEV%u", i);
 
-  ret &= Devices[i]->StateAction(sm, load, data_only, tmpbuf);
- }
+      ret &= Devices[i]->StateAction(sm, load, data_only, tmpbuf);
+   }
 
- for(unsigned i = 0; i < 8; i++)
- {
-  char tmpbuf[32];
-  snprintf(tmpbuf, sizeof(tmpbuf), "FIOMC%u", i);
+   for(unsigned i = 0; i < 8; i++)
+   {
+      char tmpbuf[32];
+      snprintf(tmpbuf, sizeof(tmpbuf), "FIOMC%u", i);
 
-  ret &= DevicesMC[i]->StateAction(sm, load, data_only, tmpbuf);
- }
+      ret &= DevicesMC[i]->StateAction(sm, load, data_only, tmpbuf);
+   }
 
- for(unsigned i = 0; i < 2; i++)
- {
-  char tmpbuf[32];
-  snprintf(tmpbuf, sizeof(tmpbuf), "FIOTAP%u", i);
+   for(unsigned i = 0; i < 2; i++)
+   {
+      char tmpbuf[32];
+      snprintf(tmpbuf, sizeof(tmpbuf), "FIOTAP%u", i);
 
-  ret &= DevicesTap[i]->StateAction(sm, load, data_only, tmpbuf);
- }
+      ret &= DevicesTap[i]->StateAction(sm, load, data_only, tmpbuf);
+   }
 
- if(load)
- {
-    IRQ_Assert(IRQ_SIO, istatus);
- }
+   if(load)
+   {
+      IRQ_Assert(IRQ_SIO, istatus);
+   }
 
- return(ret);
+   return(ret);
 }
 
 bool InputDevice::RequireNoFrameskip(void)
@@ -286,16 +332,17 @@ static INLINE unsigned EP_to_SP(bool emulate_multitap[2], unsigned ep)
    return(ep & 0x3);
 }
 
-InputDevice *FrontIO::GetMemcardDevice(unsigned int which)
+InputDevice *FrontIO_GetMemcardDevice(unsigned int which)
 {
-   if (DevicesMC)
+   if (DevicesMC[which])
       return DevicesMC[which];
    return NULL;
 }
 
-void FrontIO::MapDevicesToPorts(void)
+static void FrontIO_MapDevicesToPorts(void)
 {
    int i;
+
    if(emulate_multitap[0] && emulate_multitap[1])
    {
       for (i = 0; i < 2; i++)
@@ -343,7 +390,7 @@ void FrontIO::MapDevicesToPorts(void)
    }
 }
 
-FrontIO::FrontIO(bool emulate_memcards_[8], bool emulate_multitap_[2])
+void FrontIO_New(bool emulate_memcards_[8], bool emulate_multitap_[2])
 {
    int i;
    memcpy(emulate_memcards, emulate_memcards_, sizeof(emulate_memcards));
@@ -363,10 +410,10 @@ FrontIO::FrontIO(bool emulate_memcards_[8], bool emulate_multitap_[2])
    for(i = 0; i < 2; i++)
       DevicesTap[i] = new InputDevice_Multitap();
 
-   MapDevicesToPorts();
+   FrontIO_MapDevicesToPorts();
 }
 
-void FrontIO::SetAMCT(bool enabled)
+void FrontIO_SetAMCT(bool enabled)
 {
    int i;
    for(i = 0; i < 8; i++)
@@ -374,7 +421,7 @@ void FrontIO::SetAMCT(bool enabled)
    amct_enabled = enabled;
 }
 
-void FrontIO::SetCrosshairsColor(unsigned port, uint32_t color)
+void FrontIO_SetCrosshairsColor(unsigned port, uint32_t color)
 {
    assert(port >= 0 && port < 8);
 
@@ -382,7 +429,7 @@ void FrontIO::SetCrosshairsColor(unsigned port, uint32_t color)
    Devices[port]->SetCrosshairsColor(color);
 }
 
-FrontIO::~FrontIO()
+void FrontIO_Free()
 {
    int i;
    for(i = 0; i < 8; i++)
@@ -407,10 +454,11 @@ FrontIO::~FrontIO()
    DummyDevice = NULL;
 }
 
-int32_t FrontIO::CalcNextEventTS(int32_t timestamp, int32_t next_event)
+static const uint8_t ScaleShift[4] = { 0, 0, 4, 6 };
+
+int32_t FrontIO_CalcNextEventTS(int32_t timestamp, int32_t next_event)
 {
-   int32_t ret;
-   int i;
+   int32_t ret, i;
 
    if(ClockDivider > 0 && ClockDivider < next_event)
       next_event = ClockDivider;
@@ -430,9 +478,7 @@ int32_t FrontIO::CalcNextEventTS(int32_t timestamp, int32_t next_event)
    return(ret);
 }
 
-static const uint8_t ScaleShift[4] = { 0, 0, 4, 6 };
-
-void FrontIO::CheckStartStopPending(int32_t timestamp, bool skip_event_set)
+static void FrontIO_CheckStartStopPending(int32_t timestamp, bool skip_event_set)
 {
    //const bool prior_ReceiveInProgress = ReceiveInProgress;
    //const bool prior_TransmitInProgress = TransmitInProgress;
@@ -472,11 +518,13 @@ void FrontIO::CheckStartStopPending(int32_t timestamp, bool skip_event_set)
       ClockDivider = 0;
 
    if(!(skip_event_set))
-      PSX_SetEventNT(PSX_EVENT_FIO, CalcNextEventTS(timestamp, 0x10000000));
+      PSX_SetEventNT(PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
 }
 
-// DSR IRQ bit setting appears(from indirect tests on real PS1) to be level-sensitive, not edge-sensitive
-INLINE void FrontIO::DoDSRIRQ(void)
+/* DSR IRQ bit setting appears(from indirect tests on real PS1) 
+ * to be level-sensitive, not edge-sensitive.
+ */
+static INLINE void FrontIO_DoDSRIRQ(void)
 {
    if(Control & 0x1000)
    {
@@ -486,14 +534,13 @@ INLINE void FrontIO::DoDSRIRQ(void)
    }
 }
 
-
-void FrontIO::Write(int32_t timestamp, uint32_t A, uint32_t V)
+void FrontIO_Write(int32_t timestamp, uint32_t A, uint32_t V)
 {
    assert(!(A & 0x1));
 
-   PSX_FIODBGINFO("[FIO] Write: %08x %08x", A, V);
+   //PSX_FIODBGINFO("[FIO] Write: %08x %08x", A, V);
 
-   Update(timestamp);
+   FrontIO_Update(timestamp);
 
    switch(A & 0xF)
    {
@@ -508,8 +555,10 @@ void FrontIO::Write(int32_t timestamp, uint32_t A, uint32_t V)
          break;
 
       case 0xa:
+#if 0
          if(ClockDivider > 0 && ((V & 0x2000) != (Control & 0x2000)) && ((Control & 0x2) == (V & 0x2))  )
             PSX_DBG(PSX_DBG_WARNING, "FIO device selection changed during comm %04x->%04x\n", Control, V);
+#endif
 
          //printf("Control: %d, %04x\n", timestamp, V);
          Control = V & 0x3F2F;
@@ -583,17 +632,16 @@ void FrontIO::Write(int32_t timestamp, uint32_t A, uint32_t V)
          break;
    }
 
-   CheckStartStopPending(timestamp, false);
+   FrontIO_CheckStartStopPending(timestamp, false);
 }
 
-
-uint32_t FrontIO::Read(int32_t timestamp, uint32_t A)
+uint32_t FrontIO_Read(int32_t timestamp, uint32_t A)
 {
    uint32_t ret = 0;
 
    assert(!(A & 0x1));
 
-   Update(timestamp);
+   FrontIO_Update(timestamp);
 
    switch(A & 0xF)
    {
@@ -603,7 +651,7 @@ uint32_t FrontIO::Read(int32_t timestamp, uint32_t A)
          ReceiveBufferAvail = false;
          ReceivePending = true;
          ReceiveInProgress = false;
-         CheckStartStopPending(timestamp, false);
+         FrontIO_CheckStartStopPending(timestamp, false);
          break;
 
       case 0x4:
@@ -615,7 +663,11 @@ uint32_t FrontIO::Read(int32_t timestamp, uint32_t A)
          if(ReceiveBufferAvail)
             ret |= 0x2;
 
-         if(timestamp < dsr_active_until_ts[0] || timestamp < dsr_active_until_ts[1] || timestamp < dsr_active_until_ts[2] || timestamp < dsr_active_until_ts[3])
+         if(
+               timestamp < dsr_active_until_ts[0] || 
+               timestamp < dsr_active_until_ts[1] || 
+               timestamp < dsr_active_until_ts[2] || 
+               timestamp < dsr_active_until_ts[3])
             ret |= 0x80;
 
          if(istatus)
@@ -636,13 +688,15 @@ uint32_t FrontIO::Read(int32_t timestamp, uint32_t A)
          break;
    }
 
+#if 0
    if((A & 0xF) != 0x4)
       PSX_FIODBGINFO("[FIO] Read: %08x %08x", A, ret);
+#endif
 
    return(ret);
 }
 
-int32_t FrontIO::Update(int32_t timestamp)
+int32_t FrontIO_Update(int32_t timestamp)
 {
    int32_t clocks, i;
    bool need_start_stop_check = false;
@@ -656,7 +710,7 @@ int32_t FrontIO::Update(int32_t timestamp)
          if(dsr_pulse_delay[i] <= 0)
          {
             dsr_active_until_ts[i] = timestamp + 32 + dsr_pulse_delay[i];
-            DoDSRIRQ();
+            FrontIO_DoDSRIRQ();
          }
       }
 
@@ -737,22 +791,20 @@ int32_t FrontIO::Update(int32_t timestamp)
 
 
    if(need_start_stop_check)
-   {
-      CheckStartStopPending(timestamp, true);
-   }
+      FrontIO_CheckStartStopPending(timestamp, true);
 
-   return(CalcNextEventTS(timestamp, 0x10000000));
+   return(FrontIO_CalcNextEventTS(timestamp, 0x10000000));
 }
 
-void FrontIO::ResetTS(void)
+void FrontIO_ResetTS(void)
 {
    int i;
    for(i = 0; i < 8; i++)
    {
-      Devices[i]->Update(lastts);	// Maybe eventually call Update() from FrontIO::Update() and remove this(but would hurt speed)?
+      Devices[i]->Update(lastts);	// Maybe eventually call Update() from FrontIO_Update() and remove this(but would hurt speed)?
       Devices[i]->ResetTS();
 
-      DevicesMC[i]->Update(lastts);	// Maybe eventually call Update() from FrontIO::Update() and remove this(but would hurt speed)?
+      DevicesMC[i]->Update(lastts);	// Maybe eventually call Update() from FrontIO_Update() and remove this(but would hurt speed)?
       DevicesMC[i]->ResetTS();
    }
 
@@ -780,7 +832,7 @@ void FrontIO::ResetTS(void)
 }
 
 
-void FrontIO::Power(void)
+void FrontIO_Power(void)
 {
    int i;
    for(i = 0; i < 4; i++)
@@ -826,14 +878,14 @@ void FrontIO::Power(void)
    istatus = false;
 }
 
-void FrontIO::UpdateInput(void)
+void FrontIO_UpdateInput(void)
 {
    int i;
    for(i = 0; i < 8; i++)
       Devices[i]->UpdateInput(DeviceData[i]);
 }
 
-void FrontIO::SetInput(unsigned int port, const char *type, void *ptr)
+void FrontIO_SetInput(unsigned int port, const char *type, void *ptr)
 {
    delete Devices[port];
    Devices[port] = NULL;
@@ -868,17 +920,16 @@ void FrontIO::SetInput(unsigned int port, const char *type, void *ptr)
    Devices[port]->SetCrosshairsColor(chair_colors[port]);
    DeviceData[port] = ptr;
 
-   MapDevicesToPorts();
+   FrontIO_MapDevicesToPorts();
 }
 
-uint64_t FrontIO::GetMemcardDirtyCount(unsigned int which)
+uint64_t FrontIO_GetMemcardDirtyCount(unsigned int which)
 {
- assert(which < 8);
-
- return(DevicesMC[which]->GetNVDirtyCount());
+   assert(which < 8);
+   return(DevicesMC[which]->GetNVDirtyCount());
 }
 
-void FrontIO::LoadMemcard(unsigned int which)
+void FrontIO_LoadMemcard(unsigned int which)
 {
    assert(which < 8);
 
@@ -889,58 +940,58 @@ void FrontIO::LoadMemcard(unsigned int which)
    }
 }
 
-void FrontIO::LoadMemcard(unsigned int which, const char *path)
+void FrontIO_LoadMemcard(unsigned int which, const char *path)
 {
- assert(which < 8);
+   assert(which < 8);
 
- try
- {
-  if(DevicesMC[which]->GetNVSize())
-  {
-   FileStream mf(path, FileStream::MODE_READ);
+   try
+   {
+      if(DevicesMC[which]->GetNVSize())
+      {
+         FileStream mf(path, FileStream::MODE_READ);
 
-   mf.read(DevicesMC[which]->GetNVData(), (1 << 17));
+         mf.read(DevicesMC[which]->GetNVData(), (1 << 17));
 
-   DevicesMC[which]->WriteNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-   DevicesMC[which]->ResetNVDirtyCount();		// There's no need to rewrite the file if it's the same data.
-  }
- }
- catch(MDFN_Error &e)
- {
-  if(e.GetErrno() != ENOENT)
-   throw(e);
- }
+         DevicesMC[which]->WriteNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
+         DevicesMC[which]->ResetNVDirtyCount();		// There's no need to rewrite the file if it's the same data.
+      }
+   }
+   catch(MDFN_Error &e)
+   {
+      if(e.GetErrno() != ENOENT)
+         throw(e);
+   }
 }
 
-void FrontIO::SaveMemcard(unsigned int which)
+void FrontIO_SaveMemcard(unsigned int which)
 {
- assert(which < 8);
+   assert(which < 8);
 
- if(DevicesMC[which]->GetNVSize() && DevicesMC[which]->GetNVDirtyCount())
- {
-  DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-  DevicesMC[which]->ResetNVDirtyCount();
- }
+   if(DevicesMC[which]->GetNVSize() && DevicesMC[which]->GetNVDirtyCount())
+   {
+      DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
+      DevicesMC[which]->ResetNVDirtyCount();
+   }
 }
 
-void FrontIO::SaveMemcard(unsigned int which, const char *path)
+void FrontIO_SaveMemcard(unsigned int which, const char *path)
 {
- assert(which < 8);
+   assert(which < 8);
 
- if(DevicesMC[which]->GetNVSize() && DevicesMC[which]->GetNVDirtyCount())
- {
-  FileStream mf(path, FileStream::MODE_WRITE);	// TODO: MODE_WRITE_ATOMIC_OVERWRITE
+   if(DevicesMC[which]->GetNVSize() && DevicesMC[which]->GetNVDirtyCount())
+   {
+      FileStream mf(path, FileStream::MODE_WRITE);	// TODO: MODE_WRITE_ATOMIC_OVERWRITE
 
-  DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-  mf.write(DevicesMC[which]->GetNVData(), (1 << 17));
+      DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
+      mf.write(DevicesMC[which]->GetNVData(), (1 << 17));
 
-  mf.close();	// Call before resetting the NV dirty count!
+      mf.close();	// Call before resetting the NV dirty count!
 
-  DevicesMC[which]->ResetNVDirtyCount();
- }
+      DevicesMC[which]->ResetNVDirtyCount();
+   }
 }
 
-bool FrontIO::RequireNoFrameskip(void)
+bool FrontIO_RequireNoFrameskip(void)
 {
    unsigned i;
 
@@ -951,39 +1002,42 @@ bool FrontIO::RequireNoFrameskip(void)
    return(false);
 }
 
-void FrontIO::GPULineHook(const int32_t timestamp, const int32_t line_timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider)
+void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
+      bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format,
+      const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock,
+      const unsigned pix_clock_divider)
 {
- Update(timestamp);
+   FrontIO_Update(timestamp);
 
- for(unsigned i = 0; i < 8; i++)
- {
-    int32_t plts = Devices[i]->GPULineHook(line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
-
-  if(i < 2)
-  {
-   irq10_pulse_ts[i] = plts;
-
-   if(irq10_pulse_ts[i] <= timestamp)
+   for(unsigned i = 0; i < 8; i++)
    {
-    irq10_pulse_ts[i] = PSX_EVENT_MAXTS;
-    IRQ_Assert(IRQ_PIO, true);
-    IRQ_Assert(IRQ_PIO, false);
+      int32_t plts = Devices[i]->GPULineHook(line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
+
+      if(i < 2)
+      {
+         irq10_pulse_ts[i] = plts;
+
+         if(irq10_pulse_ts[i] <= timestamp)
+         {
+            irq10_pulse_ts[i] = PSX_EVENT_MAXTS;
+            IRQ_Assert(IRQ_PIO, true);
+            IRQ_Assert(IRQ_PIO, false);
+         }
+      }
    }
-  }
- }
 
- //
- // Draw crosshairs in a separate pass so the crosshairs won't mess up the color evaluation of later lightun GPULineHook()s.
- //
- if(pixels && pix_clock)
- {
-  for(unsigned i = 0; i < 8; i++)
-  {
-   Devices[i]->DrawCrosshairs(pixels, format, width, pix_clock);
-  }
- }
+   //
+   // Draw crosshairs in a separate pass so the crosshairs won't mess up the color evaluation of later lightun GPULineHook()s.
+   //
+   if(pixels && pix_clock)
+   {
+      for(unsigned i = 0; i < 8; i++)
+      {
+         Devices[i]->DrawCrosshairs(pixels, format, width, pix_clock);
+      }
+   }
 
- PSX_SetEventNT(PSX_EVENT_FIO, CalcNextEventTS(timestamp, 0x10000000));
+   PSX_SetEventNT(PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
 }
 
 static InputDeviceInfoStruct InputDeviceInfoPSXPort[] =
