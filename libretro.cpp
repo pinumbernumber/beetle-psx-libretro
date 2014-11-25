@@ -188,10 +188,10 @@ static int32_t Running;	// Set to -1 when not desiring exit, and 0 when we are.
 
 struct event_list_entry
 {
- uint32_t which;
- int32_t event_time;
- event_list_entry *prev;
- event_list_entry *next;
+   uint32_t which;
+   int32_t event_time;
+   event_list_entry *prev;
+   event_list_entry *next;
 };
 
 static event_list_entry events[PSX_EVENT__COUNT];
@@ -301,20 +301,6 @@ bool MDFN_FASTCALL PSX_EventHandler(const int32_t timestamp)
    event_list_entry *e = events[PSX_EVENT__SYNFIRST].next;
 #if PSX_EVENT_SYSTEM_CHECKS
    int32_t prev_event_time = 0;
-#endif
-#if 0
-   {
-      printf("EventHandler - timestamp=%8d\n", timestamp);
-      event_list_entry *moo = &events[PSX_EVENT__SYNFIRST];
-      while(moo)
-      {
-         printf("%u: %8d\n", moo->which, moo->event_time);
-         moo = moo->next;
-      }
-   }
-#endif
-
-#if PSX_EVENT_SYSTEM_CHECKS
    assert(Running == 0 || timestamp >= e->event_time);	// If Running == 0, our EventHandler 
 #endif
 
@@ -328,10 +314,8 @@ bool MDFN_FASTCALL PSX_EventHandler(const int32_t timestamp)
       if(e->event_time < prev_event_time)
          abort();
       prev_event_time = e->event_time;
-#endif
 
       //printf("Event: %u %8d\n", e->which, e->event_time);
-#if PSX_EVENT_SYSTEM_CHECKS
       if((timestamp - e->event_time) > 50)
          printf("Late: %u %d --- %8d\n", e->which, timestamp - e->event_time, timestamp);
 #endif
