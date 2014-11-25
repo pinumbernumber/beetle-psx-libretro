@@ -31,8 +31,6 @@ void MDFND_DestroyCond(MDFN_Cond *cond);
 void MDFND_DestroyMutex(MDFN_Mutex *mutex);
 int MDFND_WaitCond(MDFN_Cond *cond, MDFN_Mutex *mutex);
 int MDFND_SignalCond(MDFN_Cond *cond);
-int MDFND_LockMutex(MDFN_Mutex *mutex);
-int MDFND_UnlockMutex(MDFN_Mutex *mutex);
 
 /* End threading support. */
 #endif

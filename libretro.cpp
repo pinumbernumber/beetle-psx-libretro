@@ -3423,18 +3423,6 @@ void MDFND_DestroyMutex(MDFN_Mutex *lock)
    slock_free((slock_t*)lock);
 }
 
-int MDFND_LockMutex(MDFN_Mutex *lock)
-{
-   slock_lock((slock_t*)lock);
-   return 0;
-}
-
-int MDFND_UnlockMutex(MDFN_Mutex *lock)
-{
-   slock_unlock((slock_t*)lock);
-   return 0;
-}
-
 MDFN_Cond *MDFND_CreateCond(void)
 {
    return (MDFN_Cond*)scond_new();
