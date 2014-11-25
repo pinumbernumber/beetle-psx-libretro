@@ -2440,20 +2440,24 @@ static void check_variables(void)
 #ifdef NEED_CD
 static void ReadM3U(std::vector<std::string> &file_list, std::string path, unsigned depth = 0)
 {
-   std::vector<std::string> ret;
-   FileWrapper m3u_file(path.c_str(), FileWrapper::MODE_READ, _("M3U CD Set"));
+   FILE *fp = fopen(path.c_str(), "rb");
    std::string dir_path;
    char linebuf[2048];
 
    MDFN_GetFilePathComponents(path, &dir_path);
 
-   while(m3u_file.get_line(linebuf, sizeof(linebuf)))
+   if (fp == NULL)
+      return;
+
+   while(fgets(linebuf, sizeof(linebuf), fp))
    {
       std::string efp;
 
-      if(linebuf[0] == '#') continue;
+      if(linebuf[0] == '#')
+         continue;
       MDFN_rtrim(linebuf);
-      if(linebuf[0] == 0) continue;
+      if(linebuf[0] == 0)
+         continue;
 
       efp = MDFN_EvalFIP(dir_path, std::string(linebuf));
 
@@ -2463,14 +2467,14 @@ static void ReadM3U(std::vector<std::string> &file_list, std::string path, unsig
          {
             if (log_cb)
                log_cb(RETRO_LOG_ERROR, "M3U at \"%s\" references self.\n", efp.c_str());
-            return;
+            goto end;
          }
 
          if(depth == 99)
          {
             if (log_cb)
                log_cb(RETRO_LOG_ERROR, "M3U load recursion too deep!\n");
-            return;
+            goto end;
          }
 
          ReadM3U(file_list, efp, depth++);
@@ -2478,6 +2482,9 @@ static void ReadM3U(std::vector<std::string> &file_list, std::string path, unsig
       else
          file_list.push_back(efp);
    }
+
+end:
+   fclose(fp);
 }
 
 #ifdef NEED_CD
