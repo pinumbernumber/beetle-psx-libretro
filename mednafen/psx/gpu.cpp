@@ -1505,13 +1505,9 @@ static void G_Command_DrawSprite(const uint32 *cb)
          break;
 
       case 2:
-         w = 8;
-         h = 8;
-         break;
-
       case 3:
-         w = 16;
-         h = 16;
+         w = 1 << (raw_size + 1);
+         h = 1 << (raw_size + 1);
          break;
    }
 
