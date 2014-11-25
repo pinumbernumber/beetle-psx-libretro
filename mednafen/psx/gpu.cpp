@@ -2200,16 +2200,37 @@ static GPU_CTEntry GPU_Commands[256] =
 
 static void GPU_ProcessFIFO(void)
 {
+   unsigned vl;
+   uint32_t CB[0x10];
+   uint32_t cc;
+   GPU_CTEntry *command = NULL;
+
    if(!BlitterFIFO->in_count)
       return;
 
    switch(InCmd)
    {
-      default:
-         abort();
-         break;
-
       case INCMD_NONE:
+         cc = SimpleFIFO_ReadUnit(BlitterFIFO) >> 24;
+         command = (GPU_CTEntry*)&GPU_Commands[cc];
+         vl = command->len;
+
+         if(DrawTimeAvail < 0 && !command->ss_cmd)
+            return;
+
+         if(!command->ss_cmd)
+            DrawTimeAvail -= 2;
+
+#if 0
+         PSX_WARNING("[GPU] Command: %08x %s %d %d %d", CB[0], command->name, vl, scanline, DrawTimeAvail);
+         if(1)
+         {
+            printf("[GPU]    ");
+            for(unsigned i = 0; i < vl; i++)
+               printf("0x%08x ", CB[i]);
+            printf("\n");
+         }
+#endif
          break;
 
       case INCMD_FBREAD:
@@ -2244,96 +2265,44 @@ static void GPU_ProcessFIFO(void)
          break;
 
       case INCMD_QUAD:
-         {
-            if(DrawTimeAvail < 0)
-               return;
-
-            const uint32_t cc = InCmd_CC;
-            const GPU_CTEntry *command = &GPU_Commands[cc];
-            unsigned vl = 1 + (bool)(cc & 0x4) + (bool)(cc & 0x10);
-            uint32_t CB[3];
-
-            if(BlitterFIFO->in_count >= vl)
-            {
-               for(unsigned i = 0; i < vl; i++)
-               {
-                  CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
-                  SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
-               }
-
-               command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)](CB);
-            }
+         if(DrawTimeAvail < 0)
             return;
-         }
+
+         cc = InCmd_CC;
+         command = (GPU_CTEntry*)&GPU_Commands[cc];
+         vl = 1 + (bool)(cc & 0x4) + (bool)(cc & 0x10);
          break;
 
       case INCMD_PLINE:
+         if(DrawTimeAvail < 0)
+            return;
+
+         cc = InCmd_CC;
+         command = (GPU_CTEntry*)&GPU_Commands[cc];
+         vl = 1 + (bool)(InCmd_CC & 0x10);
+
+         if((SimpleFIFO_ReadUnit(BlitterFIFO) & 0xF000F000) == 0x50005000)
          {
-            if(DrawTimeAvail < 0)
-               return;
-
-            const uint32_t cc = InCmd_CC;
-            const GPU_CTEntry *command = &GPU_Commands[cc];
-            unsigned vl = 1 + (bool)(InCmd_CC & 0x10);
-            uint32_t CB[2];
-
-            if((SimpleFIFO_ReadUnit(BlitterFIFO) & 0xF000F000) == 0x50005000)
-            {
-               SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
-               InCmd = INCMD_NONE;
-               return;
-            }
-
-            if(BlitterFIFO->in_count >= vl)
-            {
-               for(unsigned i = 0; i < vl; i++)
-               {
-                  CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
-                  SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
-               }
-
-               command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)](CB);
-            }
+            SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
+            InCmd = INCMD_NONE;
             return;
          }
          break;
    }
 
-   const uint32_t cc = SimpleFIFO_ReadUnit(BlitterFIFO) >> 24;
-   const GPU_CTEntry *command = &GPU_Commands[cc];
-
-   if(DrawTimeAvail < 0 && !command->ss_cmd)
-      return;
-
-   if(BlitterFIFO->in_count >= command->len)
+   if(BlitterFIFO->in_count >= vl)
    {
-      uint32_t CB[0x10];
-
-      for(unsigned i = 0; i < command->len; i++)
+      unsigned i;
+      for(i = 0; i < vl; i++)
       {
          CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
          SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
       }
 
-      if(!command->ss_cmd)
-         DrawTimeAvail -= 2;
-
-#if 0
-      PSX_WARNING("[GPU] Command: %08x %s %d %d %d", CB[0], command->name, command->len, scanline, DrawTimeAvail);
-      if(1)
-      {
-         printf("[GPU]    ");
-         for(unsigned i = 0; i < command->len; i++)
-            printf("0x%08x ", CB[i]);
-         printf("\n");
-      }
-#endif
       // A very very ugly kludge to support texture mode specialization. fixme/cleanup/SOMETHING in the future.
-      if(cc >= 0x20 && cc <= 0x3F && (cc & 0x4))
+      if(InCmd == INCMD_NONE && cc >= 0x20 && cc <= 0x3F && (cc & 0x4))
       {
-         uint32 tpage;
-
-         tpage = CB[4 + ((cc >> 4) & 0x1)] >> 16;
+         uint32 tpage = CB[4 + ((cc >> 4) & 0x1)] >> 16;
 
          TexPageX = (tpage & 0xF) * 64;
          TexPageY = (tpage & 0x10) * 16;
@@ -2343,14 +2312,8 @@ static void GPU_ProcessFIFO(void)
          abr = (tpage >> 5) & 0x3;
          TexMode = (tpage >> 7) & 0x3;
       }
-      if(!command->func[abr][TexMode])
-      {
-#if 0
-         if(CB[0])
-            PSX_WARNING("[GPU] Unknown command: %08x, %d", CB[0], scanline);
-#endif
-      }
-      else
+
+      if(command->func[abr][TexMode])
          command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
    }
 }
