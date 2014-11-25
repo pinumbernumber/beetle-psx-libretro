@@ -64,7 +64,7 @@ class CDIF_ST : public CDIF
  CDAccess *disc_cdaccess;
 };
 
-CDIF::CDIF() : UnrecoverableError(false), is_phys_cache(false), DiscEjected(false)
+CDIF::CDIF() : UnrecoverableError(false), DiscEjected(false)
 {
 
 }
@@ -150,7 +150,6 @@ CDIF_ST::CDIF_ST(CDAccess *cda) : disc_cdaccess(cda)
 {
  //puts("***WARNING USING SINGLE-THREADED CD READER***");
 
- is_phys_cache = false;
  UnrecoverableError = false;
  DiscEjected = false;
 
