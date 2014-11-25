@@ -672,8 +672,7 @@ static INLINE void GPU_PlotPixel(int32 x, int32 y, uint16_t fore_pix)
       GPURAM[y][x] = (textured ? pix : (pix & 0x7FFF)) | MaskSetOR;
 }
 
-template<uint32_t TexMode_TA>
-static INLINE uint16_t GPU_GetTexel(const uint32_t clut_offset, int32 u_arg, int32 v_arg)
+static INLINE uint16_t GPU_GetTexel(uint32_t TexMode_TA, const uint32_t clut_offset, int32 u_arg, int32 v_arg)
 {
    uint32_t u = TexWindowXLUT[u_arg];
    uint32_t v = TexWindowYLUT[v_arg];
@@ -987,7 +986,7 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
 
          if(textured)
          {
-            uint16 fbw = GPU_GetTexel<TexMode_TA>(clut_offset, COORD_GET_INT(ig.u), COORD_GET_INT(ig.v));
+            uint16 fbw = GPU_GetTexel(TexMode_TA, clut_offset, COORD_GET_INT(ig.u), COORD_GET_INT(ig.v));
 
             if(fbw)
             {
@@ -1022,8 +1021,8 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
    }
 }
 
-template<bool goraud>
-static INLINE void GPU_LinePointToFXPCoord(const line_point &point, const line_fxp_step &step, line_fxp_coord &coord)
+static INLINE void GPU_LinePointToFXPCoord(bool shaded, const line_point &point,
+      const line_fxp_step &step, line_fxp_coord &coord)
 {
    coord.x = ((int64)point.x << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1));
    coord.y = ((int64)point.y << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1));
@@ -1033,7 +1032,7 @@ static INLINE void GPU_LinePointToFXPCoord(const line_point &point, const line_f
    if(step.dy_dk < 0)
       coord.y -= 1024;
 
-   if(goraud)
+   if(shaded)
    {
       coord.r = (point.r << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1));
       coord.g = (point.g << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1));
@@ -1053,8 +1052,7 @@ static INLINE int64 GPU_LineDivide(unsigned bits, int64 delta, int32 dk)
    return (delta / dk);
 }
 
-template<bool goraud>
-static INLINE void GPU_LinePointsToFXPStep(
+static INLINE void GPU_LinePointsToFXPStep(bool shaded,
       const line_point &point0, const line_point &point1, const int32 dk, line_fxp_step &step)
 {
    if(!dk)
@@ -1062,7 +1060,7 @@ static INLINE void GPU_LinePointsToFXPStep(
       step.dx_dk = 0;
       step.dy_dk = 0;
 
-      if(goraud)
+      if(shaded)
       {
          step.dr_dk = 0;
          step.dg_dk = 0;
@@ -1074,7 +1072,7 @@ static INLINE void GPU_LinePointsToFXPStep(
    step.dx_dk = GPU_LineDivide(Line_XY_FractBits, point1.x - point0.x, dk);
    step.dy_dk = GPU_LineDivide(Line_XY_FractBits, point1.y - point0.y, dk);
 
-   if(goraud)
+   if(shaded)
    {
       step.dr_dk = ((point1.r - point0.r) << Line_RGB_FractBits) / dk;
       step.dg_dk = ((point1.g - point0.g) << Line_RGB_FractBits) / dk;
@@ -1130,8 +1128,8 @@ static void GPU_DrawLine(line_point *points)
    //
    //
 
-   GPU_LinePointsToFXPStep<goraud>(points[0], points[1], k, step);
-   GPU_LinePointToFXPCoord<goraud>(points[0], step, cur_point);
+   GPU_LinePointsToFXPStep(goraud, points[0], points[1], k, step);
+   GPU_LinePointToFXPCoord(goraud, points[0], step, cur_point);
 
    //
    //
@@ -1633,7 +1631,7 @@ static void G_Command_DrawSprite(const uint32 *cb)
             {
                if(textured)
                {
-                  uint16 fbw = GPU_GetTexel<TexMode_TA>(clut, u_r, v);
+                  uint16 fbw = GPU_GetTexel(TexMode_TA, clut, u_r, v);
 
                   if(fbw)
                   {
