@@ -31,13 +31,13 @@ bool MDFNFILE::MakeMemWrapAndClose(void *fp)
 
    location = 0;
 
-   ::fseek((FILE *)fp, 0, SEEK_END);
-   f_size = ::ftell((FILE *)fp);
-   ::fseek((FILE *)fp, 0, SEEK_SET);
+   fseek((FILE *)fp, 0, SEEK_END);
+   f_size = ftell((FILE *)fp);
+   fseek((FILE *)fp, 0, SEEK_SET);
 
    if (!(f_data = (uint8*)MDFN_malloc(f_size, "file read buffer")))
       goto fail;
-   ::fread(f_data, 1, f_size, (FILE *)fp);
+   fread(f_data, 1, f_size, (FILE *)fp);
 
    ret = TRUE;
 fail:
@@ -99,96 +99,4 @@ bool MDFNFILE::Close(void)
    f_data = 0;
 
    return(1);
-}
-
-uint64 MDFNFILE::fread(void *ptr, size_t element_size, size_t nmemb)
-{
-   uint32 total = element_size * nmemb;
-
-   if (location >= f_size)
-      return 0;
-
-   if ((location + total) > f_size)
-   {
-      int64 ak = f_size - location;
-
-      memcpy((uint8*)ptr, f_data + location, ak);
-      location = f_size;
-      return(ak / element_size);
-   }
-
-   memcpy((uint8*)ptr, f_data + location, total);
-   location += total;
-   return nmemb;
-}
-
-int MDFNFILE::fseek(int64 offset, int whence)
-{
-   switch(whence)
-   {
-      case SEEK_SET:
-         if (offset >= f_size)
-            return -1;
-
-         location = offset;
-         break;
-      case SEEK_CUR:
-         if ((offset + location) > f_size)
-            return -1;
-
-         location += offset;
-         break;
-   }    
-
-   return 0;
-}
-
-int MDFNFILE::read16le(uint16 *val)
-{
-   if ((location + 2) > f_size)
-      return 0;
-
-   *val = MDFN_de16lsb(f_data + location);
-
-   location += 2;
-
-   return 1;
-}
-
-int MDFNFILE::read32le(uint32 *val)
-{
-   if ((location + 4) > f_size)
-      return 0;
-
-   *val = MDFN_de32lsb(f_data + location);
-
-   location += 4;
-
-   return 1;
-}
-
-char *MDFNFILE::fgets(char *s, int buffer_size)
-{
-   int pos = 0;
-
-   if (!buffer_size)
-      return(NULL);
-
-   if (location >= buffer_size)
-      return(NULL);
-
-   while(pos < (buffer_size - 1) && location < buffer_size)
-   {
-      int v = f_data[location];
-      s[pos] = v;
-      location++;
-      pos++;
-      if (v == '\n')
-         break;
-   }
-
-   if (buffer_size)
-      s[pos] = 0;
-
-   return s;
 }
