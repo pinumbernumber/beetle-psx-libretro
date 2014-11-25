@@ -184,8 +184,8 @@ int InputDevice_Memcard::StateAction(StateMem* sm, int load, int data_only, cons
 
  SFORMAT CD_StateRegs[] =
  {
-    SFARRAY(card_data, sizeof(card_data)),
-    SFEND
+    { ((card_data)), (uint32)((sizeof(card_data))), 0 | 0, "card_data" },
+    { 0, 0, 0, 0 }
  };
  int ret = 1;
  
