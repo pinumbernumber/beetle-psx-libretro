@@ -594,8 +594,7 @@ static INLINE void CalcVCDelta(const uint8 zs, uint8 speed,bool log_mode,
    divinco = 1;
 }
 
-
-void SPU_Sweep_Clock(SPU_Sweep *sweep)
+static void SPU_Sweep_Clock(SPU_Sweep *sweep)
 {
  if(!(sweep->Control & 0x8000))
  {

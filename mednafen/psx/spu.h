@@ -155,9 +155,6 @@ struct SPU_Voice
  SPU_ADSR ADSR;
 };
 
-void SPU_Sweep_Clock(SPU_Sweep *sweep);
-
-
 void SPU_New();
 void SPU_Free();
 
