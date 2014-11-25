@@ -39,8 +39,24 @@ void Deinterlacer::SetType(unsigned dt)
  }
 }
 
-void Deinterlacer::InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field)
+void Deinterlacer::Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field)
 {
+ const MDFN_Rect DisplayRect_Original = DisplayRect;
+
+ if(DeintType == DEINT_WEAVE)
+ {
+  if(!FieldBuffer || FieldBuffer->w < surface->w || FieldBuffer->h < (surface->h / 2))
+  {
+   if(FieldBuffer)
+    delete FieldBuffer;
+
+   FieldBuffer = new MDFN_Surface(NULL, surface->w, surface->h / 2, surface->w, surface->format);
+   LWBuffer.resize(FieldBuffer->h);
+  }
+  else if(memcmp(&surface->format, &FieldBuffer->format, sizeof(MDFN_PixelFormat)))
+   FieldBuffer->format = surface->format;
+ }
+
  //
  // We need to output with LineWidths as always being valid to handle the case of horizontal resolution change between fields
  // while in interlace mode, so clear the first LineWidths entry if it's == ~0, and
@@ -143,27 +159,7 @@ void Deinterlacer::InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect
    StateValid = true;
   }
  }
-}
 
-void Deinterlacer::Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field)
-{
- const MDFN_Rect DisplayRect_Original = DisplayRect;
-
- if(DeintType == DEINT_WEAVE)
- {
-  if(!FieldBuffer || FieldBuffer->w < surface->w || FieldBuffer->h < (surface->h / 2))
-  {
-   if(FieldBuffer)
-    delete FieldBuffer;
-
-   FieldBuffer = new MDFN_Surface(NULL, surface->w, surface->h / 2, surface->w, surface->format);
-   LWBuffer.resize(FieldBuffer->h);
-  }
-  else if(memcmp(&surface->format, &FieldBuffer->format, sizeof(MDFN_PixelFormat)))
-   FieldBuffer->format = surface->format;
- }
-
- InternalProcess(surface, DisplayRect, LineWidths, field);
  PrevDRect = DisplayRect_Original;
 }
 

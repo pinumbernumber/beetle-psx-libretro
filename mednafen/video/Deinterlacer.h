@@ -44,10 +44,6 @@ class Deinterlacer
 
  void ClearState(void);
 
- private:
-
- void InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field);
-
  MDFN_Surface *FieldBuffer;
  std::vector<int32> LWBuffer;
  bool StateValid;
