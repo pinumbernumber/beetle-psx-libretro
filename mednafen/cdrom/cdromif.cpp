@@ -20,7 +20,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include "cdromif.h"
-#include "CDAccess.h"
 #include "../general.h"
 
 #include <algorithm>
@@ -49,29 +48,29 @@ enum
  CDIF_MSG_EJECT,		// Emu -> read, args[0]; 0=insert, 1=eject
 };
 
-// TODO: prohibit copy constructor
-class CDIF_ST : public CDIF
+CDIF::CDIF(CDAccess *cda)
 {
- public:
+   //puts("***WARNING USING SINGLE-THREADED CD READER***");
 
- CDIF_ST(CDAccess *cda);
- virtual ~CDIF_ST();
+   UnrecoverableError = false;
+   DiscEjected = false;
 
- virtual bool ReadRawSector(uint8 *buf, uint32 lba);
- virtual bool Eject(bool eject_status);
+   disc_cdaccess = cda;
+   disc_cdaccess->Read_TOC(&disc_toc);
 
- private:
- CDAccess *disc_cdaccess;
-};
-
-CDIF::CDIF() : UnrecoverableError(false), DiscEjected(false)
-{
-
+   if(disc_toc.first_track < 1 || disc_toc.last_track > 99 || disc_toc.first_track > disc_toc.last_track)
+   {
+      throw(MDFN_Error(0, _("TOC first(%d)/last(%d) track numbers bad."), disc_toc.first_track, disc_toc.last_track));
+   }
 }
 
 CDIF::~CDIF()
 {
-
+ if(disc_cdaccess)
+ {
+  delete disc_cdaccess;
+  disc_cdaccess = NULL;
+ }
 }
 
 bool CDIF::ValidateRawSector(uint8 *buf)
@@ -146,31 +145,7 @@ int CDIF::ReadSector(uint8* pBuf, uint32 lba, uint32 nSectors)
 //
 //
 
-CDIF_ST::CDIF_ST(CDAccess *cda) : disc_cdaccess(cda)
-{
- //puts("***WARNING USING SINGLE-THREADED CD READER***");
-
- UnrecoverableError = false;
- DiscEjected = false;
-
- disc_cdaccess->Read_TOC(&disc_toc);
-
- if(disc_toc.first_track < 1 || disc_toc.last_track > 99 || disc_toc.first_track > disc_toc.last_track)
- {
-  throw(MDFN_Error(0, _("TOC first(%d)/last(%d) track numbers bad."), disc_toc.first_track, disc_toc.last_track));
- }
-}
-
-CDIF_ST::~CDIF_ST()
-{
- if(disc_cdaccess)
- {
-  delete disc_cdaccess;
-  disc_cdaccess = NULL;
- }
-}
-
-bool CDIF_ST::ReadRawSector(uint8 *buf, uint32 lba)
+bool CDIF::ReadRawSector(uint8 *buf, uint32 lba)
 {
  if(UnrecoverableError)
  {
@@ -183,7 +158,7 @@ bool CDIF_ST::ReadRawSector(uint8 *buf, uint32 lba)
  return(true);
 }
 
-bool CDIF_ST::Eject(bool eject_status)
+bool CDIF::Eject(bool eject_status)
 {
  if(UnrecoverableError)
   return(false);
@@ -336,5 +311,5 @@ CDIF *CDIF_Open(const char *path, const bool is_device, bool image_memcache)
 {
    CDAccess *cda = cdaccess_open_image(path, image_memcache);
 
-   return new CDIF_ST(cda); 
+   return new CDIF(cda); 
 }

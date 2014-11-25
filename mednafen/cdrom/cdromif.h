@@ -19,6 +19,7 @@
 #define __MDFN_CDROM_CDROMIF_H
 
 #include "CDUtility.h"
+#include "CDAccess.h"
 #include "../Stream.h"
 
 #include <queue>
@@ -28,16 +29,15 @@ typedef CDUtility::TOC CD_TOC;
 class CDIF
 {
    public:
-
-      CDIF();
-      virtual ~CDIF();
+      CDIF(CDAccess *cda);
+      ~CDIF();
 
       inline void ReadTOC(CDUtility::TOC *read_target)
       {
          *read_target = disc_toc;
       }
 
-      virtual bool ReadRawSector(uint8 *buf, uint32 lba) = 0;
+      bool ReadRawSector(uint8 *buf, uint32 lba);
 
       // Call for mode 1 or mode 2 form 1 only.
       bool ValidateRawSector(uint8 *buf);
@@ -49,7 +49,7 @@ class CDIF
 
       // Return true if operation succeeded or it was a NOP(either due to not being implemented, or the current status matches eject_status).
       // Returns false on failure(usually drive error of some kind; not completely fatal, can try again).
-      virtual bool Eject(bool eject_status) = 0;
+      bool Eject(bool eject_status);
 
       // For Mode 1, or Mode 2 Form 1.
       // No reference counting or whatever is done, so if you destroy the CDIF object before you destroy the returned Stream, things will go BOOM.
@@ -59,6 +59,7 @@ class CDIF
       bool UnrecoverableError;
       CDUtility::TOC disc_toc;
       bool DiscEjected;
+      CDAccess *disc_cdaccess;
 };
 
 CDIF *CDIF_Open(const char *path, const bool is_device, bool image_memcache);
