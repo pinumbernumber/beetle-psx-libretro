@@ -788,7 +788,6 @@ static void SPU_RunDecoder(SPU_Voice *voice)
  voice->ADSR.Divider = 0; \
  voice->ADSR.Phase = ADSR_RELEASE
 
-
 static void SPU_RunEnvelope(SPU_Voice *voice)
 {
  SPU_ADSR *ADSR = &voice->ADSR;
@@ -796,34 +795,66 @@ static void SPU_RunEnvelope(SPU_Voice *voice)
  int divinco;
  int16 uoflow_reset;
 
+ uint8 zs;
+ uint8 speed;
+ bool log_mode;
+ bool dec_mode;
+ bool inv_increment;
+ int16 Current = (int16)ADSR->EnvLevel;
+ bool do_calcvcdelta = false;
+
  if(ADSR->Phase == ADSR_ATTACK && ADSR->EnvLevel == 0x7FFF)
   ADSR->Phase++;
 
  switch(ADSR->Phase)
  {
-  default: assert(0);
-	   break;
+    default:
+       assert(0);
+       break;
 
-  case ADSR_ATTACK:
-	CalcVCDelta(0x7F, ADSR->AttackRate, ADSR->AttackExp, false, false, (int16)ADSR->EnvLevel, increment, divinco);
-	uoflow_reset = 0x7FFF;
-	break;
+    case ADSR_ATTACK:
+       zs = 0x7F;
+       speed = ADSR->AttackRate;
+       log_mode = ADSR->AttackExp;
+       dec_mode = false;
+       inv_increment = false;
+       uoflow_reset = 0x7FFF;
+       do_calcvcdelta = true;
+       break;
 
-  case ADSR_DECAY:
-	CalcVCDelta(0x1F << 2, ADSR->DecayRate, true, true, true, (int16)ADSR->EnvLevel, increment, divinco);
-	uoflow_reset = 0;
-	break;
+    case ADSR_DECAY:
+       zs = 0x1F << 2;
+       speed = ADSR->DecayRate;
+       log_mode = true;
+       dec_mode = true;
+       inv_increment = true;
+       uoflow_reset = 0;
+       do_calcvcdelta = true;
+       break;
 
-  case ADSR_SUSTAIN:
-	CalcVCDelta(0x7F, ADSR->SustainRate, ADSR->SustainExp, ADSR->SustainDec, ADSR->SustainDec, (int16)ADSR->EnvLevel, increment, divinco);
-	uoflow_reset = ADSR->SustainDec ? 0 : 0x7FFF;
-	break;
+    case ADSR_SUSTAIN:
+       zs = 0x7F;
+       speed = ADSR->SustainRate;
+       log_mode = ADSR->SustainExp;
+       dec_mode = ADSR->SustainDec;
+       inv_increment = ADSR->SustainDec;
+       uoflow_reset = ADSR->SustainDec ? 0 : 0x7FFF;
+       do_calcvcdelta = true;
+       break;
 
-  case ADSR_RELEASE:
-	CalcVCDelta(0x1F << 2, ADSR->ReleaseRate, ADSR->ReleaseExp, true, true, (int16)ADSR->EnvLevel, increment, divinco);
-	uoflow_reset = 0;
-	break;
+    case ADSR_RELEASE:
+       zs = 0x1F << 2;
+       speed = ADSR->ReleaseRate;
+       log_mode = ADSR->ReleaseExp;
+       dec_mode = true;
+       inv_increment = true;
+       uoflow_reset = 0;
+       do_calcvcdelta = true;
+       break;
  }
+
+ if (do_calcvcdelta)
+    CalcVCDelta(zs, speed, log_mode, dec_mode, inv_increment, Current, increment, divinco);
 
  ADSR->Divider += divinco;
  if(ADSR->Divider & 0x8000)
