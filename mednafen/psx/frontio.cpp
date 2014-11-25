@@ -34,6 +34,17 @@
 
 #include "../error.h"
 
+#define INPUTDEVICE_NONE            0
+#define INPUTDEVICE_GAMEPAD         1
+#define INPUTDEVICE_DUALSHOCK       2
+#define INPUTDEVICE_DUALANALOG      3
+#define INPUTDEVICE_ANALOG_JOYSTICK 4
+#define INPUTDEVICE_MOUSE           5
+#define INPUTDEVICE_NEGCON          6
+#define INPUTDEVICE_GUNCON          7
+#define INPUTDEVICE_JUSTIFIER       8
+#define INPUTDEVICE_DANCEPAD        9
+
 //#define PSX_FIODBGINFO(format, ...) { /* printf(format " -- timestamp=%d -- PAD temp\n", ## __VA_ARGS__, timestamp); */  }
 static void PSX_FIODBGINFO(const char *format, ...)
 {
@@ -50,6 +61,7 @@ static MDFN_IEN_PSX::InputDevice_Multitap *DevicesTap[2];
 
 static MDFN_IEN_PSX::InputDevice *DevicesMC[8];
 static MDFN_IEN_PSX::InputDevice *Devices[8];
+static unsigned DevicesType[8];
 
 static void *DeviceData[8];
 
@@ -894,25 +906,47 @@ void FrontIO_SetInput(unsigned int port, const char *type, void *ptr)
       irq10_pulse_ts[port] = PSX_EVENT_MAXTS;
 
    if(!strcmp(type, "gamepad") || !strcmp(type, "dancepad"))
+   {
       Devices[port] = Device_Gamepad_Create();
+      DevicesType[port] = INPUTDEVICE_GAMEPAD;
+   }
    else if(!strcmp(type, "dualanalog"))
+   {
       Devices[port] = Device_DualAnalog_Create(false);
+      DevicesType[port] = INPUTDEVICE_DUALANALOG;
+   }
    else if(!strcmp(type, "analogjoy"))
+   {
       Devices[port] = Device_DualAnalog_Create(true);
+      DevicesType[port] = INPUTDEVICE_ANALOG_JOYSTICK;
+   }
    else if(!strcmp(type, "dualshock"))
    {
       char name[256];
       snprintf(name, 256, _("DualShock on port %u"), port + 1);
       Devices[port] = Device_DualShock_Create(std::string(name));
+      DevicesType[port] = INPUTDEVICE_DUALSHOCK;
    }
    else if(!strcmp(type, "mouse"))
+   {
       Devices[port] = Device_Mouse_Create();
+      DevicesType[port] = INPUTDEVICE_MOUSE;
+   }
    else if(!strcmp(type, "negcon"))
+   {
       Devices[port] = Device_neGcon_Create();
+      DevicesType[port] = INPUTDEVICE_NEGCON;
+   }
    else if(!strcmp(type, "guncon"))
+   {
       Devices[port] = Device_GunCon_Create();
+      DevicesType[port] = INPUTDEVICE_GUNCON;
+   }
    else if(!strcmp(type, "justifier"))
+   {
       Devices[port] = Device_Justifier_Create();
+      DevicesType[port] = INPUTDEVICE_JUSTIFIER;
+   }
    else
       Devices[port] = new InputDevice();
 
@@ -1039,6 +1073,7 @@ void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
 
    PSX_SetEventNT(PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
 }
+
 
 static InputDeviceInfoStruct InputDeviceInfoPSXPort[] =
 {
