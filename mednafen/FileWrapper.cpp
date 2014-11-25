@@ -69,45 +69,9 @@ uint64 FileWrapper::read(void *data, uint64 count, bool error_on_eof)
    return fread(data, 1, count, fp);
 }
 
-void FileWrapper::flush(void)
-{
-   fflush(fp);
-}
-
 void FileWrapper::write(const void *data, uint64 count)
 {
    fwrite(data, 1, count, fp);
-}
-
-int FileWrapper::scanf(const char *format, ...)
-{
-   va_list ap;
-   int ret;
-
-   va_start(ap, format);
-
-   ret = trio_vfscanf(fp, format, ap);
-
-   va_end(ap);
-
-   return ret;
-}
-
-void FileWrapper::put_char(int c)
-{
-   fputc(c, fp);
-}
-
-void FileWrapper::put_string(const char *str)
-{
-   write(str, strlen(str));
-}
-
-// We need to decide whether to prohibit NULL characters in output and input strings via std::string.
-// Yes for correctness, no for potential security issues(though unlikely in context all things considered).
-void FileWrapper::put_string(const std::string &str)
-{
-   write(str.data(), str.size());
 }
 
 char *FileWrapper::get_line(char *buf_s, int buf_size)

@@ -20,13 +20,6 @@ class FileWrapper
 
  void write(const void *data, uint64 count);
 
- int scanf(const char *format, ...) MDFN_FORMATSTR(scanf, 2, 3);
-
- void put_char(int c);
-
- void put_string(const char *str);
- void put_string(const std::string &str);
-
  char *get_line(char *s, int size);	// Same semantics as fgets(), for now
 
  void seek(int64 offset, int whence);
@@ -34,8 +27,6 @@ class FileWrapper
  int64 tell(void);
 
  int64 size(void);
-
- void flush(void);
 
  void close(void);	// Flushes and closes the underlying OS/C lib file.  Calling any other method of this class after a call to
 			// this method is illegal(except for the implicit call to the destructor).
