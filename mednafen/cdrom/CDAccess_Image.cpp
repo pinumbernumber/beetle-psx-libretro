@@ -177,18 +177,17 @@ uint32 CDAccess_Image::GetSectorCount(CDRFILE_TRACK_INFO *track)
 {
    if(track->DIFormat == DI_FORMAT_AUDIO)
    {
+      int64 size = 0;
+
       if(track->AReader)
          return(((track->AReader->FrameCount() * 4) - track->FileOffset) / 2352);
-      else
-      {
-         const int64 size = track->fp->size();
 
-         //printf("%d %d %d\n", (int)stat_buf.st_size, (int)track->FileOffset, (int)stat_buf.st_size - (int)track->FileOffset);
-         if(track->SubchannelMode)
-            return((size - track->FileOffset) / (2352 + 96));
-         else
-            return((size - track->FileOffset) / 2352);
-      }
+      size = track->fp->size();
+
+      //printf("%d %d %d\n", (int)stat_buf.st_size, (int)track->FileOffset, (int)stat_buf.st_size - (int)track->FileOffset);
+      if(track->SubchannelMode)
+         return((size - track->FileOffset) / (2352 + 96));
+      return((size - track->FileOffset) / 2352);
    }
 
    return((track->fp->size() - track->FileOffset) / DI_Size_Table[track->DIFormat]);
