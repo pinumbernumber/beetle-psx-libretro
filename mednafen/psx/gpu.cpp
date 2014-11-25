@@ -1109,15 +1109,9 @@ static void GPU_DrawLine(line_point *points)
    i_dy = abs(points[1].y - points[0].y);
    k = (i_dx > i_dy) ? i_dx : i_dy;
 
-   if(i_dx >= 1024)
+   if(i_dx >= 1024 || i_dy >= 512)
    {
-      //PSX_DBG(PSX_DBG_WARNING, "[GPU] Line too long: i_dx=%d\n", i_dx);
-      return;
-   }
-
-   if(i_dy >= 512)
-   {
-      //PSX_DBG(PSX_DBG_WARNING, "[GPU] Line too long: i_dy=%d\n", i_dy);
+      //PSX_DBG(PSX_DBG_WARNING, "[GPU] Line too long: i_dx=%d, i_dy=%d\n", i_dx, i_dy);
       return;
    }
 
