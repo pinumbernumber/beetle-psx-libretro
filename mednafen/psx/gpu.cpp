@@ -616,7 +616,7 @@ static INLINE void GPU_PlotPixel(int32 x, int32 y, uint16_t fore_pix)
    y &= 511;	// More Y precision bits than GPU RAM installed in (non-arcade, at least) Playstation hardware.
    uint16_t pix = fore_pix;
 
-   if(BlendMode >= 0 && (fore_pix & 0x8000))
+   if(BlendMode >= BLEND_MODE_AVERAGE && (fore_pix & 0x8000))
    {
       uint16_t bg_pix = GPURAM[y][x];	// Don't use bg_pix for mask evaluation, it's modified in blending code paths.
       pix = 0;
@@ -949,7 +949,7 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
          {
             DrawTimeAvail -= (xb - xs);
          }
-         else if((BlendMode >= 0) || MaskEval_TA)
+         else if((BlendMode >= BLEND_MODE_AVERAGE) || MaskEval_TA)
          {
             DrawTimeAvail -= (((xb + 1) & ~1) - (xs & ~1)) >> 1;
          }
@@ -1310,7 +1310,7 @@ static void GPU_DrawSprite(int32 x_arg, int32 y_arg, int32 w,
       else
 #endif
 
-         if((BlendMode >= 0) || MaskEval_TA)
+         if((BlendMode >= BLEND_MODE_AVERAGE) || MaskEval_TA)
          {
             suck_time += ((((x_bound + 1) & ~1) - (x_start & ~1)) * (y_bound - y_start)) >> 1;
          }
@@ -1465,7 +1465,7 @@ static void GPU_DrawLine(line_point *points)
       points[0] = tmp;  
    }
 
-   DrawTimeAvail -= k * ((BlendMode >= 0) ? 2 : 1);
+   DrawTimeAvail -= k * ((BlendMode >= BLEND_MODE_AVERAGE) ? 2 : 1);
 
    //
    //
