@@ -448,7 +448,7 @@ uint32_t PS_CPU::Exception(uint32_t code, uint32_t PC, const uint32_t NPM)
 #define GPR_RES(n) { unsigned tn = (n); ReadAbsorb[tn] = 0; }
 #define GPR_DEPRES_END ReadAbsorb[0] = back; }
 
-int32_t PS_CPU::RunReal(int32_t timestamp_in)
+int32_t PS_CPU::Run(int32_t timestamp_in, const bool ILHMode)
 {
    register int32_t timestamp = timestamp_in;
 
@@ -645,15 +645,6 @@ SkipNPCStuff:	;
    ACTIVE_TO_BACKING;
 
    return(timestamp);
-}
-
-int32_t PS_CPU::Run(int32_t timestamp_in, const bool ILHMode)
-{
-#ifdef HAVE_DEBUG
-   if(CPUHook || ADDBT)
-      return(RunReal(timestamp_in));
-#endif
-   return(RunReal(timestamp_in));
 }
 
 void PS_CPU::SetCPUHook(void (*cpuh)(const int32_t timestamp, uint32_t pc), void (*addbt)(uint32_t from, uint32_t to, bool exception))
