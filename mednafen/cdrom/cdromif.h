@@ -37,7 +37,6 @@ class CDIF
          *read_target = disc_toc;
       }
 
-      virtual void HintReadSector(uint32 lba) = 0;
       virtual bool ReadRawSector(uint8 *buf, uint32 lba) = 0;
 
       // Call for mode 1 or mode 2 form 1 only.

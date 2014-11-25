@@ -98,7 +98,6 @@ class CDIF_MT : public CDIF
  CDIF_MT(CDAccess *cda);
  virtual ~CDIF_MT();
 
- virtual void HintReadSector(uint32 lba);
  virtual bool ReadRawSector(uint8 *buf, uint32 lba);
 
  // Return true if operation succeeded or it was a NOP(either due to not being implemented, or the current status matches eject_status).
@@ -149,7 +148,6 @@ class CDIF_ST : public CDIF
  CDIF_ST(CDAccess *cda);
  virtual ~CDIF_ST();
 
- virtual void HintReadSector(uint32 lba);
  virtual bool ReadRawSector(uint8 *buf, uint32 lba);
  virtual bool Eject(bool eject_status);
 
@@ -495,14 +493,6 @@ bool CDIF_MT::ReadRawSector(uint8 *buf, uint32 lba)
  return(!error_condition);
 }
 
-void CDIF_MT::HintReadSector(uint32 lba)
-{
- if(UnrecoverableError)
-  return;
-
- ReadThreadQueue.Write(CDIF_Message(CDIF_MSG_READ_SECTOR, lba));
-}
-
 int CDIF::ReadSector(uint8* pBuf, uint32 lba, uint32 nSectors)
 {
  int ret = 0;
@@ -598,11 +588,6 @@ CDIF_ST::~CDIF_ST()
   delete disc_cdaccess;
   disc_cdaccess = NULL;
  }
-}
-
-void CDIF_ST::HintReadSector(uint32 lba)
-{
- // TODO: disc_cdaccess seek hint? (probably not, would require asynchronousitycamel)
 }
 
 bool CDIF_ST::ReadRawSector(uint8 *buf, uint32 lba)
