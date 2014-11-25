@@ -1022,195 +1022,6 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
    }
 }
 
-template<bool goraud, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
-void GPU_DrawTriangle(tri_vertex *vertices, uint32 clut)
-{
-   i_deltas idl;
-
-   //
-   // Sort vertices by y.
-   //
-   if(vertices[2].y < vertices[1].y)
-   {
-      tri_vertex tmp = vertices[1];
-      vertices[1] = vertices[2];
-      vertices[2] = tmp;
-   }
-
-   if(vertices[1].y < vertices[0].y)
-   {
-      tri_vertex tmp = vertices[0];
-      vertices[0] = vertices[1];
-      vertices[1] = tmp;
-   }
-
-   if(vertices[2].y < vertices[1].y)
-   {
-      tri_vertex tmp = vertices[1];
-      vertices[1] = vertices[2];
-      vertices[2] = tmp;
-   }
-
-   if(vertices[0].y == vertices[2].y)
-      return;
-
-   if((vertices[2].y - vertices[0].y) >= 512)
-   {
-      //PSX_WARNING("[GPU] Triangle height too large: %d", (vertices[2].y - vertices[0].y));
-      return;
-   }
-
-   if(abs(vertices[2].x - vertices[0].x) >= 1024 ||
-         abs(vertices[2].x - vertices[1].x) >= 1024 ||
-         abs(vertices[1].x - vertices[0].x) >= 1024)
-   {
-      //PSX_WARNING("[GPU] Triangle width too large: %d %d %d", abs(vertices[2].x - vertices[0].x), abs(vertices[2].x - vertices[1].x), abs(vertices[1].x - vertices[0].x));
-      return;
-   }
-
-   if(!GPU_CalcIDeltas(&idl, &vertices[0], &vertices[1], &vertices[2]))
-      return;
-
-   // [0] should be top vertex, [2] should be bottom vertex, [1] should be off to the side vertex.
-   //
-   //
-   int32 y_start = vertices[0].y;
-   int32 y_middle = vertices[1].y;
-   int32 y_bound = vertices[2].y;
-
-   int64 base_coord;
-   int64 base_step;
-
-   int64 bound_coord_ul;
-   int64 bound_coord_us;
-
-   int64 bound_coord_ll;
-   int64 bound_coord_ls;
-
-   bool right_facing;
-   //bool bottom_up;
-   i_group ig;
-
-   //
-   // Find vertex with lowest X coordinate, and use as the base for calculating interpolants from.
-   //
-   {
-      unsigned iggvi = 0;
-
-      //
-      // <=, not <
-      //
-      if(vertices[1].x <= vertices[iggvi].x)
-         iggvi = 1;
-
-      if(vertices[2].x <= vertices[iggvi].x)
-         iggvi = 2;
-
-      ig.u = COORD_MF_INT(vertices[iggvi].u) + (1 << (COORD_FBS - 1));
-      ig.v = COORD_MF_INT(vertices[iggvi].v) + (1 << (COORD_FBS - 1));
-      ig.r = COORD_MF_INT(vertices[iggvi].r);
-      ig.g = COORD_MF_INT(vertices[iggvi].g);
-      ig.b = COORD_MF_INT(vertices[iggvi].b);
-
-      GPU_AddIDeltas_DX<goraud, textured>(ig, idl, -vertices[iggvi].x);
-      GPU_AddIDeltas_DY<goraud, textured>(ig, idl, -vertices[iggvi].y);
-   }
-
-   base_coord = MakePolyXFP(vertices[0].x);
-   base_step = MakePolyXFPStep((vertices[2].x - vertices[0].x), (vertices[2].y - vertices[0].y));
-
-   bound_coord_ul = MakePolyXFP(vertices[0].x);
-   bound_coord_ll = MakePolyXFP(vertices[1].x);
-
-   //
-   //
-   //
-
-
-   if(vertices[1].y == vertices[0].y)
-   {
-      bound_coord_us = 0;
-      right_facing = (bool)(vertices[1].x > vertices[0].x);
-   }
-   else
-   {
-      bound_coord_us = MakePolyXFPStep((vertices[1].x - vertices[0].x), (vertices[1].y - vertices[0].y));
-      right_facing = (bool)(bound_coord_us > base_step);
-   }
-
-   if(vertices[2].y == vertices[1].y)
-      bound_coord_ls = 0;
-   else
-      bound_coord_ls = MakePolyXFPStep((vertices[2].x - vertices[1].x), (vertices[2].y - vertices[1].y));
-
-   if(y_start < ClipY0)
-   {
-      int32 count = ClipY0 - y_start;
-
-      y_start = ClipY0;
-      base_coord += base_step * count;
-      bound_coord_ul += bound_coord_us * count;
-
-      if(y_middle < ClipY0)
-      {
-         int32 count_ls = ClipY0 - y_middle;
-
-         y_middle = ClipY0;
-         bound_coord_ll += bound_coord_ls * count_ls;
-      }
-   }
-
-   if(y_bound > (ClipY1 + 1))
-   {
-      y_bound = ClipY1 + 1;
-
-      if(y_middle > y_bound)
-         y_middle = y_bound;
-   }
-
-   if(right_facing)
-   {
-      for(int32 y = y_start; y < y_middle; y++)
-      {
-         GPU_DrawSpan<goraud, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ul), ig, idl);
-         base_coord += base_step;
-         bound_coord_ul += bound_coord_us;
-      }
-
-      for(int32 y = y_middle; y < y_bound; y++)
-      {
-         GPU_DrawSpan<goraud, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ll), ig, idl);
-         base_coord += base_step;
-         bound_coord_ll += bound_coord_ls;
-      }
-   }
-   else
-   {
-      for(int32 y = y_start; y < y_middle; y++)
-      {
-         GPU_DrawSpan<goraud, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(bound_coord_ul), GetPolyXFP_Int(base_coord), ig, idl);
-         base_coord += base_step;
-         bound_coord_ul += bound_coord_us;
-      }
-
-      for(int32 y = y_middle; y < y_bound; y++)
-      {
-         GPU_DrawSpan<goraud, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(bound_coord_ll), GetPolyXFP_Int(base_coord), ig, idl);
-         base_coord += base_step;
-         bound_coord_ll += bound_coord_ls;
-      }
-   }
-
-#if 0
-   printf("[GPU] Vertices: %d:%d(r=%d, g=%d, b=%d) -> %d:%d(r=%d, g=%d, b=%d) -> %d:%d(r=%d, g=%d, b=%d)\n\n\n", vertices[0].x, vertices[0].y,
-         vertices[0].r, vertices[0].g, vertices[0].b,
-         vertices[1].x, vertices[1].y,
-         vertices[1].r, vertices[1].g, vertices[1].b,
-         vertices[2].x, vertices[2].y,
-         vertices[2].r, vertices[2].g, vertices[2].b);
-#endif
-}
-
 template<bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, bool FlipX, bool FlipY>
 static void GPU_DrawSprite(int32 x_arg, int32 y_arg, int32 w,
       int32 h, uint8 u_arg, uint8 v_arg, uint32 color, uint32 clut_offset)
@@ -1610,7 +1421,190 @@ static void G_Command_DrawPolygon(const uint32 *cb)
       }
    }
 
-   GPU_DrawTriangle<shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(vertices, clut);
+   i_deltas idl;
+
+   //
+   // Sort vertices by y.
+   //
+   if(vertices[2].y < vertices[1].y)
+   {
+      tri_vertex tmp = vertices[1];
+      vertices[1] = vertices[2];
+      vertices[2] = tmp;
+   }
+
+   if(vertices[1].y < vertices[0].y)
+   {
+      tri_vertex tmp = vertices[0];
+      vertices[0] = vertices[1];
+      vertices[1] = tmp;
+   }
+
+   if(vertices[2].y < vertices[1].y)
+   {
+      tri_vertex tmp = vertices[1];
+      vertices[1] = vertices[2];
+      vertices[2] = tmp;
+   }
+
+   if(vertices[0].y == vertices[2].y)
+      return;
+
+   if((vertices[2].y - vertices[0].y) >= 512)
+   {
+      //PSX_WARNING("[GPU] Triangle height too large: %d", (vertices[2].y - vertices[0].y));
+      return;
+   }
+
+   if(abs(vertices[2].x - vertices[0].x) >= 1024 ||
+         abs(vertices[2].x - vertices[1].x) >= 1024 ||
+         abs(vertices[1].x - vertices[0].x) >= 1024)
+   {
+      //PSX_WARNING("[GPU] Triangle width too large: %d %d %d", abs(vertices[2].x - vertices[0].x), abs(vertices[2].x - vertices[1].x), abs(vertices[1].x - vertices[0].x));
+      return;
+   }
+
+   if(!GPU_CalcIDeltas(&idl, &vertices[0], &vertices[1], &vertices[2]))
+      return;
+
+   // [0] should be top vertex, [2] should be bottom vertex, [1] should be off to the side vertex.
+   //
+   //
+   int32 y_start = vertices[0].y;
+   int32 y_middle = vertices[1].y;
+   int32 y_bound = vertices[2].y;
+
+   int64 base_coord;
+   int64 base_step;
+
+   int64 bound_coord_ul;
+   int64 bound_coord_us;
+
+   int64 bound_coord_ll;
+   int64 bound_coord_ls;
+
+   bool right_facing;
+   //bool bottom_up;
+   i_group ig;
+
+   //
+   // Find vertex with lowest X coordinate, and use as the base for calculating interpolants from.
+   //
+   {
+      unsigned iggvi = 0;
+
+      //
+      // <=, not <
+      //
+      if(vertices[1].x <= vertices[iggvi].x)
+         iggvi = 1;
+
+      if(vertices[2].x <= vertices[iggvi].x)
+         iggvi = 2;
+
+      ig.u = COORD_MF_INT(vertices[iggvi].u) + (1 << (COORD_FBS - 1));
+      ig.v = COORD_MF_INT(vertices[iggvi].v) + (1 << (COORD_FBS - 1));
+      ig.r = COORD_MF_INT(vertices[iggvi].r);
+      ig.g = COORD_MF_INT(vertices[iggvi].g);
+      ig.b = COORD_MF_INT(vertices[iggvi].b);
+
+      GPU_AddIDeltas_DX<shaded, textured>(ig, idl, -vertices[iggvi].x);
+      GPU_AddIDeltas_DY<shaded, textured>(ig, idl, -vertices[iggvi].y);
+   }
+
+   base_coord = MakePolyXFP(vertices[0].x);
+   base_step = MakePolyXFPStep((vertices[2].x - vertices[0].x), (vertices[2].y - vertices[0].y));
+
+   bound_coord_ul = MakePolyXFP(vertices[0].x);
+   bound_coord_ll = MakePolyXFP(vertices[1].x);
+
+   //
+   //
+   //
+
+
+   if(vertices[1].y == vertices[0].y)
+   {
+      bound_coord_us = 0;
+      right_facing = (bool)(vertices[1].x > vertices[0].x);
+   }
+   else
+   {
+      bound_coord_us = MakePolyXFPStep((vertices[1].x - vertices[0].x), (vertices[1].y - vertices[0].y));
+      right_facing = (bool)(bound_coord_us > base_step);
+   }
+
+   if(vertices[2].y == vertices[1].y)
+      bound_coord_ls = 0;
+   else
+      bound_coord_ls = MakePolyXFPStep((vertices[2].x - vertices[1].x), (vertices[2].y - vertices[1].y));
+
+   if(y_start < ClipY0)
+   {
+      int32 count = ClipY0 - y_start;
+
+      y_start = ClipY0;
+      base_coord += base_step * count;
+      bound_coord_ul += bound_coord_us * count;
+
+      if(y_middle < ClipY0)
+      {
+         int32 count_ls = ClipY0 - y_middle;
+
+         y_middle = ClipY0;
+         bound_coord_ll += bound_coord_ls * count_ls;
+      }
+   }
+
+   if(y_bound > (ClipY1 + 1))
+   {
+      y_bound = ClipY1 + 1;
+
+      if(y_middle > y_bound)
+         y_middle = y_bound;
+   }
+
+   if(right_facing)
+   {
+      for(int32 y = y_start; y < y_middle; y++)
+      {
+         GPU_DrawSpan<shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ul), ig, idl);
+         base_coord += base_step;
+         bound_coord_ul += bound_coord_us;
+      }
+
+      for(int32 y = y_middle; y < y_bound; y++)
+      {
+         GPU_DrawSpan<shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ll), ig, idl);
+         base_coord += base_step;
+         bound_coord_ll += bound_coord_ls;
+      }
+   }
+   else
+   {
+      for(int32 y = y_start; y < y_middle; y++)
+      {
+         GPU_DrawSpan<shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(bound_coord_ul), GetPolyXFP_Int(base_coord), ig, idl);
+         base_coord += base_step;
+         bound_coord_ul += bound_coord_us;
+      }
+
+      for(int32 y = y_middle; y < y_bound; y++)
+      {
+         GPU_DrawSpan<shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(bound_coord_ll), GetPolyXFP_Int(base_coord), ig, idl);
+         base_coord += base_step;
+         bound_coord_ll += bound_coord_ls;
+      }
+   }
+
+#if 0
+   printf("[GPU] Vertices: %d:%d(r=%d, g=%d, b=%d) -> %d:%d(r=%d, g=%d, b=%d) -> %d:%d(r=%d, g=%d, b=%d)\n\n\n", vertices[0].x, vertices[0].y,
+         vertices[0].r, vertices[0].g, vertices[0].b,
+         vertices[1].x, vertices[1].y,
+         vertices[1].r, vertices[1].g, vertices[1].b,
+         vertices[2].x, vertices[2].y,
+         vertices[2].r, vertices[2].g, vertices[2].b);
+#endif
 }
 
 template<uint8 raw_size, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
