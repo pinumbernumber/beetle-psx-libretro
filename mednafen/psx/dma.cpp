@@ -33,8 +33,6 @@ void CPU_SetHalt(bool status);
 }
 #endif
 
-//#include <map>
-
 // Notes: DMA tested to abort when 
 
 /* Notes:
@@ -96,12 +94,12 @@ static int32_t lastts;
 
 static const char *PrettyChannelNames[7] = { "MDEC IN", "MDEC OUT", "GPU", "CDC", "SPU", "PIO", "OTC" };
 
-void DMA_Init(void)
+void DMA_New(void)
 {
 
 }
 
-void DMA_Kill(void)
+void DMA_Free(void)
 {
 
 }

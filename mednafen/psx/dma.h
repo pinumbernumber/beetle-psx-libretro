@@ -11,8 +11,8 @@ void DMA_ResetTS(void);
 
 void DMA_Power(void);
 
-void DMA_Init(void);
-void DMA_Kill(void);
+void DMA_New(void);
+void DMA_Free(void);
 
 int DMA_StateAction(void *data, int load, int data_only);
 

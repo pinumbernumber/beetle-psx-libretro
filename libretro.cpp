@@ -1322,7 +1322,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
       FrontIO_SetCrosshairsColor(i, MDFN_GetSettingUI(buf));
    }
 
-   DMA_Init();
+   DMA_New();
 
    GPU_FillVideoParams(&EmulatedPSX);
 
@@ -1640,7 +1640,7 @@ static void Cleanup(void)
 
    FrontIO_Free();
 
-   DMA_Kill();
+   DMA_Free();
 
    if(BIOSROM)
       delete BIOSROM;
