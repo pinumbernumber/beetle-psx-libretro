@@ -159,37 +159,37 @@ int PS_CPU::StateAction(StateMem *sm, int load, int data_only)
 {
    SFORMAT StateRegs[] =
    {
-      SFARRAY32(GPR, 32),
-      SFVAR(LO),
-      SFVAR(HI),
-      SFVAR(BACKED_PC),
-      SFVAR(BACKED_new_PC),
-      SFVAR(BACKED_new_PC_mask),
+      { ((GPR)), (uint32)(((32)) * sizeof(uint32)), 0x40000000 | 0, "GPR" },
+      { &((LO)), sizeof((LO)), 0x80000000 | 0, "LO" },
+      { &((HI)), sizeof((HI)), 0x80000000 | 0, "HI" },
+      { &((BACKED_PC)), sizeof((BACKED_PC)), 0x80000000 | 0, "BACKED_PC" },
+      { &((BACKED_new_PC)), sizeof((BACKED_new_PC)), 0x80000000 | 0, "BACKED_new_PC" },
+      { &((BACKED_new_PC_mask)), sizeof((BACKED_new_PC_mask)), 0x80000000 | 0, "BACKED_new_PC_mask" },
 
-      SFVAR(IPCache),
-      SFVAR(Halted),
+      { &((IPCache)), sizeof((IPCache)), 0x80000000 | 0, "IPCache" },
+      { &((Halted)), 1, 0x80000000 | 0x08000000, "Halted" },
 
-      SFVAR(BACKED_LDWhich),
-      SFVAR(BACKED_LDValue),
-      SFVAR(LDAbsorb),
+      { &((BACKED_LDWhich)), sizeof((BACKED_LDWhich)), 0x80000000 | 0, "BACKED_LDWhich" },
+      { &((BACKED_LDValue)), sizeof((BACKED_LDValue)), 0x80000000 | 0, "BACKED_LDValue" },
+      { &((LDAbsorb)), sizeof((LDAbsorb)), 0x80000000 | 0, "LDAbsorb" },
 
-      SFVAR(next_event_ts),
-      SFVAR(gte_ts_done),
-      SFVAR(muldiv_ts_done),
+      { &((next_event_ts)), sizeof((next_event_ts)), 0x80000000 | 0, "next_event_ts" },
+      { &((gte_ts_done)), sizeof((gte_ts_done)), 0x80000000 | 0, "gte_ts_done" },
+      { &((muldiv_ts_done)), sizeof((muldiv_ts_done)), 0x80000000 | 0, "muldiv_ts_done" },
 
-      SFVAR(BIU),
-      SFARRAY32(ICache_Bulk, 2048),
+      { &((BIU)), sizeof((BIU)), 0x80000000 | 0, "BIU" },
+      { ((ICache_Bulk)), (uint32)(((2048)) * sizeof(uint32)), 0x40000000 | 0, "ICache_Bulk" },
 
-      SFARRAY32(CP0.Regs, 32),
+      { ((CP0.Regs)), (uint32)(((32)) * sizeof(uint32)), 0x40000000 | 0, "CP0.Regs" },
 
-      SFARRAY(ReadAbsorb, 0x20),
-      SFVAR(ReadAbsorbDummy),
-      SFVAR(ReadAbsorbWhich),
-      SFVAR(ReadFudge),
+      { ((ReadAbsorb)), (uint32)((0x20)), 0 | 0, "ReadAbsorb" },
+      { &((ReadAbsorbDummy)), sizeof((ReadAbsorbDummy)), 0x80000000 | 0, "ReadAbsorbDummy" },
+      { &((ReadAbsorbWhich)), sizeof((ReadAbsorbWhich)), 0x80000000 | 0, "ReadAbsorbWhich" },
+      { &((ReadFudge)), sizeof((ReadFudge)), 0x80000000 | 0, "ReadFudge" },
 
-      SFARRAY(ScratchRAM.data8, 1024),
+      { ((ScratchRAM.data8)), (uint32)((1024)), 0 | 0, "ScratchRAM.data8" },
 
-      SFEND
+      { 0, 0, 0, 0 }
    };
    int ret = MDFNSS_StateAction(sm, load, StateRegs, "CPU");
 
