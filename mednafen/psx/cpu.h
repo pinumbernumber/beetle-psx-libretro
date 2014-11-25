@@ -40,6 +40,56 @@
 
 #include "gte.h"
 
+ // FAST_MAP_* enums are in BYTES(8-bit), not in 32-bit units("words" in MIPS context), but the sizes
+ // will always be multiples of 4.
+#define FAST_MAP_SHIFT 16
+#define FAST_MAP_PSIZE (1 << FAST_MAP_SHIFT)
+
+enum
+{
+   EXCEPTION_INT = 0,
+   EXCEPTION_MOD = 1,
+   EXCEPTION_TLBL = 2,
+   EXCEPTION_TLBS = 3,
+   EXCEPTION_ADEL = 4, // Address error on load
+   EXCEPTION_ADES = 5, // Address error on store
+   EXCEPTION_IBE = 6, // Instruction bus error
+   EXCEPTION_DBE = 7, // Data bus error
+   EXCEPTION_SYSCALL = 8, // System call
+   EXCEPTION_BP = 9, // Breakpoint
+   EXCEPTION_RI = 10, // Reserved instruction
+   EXCEPTION_COPU = 11,  // Coprocessor unusable
+   EXCEPTION_OV = 12	// Arithmetic overflow
+};
+
+enum
+{
+   CP0REG_BPC = 3,		// PC breakpoint address.
+   CP0REG_BDA = 5,		// Data load/store breakpoint address.
+   CP0REG_TAR = 6,		// Target address(???)
+   CP0REG_DCIC = 7,		// Cache control
+   CP0REG_BDAM = 9,		// Data load/store address mask.
+   CP0REG_BPCM = 11,		// PC breakpoint address mask.
+   CP0REG_SR = 12,
+   CP0REG_CAUSE = 13,
+   CP0REG_EPC = 14,
+   CP0REG_PRID = 15,		// Product ID
+   CP0REG_ERREG = 16
+};
+
+enum
+{
+   GSREG_GPR = 0,
+   GSREG_PC = 32,
+   GSREG_PC_NEXT,
+   GSREG_IN_BD_SLOT,
+   GSREG_LO,
+   GSREG_HI,
+   GSREG_SR,
+   GSREG_CAUSE,
+   GSREG_EPC,
+};
+
 namespace MDFN_IEN_PSX
 {
 
@@ -52,10 +102,6 @@ class PS_CPU
  PS_CPU();
  ~PS_CPU();
 
- // FAST_MAP_* enums are in BYTES(8-bit), not in 32-bit units("words" in MIPS context), but the sizes
- // will always be multiples of 4.
- enum { FAST_MAP_SHIFT = 16 };
- enum { FAST_MAP_PSIZE = 1 << FAST_MAP_SHIFT };
 
  void SetFastMap(void *region_mem, uint32_t region_address, uint32_t region_size);
 
@@ -78,11 +124,8 @@ class PS_CPU
 
  private:
 
- struct
- {
-  uint32_t GPR[32];
-  uint32_t GPR_dummy;	// Used in load delay simulation(indexing past the end of GPR)
- };
+ uint32_t GPR[32];
+ uint32_t GPR_dummy;	// Used in load delay simulation(indexing past the end of GPR)
  uint32_t LO;
  uint32_t HI;
 
@@ -113,73 +156,16 @@ class PS_CPU
   uint32 ICache_Bulk[2048];
  };
 
- enum
- {
-  CP0REG_BPC = 3,		// PC breakpoint address.
-  CP0REG_BDA = 5,		// Data load/store breakpoint address.
-  CP0REG_TAR = 6,		// Target address(???)
-  CP0REG_DCIC = 7,		// Cache control
-  CP0REG_BDAM = 9,		// Data load/store address mask.
-  CP0REG_BPCM = 11,		// PC breakpoint address mask.
-  CP0REG_SR = 12,
-  CP0REG_CAUSE = 13,
-  CP0REG_EPC = 14,
-  CP0REG_PRID = 15,		// Product ID
-  CP0REG_ERREG = 16
- };
-
-
-#if 1
- //uint32_t WrAbsorb;
- //uint8_t WrAbsorbShift;
-
- // On read:
- //WrAbsorb = 0;
- //WrAbsorbShift = 0;
-
- // On write:
- //WrAbsorb >>= (WrAbsorbShift >> 2) & 8;
- //WrAbsorbShift -= (WrAbsorbShift >> 2) & 8;
-
- //WrAbsorb |= (timestamp - pre_write_timestamp) << WrAbsorbShift;
- //WrAbsorbShift += 8;
-#endif
-
- struct
- {
-  uint8_t ReadAbsorb[0x20];
-  uint8_t ReadAbsorbDummy;
- };
+ uint8_t ReadAbsorb[0x20];
+ uint8_t ReadAbsorbDummy;
  uint8_t ReadAbsorbWhich;
  uint8_t ReadFudge;
 
- //uint32_t WriteAbsorb;
- //uint8_t WriteAbsorbCount;
- //uint8_t WriteAbsorbMonkey;
-
  MultiAccessSizeMem<1024, uint32, false> ScratchRAM;
-
- //PS_GTE GTE;
 
  uint8_t *FastMap[1 << (32 - FAST_MAP_SHIFT)];
  uint8_t DummyPage[FAST_MAP_PSIZE];
 
- enum
- {
-  EXCEPTION_INT = 0,
-  EXCEPTION_MOD = 1,
-  EXCEPTION_TLBL = 2,
-  EXCEPTION_TLBS = 3,
-  EXCEPTION_ADEL = 4, // Address error on load
-  EXCEPTION_ADES = 5, // Address error on store
-  EXCEPTION_IBE = 6, // Instruction bus error
-  EXCEPTION_DBE = 7, // Data bus error
-  EXCEPTION_SYSCALL = 8, // System call
-  EXCEPTION_BP = 9, // Breakpoint
-  EXCEPTION_RI = 10, // Reserved instruction
-  EXCEPTION_COPU = 11,  // Coprocessor unusable
-  EXCEPTION_OV = 12	// Arithmetic overflow
- };
 
  uint32_t Exception(uint32_t code, uint32_t PC, const uint32_t NPM) MDFN_WARN_UNUSED_RESULT;
 
@@ -195,18 +181,6 @@ class PS_CPU
  void SetCPUHook(void (*cpuh)(const int32_t timestamp, uint32_t pc), void (*addbt)(uint32_t from, uint32_t to, bool exception));
  void CheckBreakpoints(void (*callback)(bool write, uint32_t address, unsigned int len), uint32_t instr);
 
- enum
- {
-  GSREG_GPR = 0,
-  GSREG_PC = 32,
-  GSREG_PC_NEXT,
-  GSREG_IN_BD_SLOT,
-  GSREG_LO,
-  GSREG_HI,
-  GSREG_SR,
-  GSREG_CAUSE,
-  GSREG_EPC,
- };
 
  uint32_t GetRegister(unsigned int which, char *special, const uint32_t special_len);
  void SetRegister(unsigned int which, uint32_t value);
