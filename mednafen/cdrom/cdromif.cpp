@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include "../../libretro.h"
+#include "../../thread.h"
 
 extern retro_log_printf_t log_cb;
 
@@ -201,8 +202,8 @@ CDIF_Queue::CDIF_Queue()
 
 CDIF_Queue::~CDIF_Queue()
 {
- MDFND_DestroyMutex(ze_mutex);
- MDFND_DestroyCond(ze_cond);
+ slock_free((slock_t*)ze_mutex);
+ scond_free((scond_t*)ze_cond);
 }
 
 // Returns FALSE if message not read, TRUE if it was read.  Will always return TRUE if "blocking" is set.
@@ -211,15 +212,12 @@ bool CDIF_Queue::Read(CDIF_Message *message, bool blocking)
 {
    bool ret = true;
 
-   //
-   //
-   //
-   MDFND_LockMutex(ze_mutex);
+   slock_lock((slock_t*)ze_mutex);
 
    if(blocking)
    {
       while(ze_queue.size() == 0)	// while, not just if.
-         MDFND_WaitCond(ze_cond, ze_mutex);
+         scond_wait((scond_t*)ze_cond, (slock_t*)ze_mutex);
    }
 
    if(ze_queue.size() == 0)
@@ -230,10 +228,7 @@ bool CDIF_Queue::Read(CDIF_Message *message, bool blocking)
       ze_queue.pop();
    }  
 
-   MDFND_UnlockMutex(ze_mutex);
-   //
-   //
-   //
+   slock_unlock((slock_t*)ze_mutex);
 
    if(ret && message->message == CDIF_MSG_FATAL_ERROR)
       throw MDFN_Error(0, "%s", message->str_message.c_str());
@@ -243,13 +238,13 @@ bool CDIF_Queue::Read(CDIF_Message *message, bool blocking)
 
 void CDIF_Queue::Write(const CDIF_Message &message)
 {
- MDFND_LockMutex(ze_mutex);
+ slock_lock((slock_t*)ze_mutex);
 
  ze_queue.push(message);
 
- MDFND_SignalCond(ze_cond); // Signal while the mutex is held to prevent icky race conditions
+ scond_signal((scond_t*)ze_cond);
 
- MDFND_UnlockMutex(ze_mutex);
+ slock_unlock((slock_t*)ze_mutex);
 }
 
 
@@ -373,7 +368,7 @@ int CDIF_MT::ReadThreadStart()
 
    disc_cdaccess->Read_Raw_Sector(tmpbuf, ra_lba);
    
-   MDFND_LockMutex(SBMutex);
+   slock_lock((slock_t*)SBMutex);
 
    SectorBuffers[SBWritePos].lba = ra_lba;
    memcpy(SectorBuffers[SBWritePos].data, tmpbuf, 2352 + 96);
@@ -381,9 +376,9 @@ int CDIF_MT::ReadThreadStart()
    SectorBuffers[SBWritePos].error = error_condition;
    SBWritePos = (SBWritePos + 1) % SBSize;
 
-   MDFND_SignalCond(SBCond);
+   scond_signal((scond_t*)SBCond);
 
-   MDFND_UnlockMutex(SBMutex);
+   slock_unlock((slock_t*)SBMutex);
 
    ra_lba++;
    ra_count--;
@@ -398,8 +393,8 @@ CDIF_MT::CDIF_MT(CDAccess *cda) : disc_cdaccess(cda), CDReadThread(NULL), SBMute
   CDIF_Message msg;
   RTS_Args s;
 
-  SBMutex = MDFND_CreateMutex();
-  SBCond = MDFND_CreateCond();
+  SBMutex = (MDFN_Mutex*)slock_new();
+  SBCond  = (MDFN_Cond*)scond_new();
   UnrecoverableError = false;
 
   s.cdif_ptr = this;
@@ -420,8 +415,8 @@ CDIF_MT::~CDIF_MT()
 
  if(SBMutex)
  {
-  MDFND_DestroyMutex(SBMutex);
-  SBMutex = NULL;
+    slock_free((slock_t*)SBMutex);
+    SBMutex = NULL;
  }
 
  if(disc_cdaccess)
@@ -465,30 +460,26 @@ bool CDIF_MT::ReadRawSector(uint8 *buf, uint32 lba)
 
  ReadThreadQueue.Write(CDIF_Message(CDIF_MSG_READ_SECTOR, lba));
 
- MDFND_LockMutex(SBMutex);
+ slock_lock((slock_t*)SBMutex);
 
  do
  {
+    int i;
+    for(i = 0; i < SBSize; i++)
+    {
+       if(SectorBuffers[i].valid && SectorBuffers[i].lba == lba)
+       {
+          error_condition = SectorBuffers[i].error;
+          memcpy(buf, SectorBuffers[i].data, 2352 + 96);
+          found = TRUE;
+       }
+    }
 
-  for(int i = 0; i < SBSize; i++)
-  {
-   if(SectorBuffers[i].valid && SectorBuffers[i].lba == lba)
-   {
-    error_condition = SectorBuffers[i].error;
-    memcpy(buf, SectorBuffers[i].data, 2352 + 96);
-    found = TRUE;
-   }
-  }
-
-  if(!found)
-  {
-     //int32 swt = MDFND_GetTime();
-     MDFND_WaitCond(SBCond, SBMutex);
-     //printf("SB Waited: %d\n", MDFND_GetTime() - swt);
-  }
+    if(!found)
+       scond_wait((scond_t*)SBCond, (slock_t*)SBMutex);
  } while(!found);
 
- MDFND_UnlockMutex(SBMutex);
+ slock_unlock((slock_t*)SBMutex);
 
  return(!error_condition);
 }
