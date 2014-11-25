@@ -280,7 +280,7 @@ typedef enum
  MODPRIO_EXTERNAL_HIGH = 40
 } ModPrio;
 
-class CDIF;
+#include "cdrom/cdromif.h"
 
 typedef struct
 {

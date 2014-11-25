@@ -276,7 +276,7 @@ void CDC_SetDisc(bool tray_open, CDIF *cdif, const char *disc_id)
       DiscStartupDelay = (int64)1000 * 33868800 / 1000;
       DiscChanged = true;
 
-      Cur_CDIF->ReadTOC(&toc);
+      CDIF_ReadTOC(Cur_CDIF, &toc);
 
       if(disc_id)
       {
@@ -1016,7 +1016,7 @@ static void CDC_HandlePlayRead(void)
       synth_leadout_sector_lba(0x02, toc, CurSector, read_buf);
    }
    else
-      Cur_CDIF->ReadRawSector(read_buf, CurSector);	// FIXME: error out on error.
+      CDIF_ReadRawSector(Cur_CDIF, read_buf, CurSector);	// FIXME: error out on error.
    CDC_DecodeSubQ(read_buf + 2352);
 
 
@@ -1255,7 +1255,7 @@ int32_t CDC_Update(const int32_t timestamp)
             else if(DriveStatus == DS_SEEKING)
             {
                CurSector = SeekTarget;
-               Cur_CDIF->ReadRawSector(buf, CurSector);
+               CDIF_ReadRawSector(Cur_CDIF, buf, CurSector);
                CDC_DecodeSubQ(buf + 2352);
 
                DriveStatus = StatusAfterSeek;
@@ -1266,7 +1266,7 @@ int32_t CDC_Update(const int32_t timestamp)
             else if(DriveStatus == DS_SEEKING_LOGICAL)
             {
                CurSector = SeekTarget;
-               Cur_CDIF->ReadRawSector(buf, CurSector);
+               CDIF_ReadRawSector(Cur_CDIF, buf, CurSector);
                CDC_DecodeSubQ(buf + 2352);
                memcpy(HeaderBuf, buf + 12, 12);
 
@@ -1765,7 +1765,7 @@ static void CDC_PreSeekHack(bool logical, uint32 target)
    {
       do
       {
-         Cur_CDIF->ReadRawSector(buf, target++);
+         CDIF_ReadRawSector(Cur_CDIF, buf, target++);
 
          // GetLocL related kludge, for Gran Turismo 1 music, perhaps others?
          if(NeedHBuf)

@@ -26,41 +26,40 @@
 
 typedef CDUtility::TOC CD_TOC;
 
-class CDIF
+typedef struct CDInterface
 {
-   public:
-      CDIF(CDAccess *cda);
-      ~CDIF();
+   bool UnrecoverableError;
+   CDUtility::TOC disc_toc;
+   bool DiscEjected;
+   CDAccess *disc_cdaccess;
+} CDIF;
 
-      inline void ReadTOC(CDUtility::TOC *read_target)
-      {
-         *read_target = disc_toc;
-      }
+CDIF *CDIF_New(CDAccess *cda);
 
-      bool ReadRawSector(uint8 *buf, uint32 lba);
+void CDIF_Free(CDIF *cdif);
 
-      // Call for mode 1 or mode 2 form 1 only.
-      bool ValidateRawSector(uint8 *buf);
+static inline void CDIF_ReadTOC(CDIF *cdif, CDUtility::TOC *read_target)
+{
+   *read_target = cdif->disc_toc;
+}
 
-      // Utility/Wrapped functions
-      // Reads mode 1 and mode2 form 1 sectors(2048 bytes per sector returned)
-      // Will return the type(1, 2) of the first sector read to the buffer supplied, 0 on error
-      int ReadSector(uint8* pBuf, uint32 lba, uint32 nSectors);
+bool CDIF_ReadRawSector(CDIF *cdif, uint8 *buf, uint32 lba);
 
-      // Return true if operation succeeded or it was a NOP(either due to not being implemented, or the current status matches eject_status).
-      // Returns false on failure(usually drive error of some kind; not completely fatal, can try again).
-      bool Eject(bool eject_status);
+// Call for mode 1 or mode 2 form 1 only.
+bool CDIF_ValidateRawSector(CDIF *cdif, uint8 *buf);
 
-      // For Mode 1, or Mode 2 Form 1.
-      // No reference counting or whatever is done, so if you destroy the CDIF object before you destroy the returned Stream, things will go BOOM.
-      Stream *MakeStream(uint32 lba, uint32 sector_count);
+// Utility/Wrapped functions
+// Reads mode 1 and mode2 form 1 sectors(2048 bytes per sector returned)
+// Will return the type(1, 2) of the first sector read to the buffer supplied, 0 on error
+int CDIF_ReadSector(CDIF *cdif, uint8* pBuf, uint32 lba, uint32 nSectors);
 
-   protected:
-      bool UnrecoverableError;
-      CDUtility::TOC disc_toc;
-      bool DiscEjected;
-      CDAccess *disc_cdaccess;
-};
+// Return true if operation succeeded or it was a NOP(either due to not being implemented, or the current status matches eject_status).
+// Returns false on failure(usually drive error of some kind; not completely fatal, can try again).
+bool CDIF_Eject(CDIF *cdif, bool eject_status);
+
+// For Mode 1, or Mode 2 Form 1.
+// No reference counting or whatever is done, so if you destroy the CDIF object before you destroy the returned Stream, things will go BOOM.
+void *CDIF_MakeStream(CDIF *cdif, uint32 lba, uint32 sector_count);
 
 CDIF *CDIF_Open(const char *path, const bool is_device, bool image_memcache);
 

@@ -979,13 +979,13 @@ static bool TestMagicCD(std::vector<CDIF *> *CDInterfaces)
    CDUtility::TOC toc;
    int dt;
 
-   (*CDInterfaces)[0]->ReadTOC(&toc);
+   CDIF_ReadTOC((*CDInterfaces)[0], &toc);
 
    dt = toc.FindTrackByLBA(4);
    if(dt > 0 && !(toc.tracks[dt].control & 0x4))
       return(false);
 
-   if((*CDInterfaces)[0]->ReadSector(buf, 4, 1) != 0x2)
+   if(CDIF_ReadSector((*CDInterfaces)[0], buf, 4, 1) != 0x2)
       return(false);
 
    if(strncmp((char *)buf + 10, "Licensed  by", strlen("Licensed  by")))
@@ -1018,16 +1018,12 @@ const char *PSX_CalcDiscSCEx_BySYSTEMCNF(CDIF *c, unsigned *rr)
    Stream *fp = NULL;
    CDUtility::TOC toc;
 
-   //(*CDInterfaces)[disc]->ReadTOC(&toc);
-
-   //if(toc.first_track > 1 || toc.
-
    try
    {
       uint8_t pvd[2048];
       unsigned pvd_search_count = 0;
 
-      fp = c->MakeStream(0, ~0U);
+      fp = (Stream*)CDIF_MakeStream(c, 0, ~0U);
       fp->seek(0x8000, SEEK_SET);
 
       do
@@ -1164,7 +1160,7 @@ unsigned PSX_CalcDiscSCEx(void)
 
          memset(fbuf, 0, sizeof(fbuf));
 
-         if(id == NULL && (*cdifs)[i]->ReadSector(buf, 4, 1) == 0x2)
+         if(id == NULL && CDIF_ReadSector((*cdifs)[i], buf, 4, 1) == 0x2)
          {
             for(ipos = 0, opos = 0; ipos < 0x48; ipos++)
             {
@@ -1727,7 +1723,7 @@ static void CDInsertEject(void)
 
    for(unsigned disc = 0; disc < cdifs->size(); disc++)
    {
-      if(!(*cdifs)[disc]->Eject(CD_TrayOpen))
+      if(!CDIF_Eject((*cdifs)[disc], CD_TrayOpen))
       {
          MDFN_DispMessage(_("Eject error."));
          CD_TrayOpen = !CD_TrayOpen;
@@ -2040,7 +2036,7 @@ static void update_md5_checksum(CDIF *iface)
 
    CD_TOC toc;
 
-   iface->ReadTOC(&toc);
+   CDIF_ReadTOC(iface, &toc);
 
    layout_md5.update_u32_as_lsb(toc.first_track);
    layout_md5.update_u32_as_lsb(toc.last_track);
@@ -2513,7 +2509,7 @@ MDFNGI *MDFNI_LoadCD(const char *force_module, const char *devicename)
  {
   CDUtility::TOC toc;
 
-  CDInterfaces[i]->ReadTOC(&toc);
+  CDIF_ReadTOC(CDInterfaces[i], &toc);
 
   if (log_cb)
      log_cb(RETRO_LOG_DEBUG, "CD %d Layout:\n", i + 1);
@@ -2539,7 +2535,7 @@ MDFNGI *MDFNI_LoadCD(const char *force_module, const char *devicename)
   {
    CD_TOC toc;
 
-   CDInterfaces[i]->ReadTOC(&toc);
+   CDIF_ReadTOC(CDInterfaces[i], &toc);
 
    layout_md5.update_u32_as_lsb(toc.first_track);
    layout_md5.update_u32_as_lsb(toc.last_track);
@@ -2572,7 +2568,10 @@ MDFNGI *MDFNI_LoadCD(const char *force_module, const char *devicename)
  if(!(MDFNGameInfo->LoadCD(&CDInterfaces)))
  {
   for(unsigned i = 0; i < CDInterfaces.size(); i++)
-   delete CDInterfaces[i];
+  {
+     if (CDInterfaces[i])
+        free(CDInterfaces[i]);
+  }
   CDInterfaces.clear();
 
   MDFNGameInfo = NULL;
@@ -2737,7 +2736,10 @@ void retro_unload_game(void)
 
 #ifdef NEED_CD
    for(unsigned i = 0; i < CDInterfaces.size(); i++)
-      delete CDInterfaces[i];
+   {
+      if (CDInterfaces[i])
+         free(CDInterfaces[i]);
+   }
    CDInterfaces.clear();
 #endif
 }
