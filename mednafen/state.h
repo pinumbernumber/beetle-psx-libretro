@@ -30,48 +30,4 @@ int MDFNSS_LoadSM(void *st, int, int);
 
 #define MDFNSTATE_BOOL		  0x08000000
 
-INLINE bool SF_IS_BOOL(bool *) { return(1); }
-INLINE bool SF_IS_BOOL(void *) { return(0); }
-
-INLINE uint32 SF_FORCE_AB(bool *) { return(0); }
-
-INLINE uint32 SF_FORCE_A8(int8 *) { return(0); }
-INLINE uint32 SF_FORCE_A8(uint8 *) { return(0); }
-
-INLINE uint32 SF_FORCE_A16(int16 *) { return(0); }
-INLINE uint32 SF_FORCE_A16(uint16 *) { return(0); }
-
-INLINE uint32 SF_FORCE_A32(int32 *) { return(0); }
-INLINE uint32 SF_FORCE_A32(uint32 *) { return(0); }
-
-INLINE uint32 SF_FORCE_A64(int64 *) { return(0); }
-INLINE uint32 SF_FORCE_A64(uint64 *) { return(0); }
-
-INLINE uint32 SF_FORCE_D(double *) { return(0); }
-
-#define SFVARN(x, n) { &(x), SF_IS_BOOL(&(x)) ? 1 : sizeof(x), MDFNSTATE_RLSB | (SF_IS_BOOL(&(x)) ? MDFNSTATE_BOOL : 0), n }
-#define SFVAR(x) SFVARN((x), #x)
-
-#define SFARRAYN(x, l, n) { (x), (uint32)(l), 0 | SF_FORCE_A8(x), n }
-#define SFARRAY(x, l) SFARRAYN((x), (l), #x)
-
-#define SFARRAYBN(x, l, n) { (x), (uint32)(l), MDFNSTATE_BOOL | SF_FORCE_AB(x), n }
-#define SFARRAYB(x, l) SFARRAYBN((x), (l), #x)
-
-#define SFARRAY16N(x, l, n) { (x), (uint32)((l) * sizeof(uint16)), MDFNSTATE_RLSB16 | SF_FORCE_A16(x), n }
-#define SFARRAY16(x, l) SFARRAY16N((x), (l), #x)
-
-#define SFARRAY32N(x, l, n) { (x), (uint32)((l) * sizeof(uint32)), MDFNSTATE_RLSB32 | SF_FORCE_A32(x), n }
-#define SFARRAY32(x, l) SFARRAY32N((x), (l), #x)
-
-#define SFARRAY64N(x, l, n) { (x), (uint32)((l) * sizeof(uint64)), MDFNSTATE_RLSB64 | SF_FORCE_A64(x), n }
-#define SFARRAY64(x, l) SFARRAY64N((x), (l), #x)
-
-#define SFARRAYDN(x, l, n) { (x), (uint32)((l) * 8), MDFNSTATE_RLSB64 | SF_FORCE_D(x), n }
-#define SFARRAYD(x, l) SFARRAYDN((x), (l), #x)
-
-#define SFEND { 0, 0, 0, 0 }
-
-#include <vector>
-
 #endif

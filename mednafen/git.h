@@ -2,6 +2,7 @@
 #define _GIT_H
 
 #include <string>
+#include <vector>
 
 #include "video.h"
 
