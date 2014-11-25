@@ -19,7 +19,6 @@
 #include "mednafen/math_ops.cpp"
 #include "mednafen/settings.cpp"
 #include "mednafen/general.cpp"
-#include "mednafen/FileWrapper.cpp"
 #include "mednafen/FileStream.cpp"
 #include "mednafen/MemoryStream.cpp"
 #include "mednafen/Stream.cpp"
