@@ -899,7 +899,9 @@ void CDAccess_Image::Read_Raw_Sector(uint8 *buf, int32 lba)
 
 	case DI_FORMAT_MODE1:
 		ct->fp->read(buf + 12 + 3 + 1, 2048);
+#ifdef WANT_ECC
 		encode_mode1_sector(lba + 150, buf);
+#endif
 		break;
 
 	case DI_FORMAT_MODE1_RAW:
@@ -909,7 +911,9 @@ void CDAccess_Image::Read_Raw_Sector(uint8 *buf, int32 lba)
 
 	case DI_FORMAT_MODE2:
 		ct->fp->read(buf + 16, 2336);
+#ifdef WANT_ECC
 		encode_mode2_sector(lba + 150, buf);
+#endif
 		break;
 
 

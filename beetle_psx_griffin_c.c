@@ -20,11 +20,13 @@
 
 #include "scrc32.c"
 
-#if NEED_CD
+#ifdef NEED_CD
+#ifdef WANT_ECC
 #include "mednafen/cdrom/galois.c"
 #include "mednafen/cdrom/l-ec.c"
 #include "mednafen/cdrom/mednafen_crc32.c"
 #include "mednafen/cdrom/recover-raw.c"
+#endif
 #endif
 
 #include "mednafen/psx/sio.c"

@@ -96,13 +96,16 @@ void CDUtility_Init(void)
    if(CDUtility_Inited)
       return;
 
+#ifdef WANT_ECC
    Init_LEC_Correct();
+#endif
 
    InitScrambleTable();
 
    CDUtility_Inited = true;
 }
 
+#ifdef WANT_ECC
 void encode_mode0_sector(uint32 aba, uint8 *sector_data)
 {
    CDUtility_Init();
@@ -137,19 +140,28 @@ void encode_mode2_form2_sector(uint32 aba, uint8 *sector_data)
 
    lec_encode_mode2_form2_sector(aba, sector_data);
 }
+#endif
 
 bool edc_check(const uint8 *sector_data, bool xa)
 {
    CDUtility_Init();
 
+#ifdef WANT_ECC
    return(CheckEDC(sector_data, xa));
+#else
+   return true;
+#endif
 }
 
 bool edc_lec_check_and_correct(uint8 *sector_data, bool xa)
 {
    CDUtility_Init();
 
+#ifdef WANT_ECC
    return(ValidateRawSector(sector_data, xa));
+#else
+   return true;
+#endif
 }
 
 
@@ -227,6 +239,7 @@ void subpw_interleave(const uint8 *in_buf, uint8 *out_buf)
    }
 }
 
+#ifdef WANT_ECC
 // NOTES ON LEADOUT AREA SYNTHESIS
 //
 //  I'm not trusting that the "control" field for the TOC leadout entry will always be set properly, so | the control fields for the last track entry
@@ -301,6 +314,7 @@ void synth_leadout_sector_lba(const uint8 mode, const TOC& toc, const int32 lba,
       }
    }
 }
+#endif
 
 void scrambleize_data_sector(uint8 *sector_data)
 {

@@ -1006,6 +1006,7 @@ static void CDC_HandlePlayRead(void)
       return;
    }
 
+#ifdef WANT_ECC
    if(CurSector >= (int32)toc.tracks[100].lba)
    {
       //PSX_WARNING("[CDC] In leadout area: %u", CurSector);
@@ -1016,6 +1017,7 @@ static void CDC_HandlePlayRead(void)
       synth_leadout_sector_lba(0x02, toc, CurSector, read_buf);
    }
    else
+#endif
       CDIF_ReadRawSector(Cur_CDIF, read_buf, CurSector);	// FIXME: error out on error.
    CDC_DecodeSubQ(read_buf + 2352);
 

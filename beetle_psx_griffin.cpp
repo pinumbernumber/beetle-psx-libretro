@@ -30,7 +30,9 @@
 #include "mednafen/cdrom/CDAccess_Image.cpp"
 #include "mednafen/cdrom/CDAccess_CCD.cpp"
 #include "mednafen/cdrom/CDUtility.cpp"
+#ifdef WANT_ECC
 #include "mednafen/cdrom/lec.cpp"
+#endif
 #include "mednafen/cdrom/audioreader.cpp"
 #include "mednafen/cdrom/cdromif.cpp"
 #endif

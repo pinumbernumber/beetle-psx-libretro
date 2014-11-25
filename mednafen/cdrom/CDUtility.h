@@ -161,6 +161,7 @@ namespace CDUtility
     return(true);
  }
 
+#ifdef WANT_ECC
  //
  // Sector data encoding functions(to full 2352 bytes raw sector).
  //
@@ -175,6 +176,7 @@ namespace CDUtility
  // out_buf must be able to contain 2352+96 bytes.
  // "mode" is only used if(toc.tracks[100].control & 0x4)
  void synth_leadout_sector_lba(const uint8 mode, const TOC& toc, const int32 lba, uint8* out_buf);
+#endif
 
  //
  // User data error detection and correction
