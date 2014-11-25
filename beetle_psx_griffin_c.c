@@ -18,8 +18,6 @@
 #include "mednafen/trio/trio.c"
 #include "mednafen/trio/triostr.c"
 
-#include "scrc32.c"
-
 #ifdef NEED_CD
 #ifdef WANT_ECC
 #include "mednafen/cdrom/galois.c"

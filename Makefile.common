@@ -25,11 +25,6 @@ else
 	$(CORE_DIR)/gte.c
 endif
 
-ifeq ($(NEED_CRC32), 1)
-   FLAGS += -DWANT_CRC32
-	CRC32_SOURCES += scrc32.c
-endif
-
 ifeq ($(NEED_DEINTERLACER), 1)
    FLAGS += -DNEED_DEINTERLACER
 endif
