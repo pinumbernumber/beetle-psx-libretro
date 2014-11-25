@@ -37,34 +37,15 @@
 
 FileStream::FileStream(const char *path, const int mode): OpenedMode(mode)
 {
- if(!(fp = fopen(path, (mode == FileStream::MODE_WRITE) ? "wb" : "rb")))
- {
-  ErrnoHolder ene(errno);
-
-  throw(MDFN_Error(ene.Errno(), _("Error opening file %s"), ene.StrError()));
- }
+   if (!(fp = fopen(path, (mode == FileStream::MODE_WRITE) ? "wb" : "rb")))
+   {
+      ErrnoHolder ene(errno);
+      throw(MDFN_Error(ene.Errno(), "Error opening file %s", ene.StrError()));
+   }
 }
 
 FileStream::~FileStream()
 {
-}
-
-uint64 FileStream::attributes(void)
-{
-   uint64 ret = ATTRIBUTE_SEEKABLE;
-
-   switch(OpenedMode)
-   {
-      case FileStream::MODE_READ:
-         ret |= ATTRIBUTE_READABLE;
-         break;
-      case FileStream::MODE_WRITE_SAFE:
-      case FileStream::MODE_WRITE:
-         ret |= ATTRIBUTE_WRITEABLE;
-         break;
-   }
-
-   return ret;
 }
 
 uint64 FileStream::read(void *data, uint64 count, bool error_on_eos)

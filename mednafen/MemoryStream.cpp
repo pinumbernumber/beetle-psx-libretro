@@ -64,12 +64,6 @@ MemoryStream::~MemoryStream()
    data_buffer = NULL;
 }
 
-uint64 MemoryStream::attributes(void)
-{
- return (ATTRIBUTE_READABLE | ATTRIBUTE_WRITEABLE | ATTRIBUTE_SEEKABLE);
-}
-
-
 uint8 *MemoryStream::map(void)
 {
  return data_buffer;
