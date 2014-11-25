@@ -218,7 +218,7 @@ struct event_list_entry
 
 static event_list_entry events[PSX_EVENT__COUNT];
 
-static void EventReset(void)
+static void PSX_EventReset(void)
 {
    unsigned i;
    for(i = 0; i < PSX_EVENT__COUNT; i++)
@@ -237,13 +237,7 @@ static void EventReset(void)
    }
 }
 
-//static void RemoveEvent(event_list_entry *e)
-//{
-// e->prev->next = e->next;
-// e->next->prev = e->prev;
-//}
-
-static void RebaseTS(const int32_t timestamp)
+static void PSX_RebaseTS(const int32_t timestamp)
 {
    unsigned i;
    for(i = 0; i < PSX_EVENT__COUNT; i++)
@@ -310,7 +304,7 @@ void PSX_SetEventNT(const int type, const int32_t next_timestamp)
 }
 
 // Called from debug.cpp too.
-void ForceEventUpdates(const int32_t timestamp)
+void PSX_ForceEventUpdates(const int32_t timestamp)
 {
    PSX_SetEventNT(PSX_EVENT_GPU, GPU_Update(timestamp));
    PSX_SetEventNT(PSX_EVENT_CDC, CDC_Update(timestamp));
@@ -957,32 +951,10 @@ uint32_t PSX_MemPeek32(uint32_t A)
    return MemPeek<uint32, false>(0, A);
 }
 
-// FIXME: Add PSX_Reset() and FrontIO::Reset() so that emulated input devices don't get power-reset on reset-button reset.
 static void PSX_Power(void)
 {
    unsigned i;
    PSX_PRNG.ResetState();	// Should occur first!
-
-#if 0
-   const uint32_t counterer = 262144;
-   uint64_t averageizer = 0;
-   uint32_t maximizer = 0;
-   uint32_t minimizer = ~0U;
-   for(int i = 0; i < counterer; i++)
-   {
-      uint32_t tmp = PSX_GetRandU32(0, 20000);
-      if(tmp < minimizer)
-         minimizer = tmp;
-
-      if(tmp > maximizer)
-         maximizer = tmp;
-
-      averageizer += tmp;
-      printf("%8u\n", tmp);
-   }
-   printf("Average: %f\nMinimum: %u\nMaximum: %u\n", (double)averageizer / counterer, minimizer, maximizer);
-   exit(1);
-#endif
 
    memset(MainRAM.data32, 0, 2048 * 1024);
 
@@ -991,7 +963,7 @@ static void PSX_Power(void)
 
    CPU->Power();
 
-   EventReset();
+   PSX_EventReset();
 
    TIMER_Power();
 
@@ -1006,7 +978,7 @@ static void PSX_Power(void)
    //SPU->Power();	// Called from CDC_Power()
    IRQ_Power();
 
-   ForceEventUpdates(0);
+   PSX_ForceEventUpdates(0);
 }
 
 
@@ -1069,7 +1041,7 @@ static bool TestMagicCD(std::vector<CDIF *> *CDInterfaces)
    return(true);
 }
 
-static const char *CalcDiscSCEx_BySYSTEMCNF(CDIF *c, unsigned *rr)
+const char *PSX_CalcDiscSCEx_BySYSTEMCNF(CDIF *c, unsigned *rr)
 {
    const char *ret = NULL;
    Stream *fp = NULL;
@@ -1201,7 +1173,7 @@ Breakout:
    return(ret);
 }
 
-static unsigned CalcDiscSCEx(void)
+unsigned PSX_CalcDiscSCEx(void)
 {
    const char *prev_valid_id = NULL;
    unsigned ret_region = MDFN_GetSettingI("psx.region_default");
@@ -1217,7 +1189,7 @@ static unsigned CalcDiscSCEx(void)
          unsigned ipos, opos;
 
 
-         id = CalcDiscSCEx_BySYSTEMCNF((*cdifs)[i], (i == 0) ? &ret_region : NULL);
+         id = PSX_CalcDiscSCEx_BySYSTEMCNF((*cdifs)[i], (i == 0) ? &ret_region : NULL);
 
          memset(fbuf, 0, sizeof(fbuf));
 
@@ -1322,7 +1294,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
 
 
    cdifs = CDInterfaces;
-   region = CalcDiscSCEx();
+   region = PSX_CalcDiscSCEx();
 
    if(!MDFN_GetSettingB("psx.region_autodetect"))
       region = MDFN_GetSettingI("psx.region_default");
@@ -1769,9 +1741,7 @@ static int StateAction(StateMem *sm, int load, int data_only)
    ret &= IRQ_StateAction(sm, load, data_only);	// Do it last.
 
    if(load)
-   {
-      ForceEventUpdates(0); // FIXME to work with debugger step mode.
-   }
+      PSX_ForceEventUpdates(0); // FIXME to work with debugger step mode.
 
    return(ret);
 }
@@ -2132,7 +2102,7 @@ static bool disk_replace_image_index(unsigned index, const struct retro_game_inf
          CD_SelectedDisc--;
       
       // Poke into psx.cpp
-      CalcDiscSCEx();
+      PSX_CalcDiscSCEx();
       return true;
    }
 
@@ -2141,7 +2111,7 @@ static bool disk_replace_image_index(unsigned index, const struct retro_game_inf
       CDIF *iface = CDIF_Open(info->path, false, false);
       delete cdifs->at(index);
       cdifs->at(index) = iface;
-      CalcDiscSCEx();
+      PSX_CalcDiscSCEx();
       set_basename(info->path); // If we replace, we want the "swap disk manually effect".
       update_md5_checksum(iface); // Ugly, but needed to get proper disk swapping effect.
       return true;
@@ -2765,7 +2735,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    MDFN_PixelFormat pix_fmt(MDFN_COLORSPACE_RGB, 16, 8, 0, 24);
    
-   surf = new MDFN_Surface(NULL, MEDNAFEN_CORE_GEOMETRY_MAX_W, (CalcDiscSCEx() == REGION_EU) ? MEDNAFEN_CORE_GEOMETRY_MAX_H  : 480, MEDNAFEN_CORE_GEOMETRY_MAX_W, pix_fmt);
+   surf = new MDFN_Surface(NULL, MEDNAFEN_CORE_GEOMETRY_MAX_W, (PSX_CalcDiscSCEx() == REGION_EU) ? MEDNAFEN_CORE_GEOMETRY_MAX_H  : 480, MEDNAFEN_CORE_GEOMETRY_MAX_W, pix_fmt);
 
 #ifdef NEED_DEINTERLACER
 	PrevInterlaced = false;
@@ -2984,7 +2954,7 @@ void retro_run(void)
 
    assert(timestamp);
 
-   ForceEventUpdates(timestamp);
+   PSX_ForceEventUpdates(timestamp);
 
 #if 0
    if(GPU_GetScanlineNum() < 100)
@@ -3002,7 +2972,7 @@ void retro_run(void)
    GPU_ResetTS();
    FrontIO_ResetTS();
 
-   RebaseTS(timestamp);
+   PSX_RebaseTS(timestamp);
 
    espec->MasterCycles = timestamp;
 
@@ -3113,7 +3083,7 @@ void retro_run(void)
             break;
       }
       
-      if ((CalcDiscSCEx() == REGION_EU))
+      if ((PSX_CalcDiscSCEx() == REGION_EU))
       {
          // Attempt to remove black bars.
          // These numbers are arbitrary since the bars differ some by game.
@@ -3143,7 +3113,7 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
-   info->timing.fps            = (CalcDiscSCEx() == REGION_EU) ? 49.842 : 59.941;
+   info->timing.fps            = (PSX_CalcDiscSCEx() == REGION_EU) ? 49.842 : 59.941;
    info->timing.sample_rate    = 44100;
    info->geometry.base_width   = MEDNAFEN_CORE_GEOMETRY_BASE_W;
    info->geometry.base_height  = MEDNAFEN_CORE_GEOMETRY_BASE_H;
@@ -3168,7 +3138,7 @@ void retro_deinit(void)
 
 unsigned retro_get_region(void)
 {
-   if (CalcDiscSCEx() == REGION_EU)
+   if (PSX_CalcDiscSCEx() == REGION_EU)
       return RETRO_REGION_PAL;
    return RETRO_REGION_NTSC;
 }
