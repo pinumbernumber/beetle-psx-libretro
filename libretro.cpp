@@ -1360,9 +1360,13 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
 
    {
       std::string biospath = MDFN_MakeFName(MDFNMKF_FIRMWARE, 0, MDFN_GetSettingS(biospath_sname).c_str());
-      FileStream BIOSFile(biospath.c_str(), FileStream::MODE_READ);
+      FILE *fp = fopen(biospath.c_str(), "rb");
 
-      BIOSFile.read(BIOSROM->data8, 512 * 1024);
+      if (fp != NULL)
+      {
+         fread(BIOSROM->data8, 1, 512 * 1024, fp);
+         fclose(fp);
+      }
    }
 
    i = 0;

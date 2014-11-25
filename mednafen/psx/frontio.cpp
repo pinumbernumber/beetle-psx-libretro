@@ -978,22 +978,17 @@ void FrontIO_LoadMemcard(unsigned int which, const char *path)
 {
    assert(which < 8);
 
-   try
+   if(DevicesMC[which]->GetNVSize())
    {
-      if(DevicesMC[which]->GetNVSize())
+      FILE *fp = fopen(path, "rb");
+
+      if (fp != NULL)
       {
-         FileStream mf(path, FileStream::MODE_READ);
-
-         mf.read(DevicesMC[which]->GetNVData(), (1 << 17));
-
+         fread(DevicesMC[which]->GetNVData(), 1, 1 << 17, fp);
+         fclose(fp);
          DevicesMC[which]->WriteNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
          DevicesMC[which]->ResetNVDirtyCount();		// There's no need to rewrite the file if it's the same data.
       }
-   }
-   catch(MDFN_Error &e)
-   {
-      if(e.GetErrno() != ENOENT)
-         throw(e);
    }
 }
 
@@ -1014,14 +1009,15 @@ void FrontIO_SaveMemcard(unsigned int which, const char *path)
 
    if(DevicesMC[which]->GetNVSize() && DevicesMC[which]->GetNVDirtyCount())
    {
-      FileStream mf(path, FileStream::MODE_WRITE);	// TODO: MODE_WRITE_ATOMIC_OVERWRITE
+      FILE *fp = fopen(path, "rb");
 
-      DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-      mf.write(DevicesMC[which]->GetNVData(), (1 << 17));
-
-      mf.close();	// Call before resetting the NV dirty count!
-
-      DevicesMC[which]->ResetNVDirtyCount();
+      if (fp != NULL)
+      {
+         DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
+         fwrite(DevicesMC[which]->GetNVData(), 1, (1 << 17), fp);
+         fclose(fp);
+         DevicesMC[which]->ResetNVDirtyCount();
+      }
    }
 }
 
