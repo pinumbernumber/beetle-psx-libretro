@@ -1022,8 +1022,8 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
    }
 }
 
-template<bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, bool FlipX, bool FlipY>
-static void GPU_DrawSprite(int32 x_arg, int32 y_arg, int32 w,
+template<bool textured, int BlendMode, uint32 TexMode_TA, bool MaskEval_TA>
+static void GPU_DrawSprite(bool TexMult, bool FlipX, bool FlipY, int32 x_arg, int32 y_arg, int32 w,
       int32 h, uint8 u_arg, uint8 v_arg, uint32 color, uint32 clut_offset)
 {
    const int32 r = color & 0xFF;
@@ -1611,6 +1611,10 @@ static void G_Command_DrawSprite(const uint32 *cb)
 {
    int32 x, y;
    int32 w, h;
+   bool FlipX = false;
+   bool FlipY = false;
+   bool do_drawsprite = false;
+   bool tex_multiply = true;
    uint8 u = 0, v = 0;
    uint32 color = 0;
    uint32 clut = 0;
@@ -1662,36 +1666,31 @@ static void G_Command_DrawSprite(const uint32 *cb)
    x = sign_x_to_s32(11, x + OffsX);
    y = sign_x_to_s32(11, y + OffsY);
 
+   if(!TexMult || color == 0x808080)
+      tex_multiply = false;
+
    switch(SpriteFlip & 0x3000)
    {
       case 0x0000:
-         if(!TexMult || color == 0x808080)
-            GPU_DrawSprite<textured, BlendMode, false, TexMode_TA, MaskEval_TA, false, false>(x, y, w, h, u, v, color, clut);
-         else
-            GPU_DrawSprite<textured, BlendMode, true, TexMode_TA, MaskEval_TA, false, false>(x, y, w, h, u, v, color, clut);
+         do_drawsprite = true;
          break;
-
       case 0x1000:
-         if(!TexMult || color == 0x808080)
-            GPU_DrawSprite<textured, BlendMode, false, TexMode_TA, MaskEval_TA, true, false>(x, y, w, h, u, v, color, clut);
-         else
-            GPU_DrawSprite<textured, BlendMode, true, TexMode_TA, MaskEval_TA, true, false>(x, y, w, h, u, v, color, clut);
+         FlipX = true;
+         do_drawsprite = true;
          break;
-
       case 0x2000:
-         if(!TexMult || color == 0x808080)
-            GPU_DrawSprite<textured, BlendMode, false, TexMode_TA, MaskEval_TA, false, true>(x, y, w, h, u, v, color, clut);
-         else
-            GPU_DrawSprite<textured, BlendMode, true, TexMode_TA, MaskEval_TA, false, true>(x, y, w, h, u, v, color, clut);
+         FlipY = true;
+         do_drawsprite = true;
          break;
-
       case 0x3000:
-         if(!TexMult || color == 0x808080)
-            GPU_DrawSprite<textured, BlendMode, false, TexMode_TA, MaskEval_TA, true, true>(x, y, w, h, u, v, color, clut);
-         else
-            GPU_DrawSprite<textured, BlendMode, true, TexMode_TA, MaskEval_TA, true, true>(x, y, w, h, u, v, color, clut);
+         FlipX = true;
+         FlipY = true;
+         do_drawsprite = true;
          break;
    }
+
+   if (do_drawsprite)
+      GPU_DrawSprite<textured, BlendMode, TexMode_TA, MaskEval_TA>(tex_multiply, FlipX, FlipY, x, y, w, h, u, v, color, clut);
 }
 
 template<bool polyline, bool goraud, int BlendMode, bool MaskEval_TA>
