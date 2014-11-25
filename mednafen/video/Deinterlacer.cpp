@@ -39,7 +39,6 @@ void Deinterlacer::SetType(unsigned dt)
  }
 }
 
-template<typename T>
 void Deinterlacer::InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field)
 {
  //
@@ -77,41 +76,41 @@ void Deinterlacer::InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect
   {
     memmove(surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix,
 	    surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix + XReposition,
-	    LineWidths[(y * 2) + field + DisplayRect.y] * sizeof(T));
+	    LineWidths[(y * 2) + field + DisplayRect.y] * sizeof(uint32));
   }
 
   if(WeaveGood)
   {
-   const T* src = FieldBuffer->pixels + y * FieldBuffer->pitchinpix;
-   T* dest = surface->pixels + ((y * 2) + (field ^ 1) + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
+   const uint32* src = FieldBuffer->pixels + y * FieldBuffer->pitchinpix;
+   uint32* dest = surface->pixels + ((y * 2) + (field ^ 1) + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
    int32 *dest_lw = &LineWidths[(y * 2) + (field ^ 1) + DisplayRect.y];
 
    *dest_lw = LWBuffer[y];
 
-   memcpy(dest, src, LWBuffer[y] * sizeof(T));
+   memcpy(dest, src, LWBuffer[y] * sizeof(uint32));
   }
   else if(DeintType == DEINT_BOB)
   {
-   const T* src = surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
-   T* dest = surface->pixels + ((y * 2) + (field ^ 1) + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
+   const uint32* src = surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
+   uint32* dest = surface->pixels + ((y * 2) + (field ^ 1) + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
    const int32 *src_lw = &LineWidths[(y * 2) + field + DisplayRect.y];
    int32 *dest_lw = &LineWidths[(y * 2) + (field ^ 1) + DisplayRect.y];
 
    *dest_lw = *src_lw;
 
-   memcpy(dest, src, *src_lw * sizeof(T));
+   memcpy(dest, src, *src_lw * sizeof(uint32));
   }
   else
   {
    const int32 *src_lw = &LineWidths[(y * 2) + field + DisplayRect.y];
-   const T* src = surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
+   const uint32* src = surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
    const int32 dly = ((y * 2) + (field + 1) + DisplayRect.y);
-   T* dest = surface->pixels + dly * surface->pitchinpix + DisplayRect.x;
+   uint32* dest = surface->pixels + dly * surface->pitchinpix + DisplayRect.x;
 
    if(y == 0 && field)
    {
-    T black = MAKECOLOR(0, 0, 0, 0);
-    T* dm2 = surface->pixels + (dly - 2) * surface->pitchinpix;
+    uint32 black = MAKECOLOR(0, 0, 0, 0);
+    uint32* dm2 = surface->pixels + (dly - 2) * surface->pitchinpix;
 
     LineWidths[dly - 2] = *src_lw;
 
@@ -122,7 +121,7 @@ void Deinterlacer::InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect
    if(dly < (DisplayRect.y + DisplayRect.h))
    {
     LineWidths[dly] = *src_lw;
-    memcpy(dest, src, *src_lw * sizeof(T));
+    memcpy(dest, src, *src_lw * sizeof(uint32));
    }
   }
 
@@ -135,8 +134,8 @@ void Deinterlacer::InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect
   if(DeintType == DEINT_WEAVE)
   {
    const int32 *src_lw = &LineWidths[(y * 2) + field + DisplayRect.y];
-   const T* src = surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
-   T* dest = FieldBuffer->pixels + y * FieldBuffer->pitchinpix;
+   const uint32* src = surface->pixels + ((y * 2) + field + DisplayRect.y) * surface->pitchinpix + DisplayRect.x;
+   uint32* dest = FieldBuffer->pixels + y * FieldBuffer->pitchinpix;
 
    memcpy(dest, src, *src_lw * sizeof(uint32));
    LWBuffer[y] = *src_lw;
@@ -161,17 +160,10 @@ void Deinterlacer::Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 
    LWBuffer.resize(FieldBuffer->h);
   }
   else if(memcmp(&surface->format, &FieldBuffer->format, sizeof(MDFN_PixelFormat)))
-  {
-   FieldBuffer->SetFormat(surface->format, StateValid && PrevDRect.h == DisplayRect.h);
-  }
+   FieldBuffer->format = surface->format;
  }
 
-#if defined(WANT_32BPP)
- InternalProcess<uint32>(surface, DisplayRect, LineWidths, field);
-#elif defined(WANT_16BPP)
- InternalProcess<uint16>(surface, DisplayRect, LineWidths, field);
-#endif
-
+ InternalProcess(surface, DisplayRect, LineWidths, field);
  PrevDRect = DisplayRect_Original;
 }
 

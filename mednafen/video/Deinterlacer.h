@@ -46,7 +46,6 @@ class Deinterlacer
 
  private:
 
- template<typename T>
  void InternalProcess(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field);
 
  MDFN_Surface *FieldBuffer;
