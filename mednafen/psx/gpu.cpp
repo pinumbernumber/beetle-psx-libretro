@@ -1186,8 +1186,7 @@ static INLINE void GPU_LinePointToFXPCoord(const line_point &point, const line_f
    }
 }
 
-template<typename T, unsigned bits>
-static INLINE T GPU_LineDivide(T delta, int32 dk)
+static INLINE int64 GPU_LineDivide(unsigned bits, int64 delta, int32 dk)
 {
    delta <<= bits;
 
@@ -1196,7 +1195,7 @@ static INLINE T GPU_LineDivide(T delta, int32 dk)
    if(delta > 0)
       delta += dk - 1;
 
-   return(delta / dk);
+   return (delta / dk);
 }
 
 template<bool goraud>
@@ -1217,8 +1216,8 @@ static INLINE void GPU_LinePointsToFXPStep(
       return;
    }
 
-   step.dx_dk = GPU_LineDivide<int64, Line_XY_FractBits>(point1.x - point0.x, dk);
-   step.dy_dk = GPU_LineDivide<int64, Line_XY_FractBits>(point1.y - point0.y, dk);
+   step.dx_dk = GPU_LineDivide(Line_XY_FractBits, point1.x - point0.x, dk);
+   step.dy_dk = GPU_LineDivide(Line_XY_FractBits, point1.y - point0.y, dk);
 
    if(goraud)
    {
