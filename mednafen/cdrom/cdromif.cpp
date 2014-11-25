@@ -25,7 +25,6 @@
 
 #include <algorithm>
 #include "../../libretro.h"
-#include "../../thread.h"
 
 extern retro_log_printf_t log_cb;
 

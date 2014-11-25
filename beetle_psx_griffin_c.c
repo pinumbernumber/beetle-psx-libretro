@@ -18,7 +18,6 @@
 #include "mednafen/trio/trio.c"
 #include "mednafen/trio/triostr.c"
 
-#include "threads.c"
 #include "scrc32.c"
 
 #if NEED_CD
