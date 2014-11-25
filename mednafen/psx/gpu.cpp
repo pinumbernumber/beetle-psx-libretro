@@ -890,8 +890,7 @@ static INLINE bool GPU_CalcIDeltas(i_deltas *idl, const tri_vertex *A, const tri
  return(true);
 }
 
-template<bool goraud, bool textured>
-static INLINE void GPU_AddIDeltas_DX(i_group &ig, const i_deltas &idl, uint32 count = 1)
+static INLINE void GPU_AddIDeltas_DX(bool shaded, bool textured, i_group &ig, const i_deltas &idl, uint32 count = 1)
 {
    if(textured)
    {
@@ -899,7 +898,7 @@ static INLINE void GPU_AddIDeltas_DX(i_group &ig, const i_deltas &idl, uint32 co
       ig.v += idl.dv_dx * count;
    }
 
-   if(goraud)
+   if(shaded)
    {
       ig.r += idl.dr_dx * count;
       ig.g += idl.dg_dx * count;
@@ -907,8 +906,7 @@ static INLINE void GPU_AddIDeltas_DX(i_group &ig, const i_deltas &idl, uint32 co
    }
 }
 
-template<bool goraud, bool textured>
-static INLINE void GPU_AddIDeltas_DY(i_group &ig, const i_deltas &idl, uint32 count = 1)
+static INLINE void GPU_AddIDeltas_DY(bool shaded, bool textured, i_group &ig, const i_deltas &idl, uint32 count = 1)
 {
    if(textured)
    {
@@ -916,7 +914,7 @@ static INLINE void GPU_AddIDeltas_DY(i_group &ig, const i_deltas &idl, uint32 co
       ig.v += idl.dv_dy * count;
    }
 
-   if(goraud)
+   if(shaded)
    {
       ig.r += idl.dr_dy * count;
       ig.g += idl.dg_dy * count;
@@ -1015,7 +1013,7 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
             GPU_PlotPixel<BlendMode, MaskEval_TA, false>(x, y, pix);
          }
 
-         GPU_AddIDeltas_DX<goraud, textured>(ig, idl);
+         GPU_AddIDeltas_DX(goraud, textured, ig, idl);
          //AddStep<goraud, textured>(perp_coord, perp_step);
       }
    }
@@ -1080,19 +1078,15 @@ static INLINE void GPU_LinePointsToFXPStep(bool shaded,
    }
 }
 
-template<bool goraud>
-static INLINE void GPU_AddLineStep(line_fxp_coord &point, const line_fxp_step &step, int32 count = 1)
-{
-   point.x += step.dx_dk * count;
-   point.y += step.dy_dk * count;
-
-   if(goraud)
-   {
-      point.r += step.dr_dk * count;
-      point.g += step.dg_dk * count;
-      point.b += step.db_dk * count;
+#define GPU_AddLineStep(shaded, point, step, count) \
+   point.x += step.dx_dk * count; \
+   point.y += step.dy_dk * count; \
+   if(shaded) \
+   { \
+      point.r += step.dr_dk * count; \
+      point.g += step.dg_dk * count; \
+      point.b += step.db_dk * count; \
    }
-}
 
 template<bool goraud, int BlendMode, bool MaskEval_TA>
 static void GPU_DrawLine(line_point *points)
@@ -1176,7 +1170,7 @@ static void GPU_DrawLine(line_point *points)
             GPU_PlotPixel<BlendMode, MaskEval_TA, false>(x, y, pix);
       }
 
-      GPU_AddLineStep<goraud>(cur_point, step);
+      GPU_AddLineStep(goraud, cur_point, step, 1);
    }
 }
 
@@ -1354,8 +1348,8 @@ static void G_Command_DrawPolygon(const uint32 *cb)
       ig.g = COORD_MF_INT(vertices[iggvi].g);
       ig.b = COORD_MF_INT(vertices[iggvi].b);
 
-      GPU_AddIDeltas_DX<shaded, textured>(ig, idl, -vertices[iggvi].x);
-      GPU_AddIDeltas_DY<shaded, textured>(ig, idl, -vertices[iggvi].y);
+      GPU_AddIDeltas_DX(shaded, textured, ig, idl, -vertices[iggvi].x);
+      GPU_AddIDeltas_DY(shaded, textured, ig, idl, -vertices[iggvi].y);
    }
 
    base_coord = MakePolyXFP(vertices[0].x);
