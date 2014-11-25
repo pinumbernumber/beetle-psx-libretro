@@ -1468,7 +1468,6 @@ static void G_Command_DrawSprite(const uint32 *cb)
    int32 w, h;
    bool FlipX = false;
    bool FlipY = false;
-   bool do_drawsprite = false;
    bool tex_multiply = true;
    uint8 u = 0, v = 0;
    uint32 color = 0;
@@ -1524,27 +1523,9 @@ static void G_Command_DrawSprite(const uint32 *cb)
    if(!TexMult || color == 0x808080)
       tex_multiply = false;
 
-   switch(SpriteFlip & 0x3000)
-   {
-      case 0x0000:
-         do_drawsprite = true;
-         break;
-      case 0x1000:
-         FlipX = true;
-         do_drawsprite = true;
-         break;
-      case 0x2000:
-         FlipY = true;
-         do_drawsprite = true;
-         break;
-      case 0x3000:
-         FlipX = true;
-         FlipY = true;
-         do_drawsprite = true;
-         break;
-   }
+   FlipX = SpriteFlip & 0x1000;
+   FlipY = SpriteFlip & 0x2000;
 
-   if (do_drawsprite)
    {
       const int32 r = color & 0xFF;
       const int32 g = (color >> 8) & 0xFF;
