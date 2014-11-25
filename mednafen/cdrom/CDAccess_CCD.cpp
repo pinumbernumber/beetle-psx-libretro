@@ -339,14 +339,7 @@ case 1:
  {
   std::string image_path = MDFN_EvalFIP(dir_path, file_base + std::string(".") + std::string(img_extsd), true);
 
-  if(image_memcache)
-  {
-   img_stream = new MemoryStream(new FileStream(image_path.c_str(), FileStream::MODE_READ));
-  }
-  else
-  {
-   img_stream = new FileStream(image_path.c_str(), FileStream::MODE_READ);
-  }
+  img_stream = new FileStream(image_path.c_str(), FileStream::MODE_READ);
 
   int64 ss = img_stream->size();
 
@@ -361,10 +354,7 @@ case 1:
  {
   std::string sub_path = MDFN_EvalFIP(dir_path, file_base + std::string(".") + std::string(sub_extsd), true);
 
-  if(image_memcache)
-   sub_stream = new MemoryStream(new FileStream(sub_path.c_str(), FileStream::MODE_READ));
-  else
-   sub_stream = new FileStream(sub_path.c_str(), FileStream::MODE_READ);
+  sub_stream = new FileStream(sub_path.c_str(), FileStream::MODE_READ);
 
   if(sub_stream->size() != (int64)img_numsectors * 96)
    throw MDFN_Error(0, _("CCD SUB file size mismatch."));

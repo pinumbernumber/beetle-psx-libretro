@@ -219,10 +219,7 @@ void CDAccess_Image::ParseTOCFileLineInfo(CDRFILE_TRACK_INFO *track, const int t
 
   efn = MDFN_EvalFIP(base_dir, filename);
 
-  if(image_memcache)
-   track->fp = new MemoryStream(new FileStream(efn.c_str(), FileStream::MODE_READ));
-  else
-   track->fp = new FileStream(efn.c_str(), FileStream::MODE_READ);
+  track->fp = new FileStream(efn.c_str(), FileStream::MODE_READ);
 
   toc_streamcache[filename] = track->fp;
  }
@@ -556,9 +553,6 @@ void CDAccess_Image::ImageOpen(const char *path, bool image_memcache)
      std::string efn = MDFN_EvalFIP(base_dir, args[0]);
      TmpTrack.fp = new FileStream(efn.c_str(), FileStream::MODE_READ);
      TmpTrack.FirstFileInstance = 1;
-
-     if(image_memcache)
-      TmpTrack.fp = new MemoryStream(TmpTrack.fp);
 
      if(!strcasecmp(args[1].c_str(), "BINARY"))
      {

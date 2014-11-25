@@ -2198,8 +2198,6 @@ bool retro_load_game_special(unsigned, const struct retro_game_info *, size_t)
    return false;
 }
 
-static bool old_cdimagecache = false;
-
 // experimental save state support
 static bool boot = true;
 
@@ -2225,21 +2223,6 @@ static void check_variables(void)
    struct retro_variable var = {0};
 
    extern void PSXDitherApply(bool);
-
-   var.key = "beetle_psx_cdimagecache";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      bool cdimage_cache = true;
-      if (strcmp(var.value, "enabled") == 0)
-         cdimage_cache = true;
-      else if (strcmp(var.value, "disabled") == 0)
-         cdimage_cache = false;
-      if (cdimage_cache != old_cdimagecache)
-      {
-         old_cdimagecache = cdimage_cache;
-      }
-   }
 
    var.key = "beetle_psx_dithering";
 
@@ -2509,12 +2492,12 @@ MDFNGI *MDFNI_LoadCD(const char *force_module, const char *devicename)
 
    for(unsigned i = 0; i < file_list.size(); i++)
    {
-    CDInterfaces.push_back(CDIF_Open(file_list[i].c_str(), false, old_cdimagecache));
+    CDInterfaces.push_back(CDIF_Open(file_list[i].c_str(), false, false));
    }
   }
   else
   {
-   CDInterfaces.push_back(CDIF_Open(devicename, false, old_cdimagecache));
+   CDInterfaces.push_back(CDIF_Open(devicename, false, false));
   }
  }
  catch(std::exception &e)
@@ -3173,7 +3156,6 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
-      { "beetle_psx_cdimagecache", "CD Image Cache (restart); disabled|enabled" },
       { "beetle_psx_dithering", "Dithering; enabled|disabled" },
       { "beetle_psx_use_mednafen_memcard0_method", "Memcard 0 method; libretro|mednafen" },
       { "beetle_psx_shared_memory_cards", "Shared memcards (restart); disabled|enabled" },
