@@ -96,6 +96,13 @@ static const int32_t dither_table[4][4] =
  {  3, -1,  2, -2 },
 };
 
+/* Blend modes */
+
+#define BLEND_MODE_AVERAGE    0
+#define BLEND_MODE_ADD        1
+#define BLEND_MODE_SUBTRACT   2
+#define BLEND_MODE_ADD_FOURTH 3
+
 static uint8_t DitherLUT[4][4][512];	// Y, X, 8-bit source value(256 extra for saturation)
 
 struct i_group
@@ -626,17 +633,17 @@ static INLINE void GPU_PlotPixel(int32 x, int32 y, uint16_t fore_pix)
       // Efficient 15bpp pixel math algorithms from blargg
       switch(BlendMode)
       {
-         case 0:
+         case BLEND_MODE_AVERAGE:
             bg_pix |= 0x8000;
             pix = ((fore_pix + bg_pix) - ((fore_pix ^ bg_pix) & 0x0421)) >> 1;
             break;
 
-         case 1:
-         case 3:
+         case BLEND_MODE_ADD:
+         case BLEND_MODE_ADD_FOURTH:
             {
                uint32_t sum, carry;
                bg_pix &= ~0x8000;
-               if (BlendMode == 3)
+               if (BlendMode == BLEND_MODE_ADD_FOURTH)
                   fore_pix = ((fore_pix >> 2) & 0x1CE7) | 0x8000;
 
                sum = fore_pix + bg_pix;
@@ -646,7 +653,7 @@ static INLINE void GPU_PlotPixel(int32 x, int32 y, uint16_t fore_pix)
             }
             break;
 
-         case 2:
+         case BLEND_MODE_SUBTRACT:
             {
                uint32_t diff, borrow;
                bg_pix |= 0x8000;
