@@ -653,9 +653,6 @@ class CDIF_Stream_Thing : public Stream
  CDIF_Stream_Thing(CDIF *cdintf_arg, uint32 lba_arg, uint32 sector_count_arg);
  ~CDIF_Stream_Thing();
 
- virtual uint8 *map(void);
- virtual void unmap(void);
-  
  virtual uint64 read(void *data, uint64 count, bool error_on_eos = true);
  virtual void write(const void *data, uint64 count);
 
@@ -681,16 +678,6 @@ CDIF_Stream_Thing::~CDIF_Stream_Thing()
 
 }
 
-uint8 *CDIF_Stream_Thing::map(void)
-{
- return NULL;
-}
-
-void CDIF_Stream_Thing::unmap(void)
-{
-
-}
-  
 uint64 CDIF_Stream_Thing::read(void *data, uint64 count, bool error_on_eos)
 {
  if(count > (((uint64)sector_count * 2048) - position))

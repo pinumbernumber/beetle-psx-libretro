@@ -64,17 +64,6 @@ MemoryStream::~MemoryStream()
    data_buffer = NULL;
 }
 
-uint8 *MemoryStream::map(void)
-{
- return data_buffer;
-}
-
-void MemoryStream::unmap(void)
-{
-
-}
-
-
 INLINE void MemoryStream::grow_if_necessary(uint64 new_required_size)
 {
    if(new_required_size > data_buffer_size)
