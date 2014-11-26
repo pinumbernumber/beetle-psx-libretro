@@ -16,7 +16,6 @@
 #include "mednafen/psx/input/mouse.cpp"
 
 #include "mednafen/error.cpp"
-#include "mednafen/math_ops.cpp"
 #include "mednafen/settings.cpp"
 #include "mednafen/general.cpp"
 #include "mednafen/FileStream.cpp"
