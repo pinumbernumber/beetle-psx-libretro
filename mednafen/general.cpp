@@ -53,11 +53,6 @@ static bool IsAbsolutePath(const char *path)
  return(FALSE);
 }
 
-static bool IsAbsolutePath(const std::string &path)
-{
- return(IsAbsolutePath(path.c_str()));
-}
-
 bool MDFN_IsFIROPSafe(const std::string &path)
 {
  // We could make this more OS-specific, but it shouldn't hurt to try to weed out usage of characters that are path
@@ -150,8 +145,7 @@ std::string MDFN_EvalFIP(const std::string &dir_path, const std::string &rel_pat
 
    if(IsAbsolutePath(rel_path.c_str()))
       return(rel_path);
-   else
-      return(dir_path + slash + rel_path);
+   return(dir_path + slash + rel_path);
 }
 
 const char * GetFNComponent(const char *str)
@@ -161,9 +155,7 @@ const char * GetFNComponent(const char *str)
 #ifdef _WIN32
    tp1 = ((char *)strrchr(str,'\\'));
 
-   const char *tp3;
-
-   tp3 = ((char *)strrchr(str,'/'));
+   const char *tp3 = ((char *)strrchr(str,'/'));
 
    if (tp1<tp3)
       tp1 = tp3;
@@ -173,8 +165,7 @@ const char * GetFNComponent(const char *str)
 
    if (tp1)
       return (tp1+1);
-   else
-      return (str);
+   return (str);
 }
 
 // Remove whitespace from beginning of string
