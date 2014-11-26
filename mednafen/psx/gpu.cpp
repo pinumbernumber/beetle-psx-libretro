@@ -899,7 +899,7 @@ static INLINE bool GPU_CalcIDeltas(i_deltas *idl, const tri_vertex *A, const tri
  return(true);
 }
 
-static INLINE void GPU_AddIDeltas_DX(bool shaded, bool textured, i_group &ig, const i_deltas &idl, uint32 count = 1)
+static INLINE void GPU_AddIDeltas_DX(bool shaded, bool textured, i_group &ig, const i_deltas &idl, uint32 count)
 {
    if(textured)
    {
@@ -915,7 +915,7 @@ static INLINE void GPU_AddIDeltas_DX(bool shaded, bool textured, i_group &ig, co
    }
 }
 
-static INLINE void GPU_AddIDeltas_DY(bool shaded, bool textured, i_group &ig, const i_deltas &idl, uint32 count = 1)
+static INLINE void GPU_AddIDeltas_DY(bool shaded, bool textured, i_group &ig, const i_deltas &idl, uint32 count)
 {
    if(textured)
    {
@@ -931,7 +931,7 @@ static INLINE void GPU_AddIDeltas_DY(bool shaded, bool textured, i_group &ig, co
    }
 }
 
-template<bool goraud, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
+template<bool shaded, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
 static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, const int32 x_bound, i_group ig, const i_deltas &idl)
 {
    int32 xs = x_start, xb = x_bound;
@@ -951,7 +951,7 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
       {
          DrawTimeAvail -= (xb - xs);
 
-         if(goraud || textured)
+         if(shaded || textured)
          {
             DrawTimeAvail -= (xb - xs);
          }
@@ -967,7 +967,7 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
          ig.v += (xs * idl.dv_dx) + (y * idl.dv_dy);
       }
 
-      if(goraud)
+      if(shaded)
       {
          ig.r += (xs * idl.dr_dx) + (y * idl.dr_dy);
          ig.g += (xs * idl.dg_dx) + (y * idl.dg_dy);
@@ -978,7 +978,7 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
       {
          uint32 r, g, b;
 
-         if(goraud)
+         if(shaded)
          {
             r = RGB8SAT[COORD_GET_INT(ig.r)];
             g = RGB8SAT[COORD_GET_INT(ig.g)];
@@ -1006,7 +1006,7 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
          {
             uint16 pix = 0x8000;
 
-            if(goraud && dtd)
+            if(shaded && dtd)
             {
                pix |= DitherLUT[y & 3][x & 3][r] << 0;
                pix |= DitherLUT[y & 3][x & 3][g] << 5;
@@ -1022,8 +1022,8 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
             GPU_PlotPixel<BlendMode, MaskEval_TA, false>(x, y, pix);
          }
 
-         GPU_AddIDeltas_DX(goraud, textured, ig, idl);
-         //AddStep<goraud, textured>(perp_coord, perp_step);
+         GPU_AddIDeltas_DX(shaded, textured, ig, idl, 1);
+         //AddStep<shaded, textured>(perp_coord, perp_step);
       }
    }
 }
@@ -1096,92 +1096,6 @@ static INLINE void GPU_LinePointsToFXPStep(bool shaded,
       point.g += step.dg_dk * count; \
       point.b += step.db_dk * count; \
    }
-
-template<bool goraud, int BlendMode, bool MaskEval_TA>
-static void GPU_DrawLine(line_point *points)
-{
-   int32 i_dx;
-   int32 i_dy;
-   int32 k;
-   line_fxp_coord cur_point;
-   line_fxp_step step;
-
-   i_dx = abs(points[1].x - points[0].x);
-   i_dy = abs(points[1].y - points[0].y);
-   k = (i_dx > i_dy) ? i_dx : i_dy;
-
-   if(i_dx >= 1024 || i_dy >= 512)
-   {
-      //PSX_DBG(PSX_DBG_WARNING, "[GPU] Line too long: i_dx=%d, i_dy=%d\n", i_dx, i_dy);
-      return;
-   }
-
-   // May not be correct(do tests for the case of k == i_dy on real thing.
-   if(points[0].x > points[1].x)
-   {
-      line_point tmp = points[1];
-
-      points[1] = points[0];
-      points[0] = tmp;  
-   }
-
-   DrawTimeAvail -= k * ((BlendMode >= BLEND_MODE_AVERAGE) ? 2 : 1);
-
-   //
-   //
-   //
-
-   GPU_LinePointsToFXPStep(goraud, points[0], points[1], k, step);
-   GPU_LinePointToFXPCoord(goraud, points[0], step, cur_point);
-
-   //
-   //
-   //
-   for(int32 i = 0; i <= k; i++)	// <= is not a typo.
-   {
-      // Sign extension is not necessary here for x and y, due to the maximum values that ClipX1 and ClipY1 can contain.
-      const int32 x = (cur_point.x >> Line_XY_FractBits) & 2047;
-      const int32 y = (cur_point.y >> Line_XY_FractBits) & 2047;
-      uint16 pix = 0x8000;
-
-      if(!LineSkipTest( y))
-      {
-         uint8 r, g, b;
-
-         if(goraud)
-         {
-            r = cur_point.r >> Line_RGB_FractBits;
-            g = cur_point.g >> Line_RGB_FractBits;
-            b = cur_point.b >> Line_RGB_FractBits;
-         }
-         else
-         {
-            r = points[0].r;
-            g = points[0].g;
-            b = points[0].b;
-         }
-
-         if(goraud && dtd)
-         {
-            pix |= DitherLUT[y & 3][x & 3][r] << 0;
-            pix |= DitherLUT[y & 3][x & 3][g] << 5;
-            pix |= DitherLUT[y & 3][x & 3][b] << 10;
-         }
-         else
-         {
-            pix |= (r >> 3) << 0;
-            pix |= (g >> 3) << 5;
-            pix |= (b >> 3) << 10;
-         }
-
-         // FIXME: There has to be a faster way than checking for being inside the drawing area for each pixel.
-         if(x >= ClipX0 && x <= ClipX1 && y >= ClipY0 && y <= ClipY1)
-            GPU_PlotPixel<BlendMode, MaskEval_TA, false>(x, y, pix);
-      }
-
-      GPU_AddLineStep(goraud, cur_point, step, 1);
-   }
-}
 
 /* C-style function wrappers so our command table isn't so ginormous(in memory usage). */
 template<int numvertices, bool shaded, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
@@ -1523,17 +1437,15 @@ static void G_Command_DrawSprite(const uint32 *cb)
       const int32 b = (color >> 16) & 0xFF;
       const uint16 fill_color = 0x8000 | ((r >> 3) << 0) | ((g >> 3) << 5) | ((b >> 3) << 10);
 
-      int32 x_start, x_bound;
-      int32 y_start, y_bound;
       int v_inc = 1, u_inc = 1;
 
       //printf("[GPU] Sprite: x=%d, y=%d, w=%d, h=%d\n", x, y, w, h);
 
-      x_start = x;
-      x_bound = x + w;
+      int32 x_start = x;
+      int32 x_bound = x + w;
 
-      y_start = y;
-      y_bound = y + h;
+      int32 y_start = y;
+      int32 y_bound = y + h;
 
       if(textured)
       {
@@ -1656,7 +1568,7 @@ static void G_Command_DrawSprite(const uint32 *cb)
    }
 }
 
-template<bool polyline, bool goraud, int BlendMode, bool MaskEval_TA>
+template<bool polyline, bool shaded, int BlendMode, bool MaskEval_TA>
 static void G_Command_DrawLine(const uint32 *cb)
 {
    const uint8 cc = cb[0] >> 24; // For pline handling later.
@@ -1681,7 +1593,7 @@ static void G_Command_DrawLine(const uint32 *cb)
       cb++;
    }
 
-   if(goraud)
+   if(shaded)
    {
       points[1].r = (*cb >> 0) & 0xFF;
       points[1].g = (*cb >> 8) & 0xFF;
@@ -1710,7 +1622,87 @@ static void G_Command_DrawLine(const uint32 *cb)
       }
    }
 
-   GPU_DrawLine<goraud, BlendMode, MaskEval_TA>(points);
+   int32 i_dx;
+   int32 i_dy;
+   int32 k;
+   line_fxp_coord cur_point;
+   line_fxp_step step;
+
+   i_dx = abs(points[1].x - points[0].x);
+   i_dy = abs(points[1].y - points[0].y);
+   k = (i_dx > i_dy) ? i_dx : i_dy;
+
+   if(i_dx >= 1024 || i_dy >= 512)
+   {
+      //PSX_DBG(PSX_DBG_WARNING, "[GPU] Line too long: i_dx=%d, i_dy=%d\n", i_dx, i_dy);
+      return;
+   }
+
+   // May not be correct(do tests for the case of k == i_dy on real thing.
+   if(points[0].x > points[1].x)
+   {
+      line_point tmp = points[1];
+
+      points[1] = points[0];
+      points[0] = tmp;  
+   }
+
+   DrawTimeAvail -= k * ((BlendMode >= BLEND_MODE_AVERAGE) ? 2 : 1);
+
+   //
+   //
+   //
+
+   GPU_LinePointsToFXPStep(shaded, points[0], points[1], k, step);
+   GPU_LinePointToFXPCoord(shaded, points[0], step, cur_point);
+
+   //
+   //
+   //
+   for(int32 i = 0; i <= k; i++)	// <= is not a typo.
+   {
+      // Sign extension is not necessary here for x and y, due to the maximum values that ClipX1 and ClipY1 can contain.
+      const int32 x = (cur_point.x >> Line_XY_FractBits) & 2047;
+      const int32 y = (cur_point.y >> Line_XY_FractBits) & 2047;
+      uint16 pix = 0x8000;
+
+      if(!LineSkipTest( y))
+      {
+         uint8 r, g, b;
+
+         if(shaded)
+         {
+            r = cur_point.r >> Line_RGB_FractBits;
+            g = cur_point.g >> Line_RGB_FractBits;
+            b = cur_point.b >> Line_RGB_FractBits;
+         }
+         else
+         {
+            r = points[0].r;
+            g = points[0].g;
+            b = points[0].b;
+         }
+
+         if(shaded && dtd)
+         {
+            pix |= DitherLUT[y & 3][x & 3][r] << 0;
+            pix |= DitherLUT[y & 3][x & 3][g] << 5;
+            pix |= DitherLUT[y & 3][x & 3][b] << 10;
+         }
+         else
+         {
+            pix |= (r >> 3) << 0;
+            pix |= (g >> 3) << 5;
+            pix |= (b >> 3) << 10;
+         }
+
+         // FIXME: There has to be a faster way than checking for being inside the drawing area for each pixel.
+         if(x >= ClipX0 && x <= ClipX1 && y >= ClipY0 && y <= ClipY1)
+            GPU_PlotPixel<BlendMode, MaskEval_TA, false>(x, y, pix);
+      }
+
+      GPU_AddLineStep(shaded, cur_point, step, 1);
+   }
 }
 
 static void G_Command_ClearCache(const uint32 *cb)
