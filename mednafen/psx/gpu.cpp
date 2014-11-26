@@ -2155,7 +2155,8 @@ static GPU_CTEntry GPU_Commands[256] =
 
 static void GPU_ProcessFIFO(void)
 {
-   unsigned vl;
+   unsigned vl, i;
+   uint32 *cb = NULL;
    uint32_t CB[0x10];
    uint32_t cc;
    GPU_CTEntry *command = NULL;
@@ -2170,11 +2171,12 @@ static void GPU_ProcessFIFO(void)
          command = (GPU_CTEntry*)&GPU_Commands[cc];
          vl = command->len;
 
-         if(DrawTimeAvail < 0 && !command->ss_cmd)
-            return;
-
          if(!command->ss_cmd)
+         {
+            if(DrawTimeAvail < 0)
+               return;
             DrawTimeAvail -= 2;
+         }
 
 #if 0
          PSX_WARNING("[GPU] Command: %08x %s %d %d %d", CB[0], command->name, vl, scanline, DrawTimeAvail);
@@ -2189,43 +2191,40 @@ static void GPU_ProcessFIFO(void)
          break;
 
       case INCMD_FBREAD:
-         puts("BOGUS SALAMANDERS, CAPTAIN!");
+         //puts("BOGUS SALAMANDERS, CAPTAIN!");
          return;
 
       case INCMD_FBWRITE:
+         cc = SimpleFIFO_ReadUnit(BlitterFIFO);
+         SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
+
+         for(i = 0; i < 2; i++)
          {
-            uint32_t InData = SimpleFIFO_ReadUnit(BlitterFIFO);
-            SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
+            if(!(GPURAM[FBRW_CurY & 511][FBRW_CurX & 1023] & MaskEvalAND))
+               GPURAM[FBRW_CurY & 511][FBRW_CurX & 1023] = cc | MaskSetOR;
 
-            for(int i = 0; i < 2; i++)
+            FBRW_CurX++;
+            if(FBRW_CurX == (FBRW_X + FBRW_W))
             {
-               if(!(GPURAM[FBRW_CurY & 511][FBRW_CurX & 1023] & MaskEvalAND))
-                  GPURAM[FBRW_CurY & 511][FBRW_CurX & 1023] = InData | MaskSetOR;
-
-               FBRW_CurX++;
-               if(FBRW_CurX == (FBRW_X + FBRW_W))
+               FBRW_CurX = FBRW_X;
+               FBRW_CurY++;
+               if(FBRW_CurY == (FBRW_Y + FBRW_H))
                {
-                  FBRW_CurX = FBRW_X;
-                  FBRW_CurY++;
-                  if(FBRW_CurY == (FBRW_Y + FBRW_H))
-                  {
-                     InCmd = INCMD_NONE;
-                     break;	// Break out of the for() loop.
-                  }
+                  InCmd = INCMD_NONE;
+                  break;	// Break out of the for() loop.
                }
-               InData >>= 16;
             }
-            return;
+            cc >>= 16;
          }
+         return;
          break;
-
       case INCMD_QUAD:
          if(DrawTimeAvail < 0)
             return;
 
          cc = InCmd_CC;
          command = (GPU_CTEntry*)&GPU_Commands[cc];
-         vl = 1 + (bool)(cc & 0x4) + (bool)(cc & 0x10);
+         vl = 1 + (bool)(cc & 0x4) + (bool)(InCmd_CC & 0x10);
          break;
 
       case INCMD_PLINE:
@@ -2245,128 +2244,127 @@ static void GPU_ProcessFIFO(void)
          break;
    }
 
-   if(BlitterFIFO->in_count >= vl)
+   if(BlitterFIFO->in_count < vl)
+      return;
+
+   cb = (uint32*)CB;
+
+   for(i = 0; i < vl; i++)
    {
-      unsigned i;
-      const uint32 *cb = (const uint32*)CB;
+      CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
+      SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
+   }
 
-      for(i = 0; i < vl; i++)
+   if (cc >= 0xA0 && cc <= 0xBF)
+   {
+      LOG_GPU_FIFO("CC #%d : FBWrite.\n", cc);
+      G_Command_FBWrite(CB);
+   }
+   else if (cc >= 0xC0 && cc <= 0xDF)
+   {
+      LOG_GPU_FIFO("CC #%d : FBRead.\n", cc);
+      G_Command_FBRead(CB);
+   }
+   else if (cc >= 0x80 && cc <= 0x9F)
+   {
+      LOG_GPU_FIFO("CC #%d : FBCopy.\n", cc);
+      G_Command_FBCopy(CB);
+   }
+   else if (cc >= 0x20 && cc <= 0x3F)
+   {
+      LOG_GPU_FIFO("CC #%d : DrawPolygon.\n", cc);
+      // A very very ugly kludge to support texture mode specialization. fixme/cleanup/SOMETHING in the future.
+      if(InCmd == INCMD_NONE && (cc & 0x4))
       {
-         CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
-         SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
+         uint32 tpage = CB[4 + ((cc >> 4) & 0x1)] >> 16;
+
+         TexPageX = (tpage & 0xF) * 64;
+         TexPageY = (tpage & 0x10) * 16;
+
+         SpriteFlip = tpage & 0x3000;
+
+         abr = (tpage >> 5) & 0x3;
+         TexMode = (tpage >> 7) & 0x3;
       }
 
-      if (cc >= 0xA0 && cc <= 0xBF)
+      if(command->func[abr][TexMode])
+         command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
+   }
+   else
+   {
+      switch(cc)
       {
-         LOG_GPU_FIFO("CC #%d : FBWrite.\n", cc);
-         G_Command_FBWrite(CB);
-      }
-      else if (cc >= 0xC0 && cc <= 0xDF)
-      {
-         LOG_GPU_FIFO("CC #%d : FBRead.\n", cc);
-         G_Command_FBRead(CB);
-      }
-      else if (cc >= 0x80 && cc <= 0x9F)
-      {
-         LOG_GPU_FIFO("CC #%d : FBCopy.\n", cc);
-         G_Command_FBCopy(CB);
-      }
-      else if (cc >= 0x20 && cc <= 0x3F)
-      {
-         LOG_GPU_FIFO("CC #%d : DrawPolygon.\n", cc);
-         // A very very ugly kludge to support texture mode specialization. fixme/cleanup/SOMETHING in the future.
-         if(InCmd == INCMD_NONE && (cc & 0x4))
-         {
-            uint32 tpage = CB[4 + ((cc >> 4) & 0x1)] >> 16;
+         case 0x00:
+         case 0x01:
+            //G_Command_ClearCache(CB);
+            break;
+         case 0x02:
+            LOG_GPU_FIFO("CC #%d : FBFill.\n", cc);
 
-            TexPageX = (tpage & 0xF) * 64;
-            TexPageY = (tpage & 0x10) * 16;
+            G_Command_FBFill(CB);
+            break;
+         case 0x1F:
+            LOG_GPU_FIFO("CC #%d : IRQ.\n", cc);
 
-            SpriteFlip = tpage & 0x3000;
+            IRQPending = true;
+            IRQ_Assert(IRQ_GPU, IRQPending);
+            break;
+         case 0xE1:
+            LOG_GPU_FIFO("CC #%d : DrawMode.\n", cc);
 
-            abr = (tpage >> 5) & 0x3;
-            TexMode = (tpage >> 7) & 0x3;
-         }
+            TexPageX = (*cb & 0xF) * 64;
+            TexPageY = (*cb & 0x10) * 16;
 
-         if(command->func[abr][TexMode])
-            command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
-      }
-      else
-      {
-         switch(cc)
-         {
-            case 0x00:
-            case 0x01:
-               //G_Command_ClearCache(CB);
-               break;
-            case 0x02:
-               LOG_GPU_FIFO("CC #%d : FBFill.\n", cc);
+            SpriteFlip = *cb & 0x3000;
 
-               G_Command_FBFill(CB);
-               break;
-            case 0x1F:
-               LOG_GPU_FIFO("CC #%d : IRQ.\n", cc);
+            abr = (*cb >> 5) & 0x3;
+            TexMode = (*cb >> 7) & 0x3;
 
-               IRQPending = true;
-               IRQ_Assert(IRQ_GPU, IRQPending);
-               break;
-            case 0xE1:
-               LOG_GPU_FIFO("CC #%d : DrawMode.\n", cc);
+            dtd = (*cb >> 9) & 1;
+            dfe = (*cb >> 10) & 1;
+            //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
+            break;
+         case 0xE2:
+            LOG_GPU_FIFO("CC #%d : TexWindow.\n", cc);
 
-               TexPageX = (*cb & 0xF) * 64;
-               TexPageY = (*cb & 0x10) * 16;
+            tww = (*cb & 0x1F);
+            twh = ((*cb >> 5) & 0x1F);
+            twx = ((*cb >> 10) & 0x1F);
+            twy = ((*cb >> 15) & 0x1F);
 
-               SpriteFlip = *cb & 0x3000;
+            GPU_RecalcTexWindowLUT();
+            break;
+         case 0xE3:
+            LOG_GPU_FIFO("CC #%d : Clip0.\n", cc);
 
-               abr = (*cb >> 5) & 0x3;
-               TexMode = (*cb >> 7) & 0x3;
+            ClipX0 = *cb & 1023;
+            ClipY0 = (*cb >> 10) & 1023;
+            break;
+         case 0xE4:
+            LOG_GPU_FIFO("CC #%d : Clip1.\n", cc);
 
-               dtd = (*cb >> 9) & 1;
-               dfe = (*cb >> 10) & 1;
-               //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
-               break;
-            case 0xE2:
-               LOG_GPU_FIFO("CC #%d : TexWindow.\n", cc);
+            ClipX1 = *cb & 1023;
+            ClipY1 = (*cb >> 10) & 1023;
+            break;
+         case 0xE5:
+            LOG_GPU_FIFO("CC #%d : DrawingOffset.\n", cc);
 
-               tww = (*cb & 0x1F);
-               twh = ((*cb >> 5) & 0x1F);
-               twx = ((*cb >> 10) & 0x1F);
-               twy = ((*cb >> 15) & 0x1F);
+            OffsX = sign_x_to_s32(11, (*cb & 2047));
+            OffsY = sign_x_to_s32(11, ((*cb >> 11) & 2047));
 
-               GPU_RecalcTexWindowLUT();
-               break;
-            case 0xE3:
-               LOG_GPU_FIFO("CC #%d : Clip0.\n", cc);
+            //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
+            break;
+         case 0xE6:
+            LOG_GPU_FIFO("CC #%d : MaskSetting.\n", cc);
 
-               ClipX0 = *cb & 1023;
-               ClipY0 = (*cb >> 10) & 1023;
-               break;
-            case 0xE4:
-               LOG_GPU_FIFO("CC #%d : Clip1.\n", cc);
-
-               ClipX1 = *cb & 1023;
-               ClipY1 = (*cb >> 10) & 1023;
-               break;
-            case 0xE5:
-               LOG_GPU_FIFO("CC #%d : DrawingOffset.\n", cc);
-
-               OffsX = sign_x_to_s32(11, (*cb & 2047));
-               OffsY = sign_x_to_s32(11, ((*cb >> 11) & 2047));
-
-               //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
-               break;
-            case 0xE6:
-               LOG_GPU_FIFO("CC #%d : MaskSetting.\n", cc);
-
-               //printf("Mask setting: %08x\n", *cb);
-               MaskSetOR   = (*cb & 1) ? 0x8000 : 0x0000;
-               MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
-               break;
-            default:
-               if(command->func[abr][TexMode])
-                  command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
-               break;
-         }
+            //printf("Mask setting: %08x\n", *cb);
+            MaskSetOR   = (*cb & 1) ? 0x8000 : 0x0000;
+            MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
+            break;
+         default:
+            if(command->func[abr][TexMode])
+               command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
+            break;
       }
    }
 }
