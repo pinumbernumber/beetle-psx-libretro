@@ -2259,8 +2259,49 @@ static void GPU_ProcessFIFO(void)
          TexMode = (tpage >> 7) & 0x3;
       }
 
-      if(command->func[abr][TexMode])
-         command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
+
+      switch(cc)
+      {
+#if 0
+         case 0x01:
+            G_Command_ClearCache(CB);
+            break;
+#endif
+         case 0x02:
+            G_Command_FBFill(CB);
+            break;
+         case 0x1F:
+            G_Command_IRQ(CB);
+            break;
+         case 0xE1:
+            G_Command_DrawMode(CB);
+            break;
+         case 0xE2:
+            G_Command_TexWindow(CB);
+            break;
+         case 0xE3:
+            G_Command_Clip0(CB);
+            break;
+         case 0xE4:
+            G_Command_Clip1(CB);
+            break;
+         case 0xE5:
+            G_Command_DrawingOffset(CB);
+            break;
+         case 0xE6:
+            G_Command_MaskSetting(CB);
+            break;
+         default:
+            if (cc >= 0xA0 && cc <= 0xBF)
+               G_Command_FBWrite(CB);
+            else if (cc >= 0xC0 && cc <= 0xDF)
+               G_Command_FBRead(CB);
+            else if (cc >= 0x80 && cc <= 0x9F)
+               G_Command_FBCopy(CB);
+            else if(command->func[abr][TexMode])
+               command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
+            break;
+      }
    }
 }
 
