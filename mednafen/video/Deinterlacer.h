@@ -18,6 +18,12 @@
 #ifndef __MDFN_DEINTERLACER_H
 #define __MDFN_DEINTERLACER_H
 
+#include <boolean.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum
 {
    DEINT_BOB_OFFSET = 0,	// Code will fall-through to this case under certain conditions, too.
@@ -25,12 +31,17 @@ enum
    DEINT_WEAVE,
 };
 
+
 void Deinterlacer_New();
 
 void Deinterlacer_Free();
 
-void Deinterlacer_Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field);
+void Deinterlacer_Process(MDFN_Surface *surface, MDFN_Rect *DisplayRect, int32 *LineWidths, const bool field);
 
 void Deinterlacer_ClearState(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

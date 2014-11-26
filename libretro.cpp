@@ -2995,7 +2995,7 @@ void retro_run(void)
       if (!PrevInterlaced)
          Deinterlacer_ClearState();
 
-      Deinterlacer_Process(spec.surface, spec.DisplayRect, spec.LineWidths, spec.InterlaceField);
+      Deinterlacer_Process(spec.surface, &spec.DisplayRect, spec.LineWidths, spec.InterlaceField);
 
       PrevInterlaced = true;
 

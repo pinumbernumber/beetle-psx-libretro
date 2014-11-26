@@ -67,13 +67,13 @@ MEDNAFEN_SOURCES := $(MEDNAFEN_DIR)/error.cpp \
 MEDNAFEN_SOURCES += $(CDROM_SOURCES)
 
 MEDNAFEN_SOURCES += $(MEDNAFEN_DIR)/mempatcher.cpp \
-	$(MEDNAFEN_DIR)/video/Deinterlacer.cpp \
 	$(RESAMPLER_SOURCES) \
 	$(MEDNAFEN_DIR)/file.cpp \
 	$(OKIADPCM_SOURCES) \
 	$(MEDNAFEN_DIR)/md5.cpp
 
 MEDNAFEN_SOURCES_C += $(MEDNAFEN_DIR)/video/surface.c \
+							 $(MEDNAFEN_DIR)/video/Deinterlacer.c \
 							 $(MEDNAFEN_DIR)/mednafen-endian.c
 
 LIBRETRO_SOURCES += libretro.cpp
