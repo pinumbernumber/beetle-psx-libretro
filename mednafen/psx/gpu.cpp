@@ -2260,47 +2260,82 @@ static void GPU_ProcessFIFO(void)
       }
 
 
-      switch(cc)
+      if (cc >= 0xA0 && cc <= 0xBF)
+         G_Command_FBWrite(CB);
+      else if (cc >= 0xC0 && cc <= 0xDF)
+         G_Command_FBRead(CB);
+      else if (cc >= 0x80 && cc <= 0x9F)
+         G_Command_FBCopy(CB);
+      else
       {
+         const uint32 *cb = (const uint32*)CB;
+
+         switch(cc)
+         {
 #if 0
-         case 0x01:
-            G_Command_ClearCache(CB);
-            break;
+            case 0x01:
+               G_Command_ClearCache(CB);
+               break;
 #endif
-         case 0x02:
-            G_Command_FBFill(CB);
-            break;
-         case 0x1F:
-            G_Command_IRQ(CB);
-            break;
-         case 0xE1:
-            G_Command_DrawMode(CB);
-            break;
-         case 0xE2:
-            G_Command_TexWindow(CB);
-            break;
-         case 0xE3:
-            G_Command_Clip0(CB);
-            break;
-         case 0xE4:
-            G_Command_Clip1(CB);
-            break;
-         case 0xE5:
-            G_Command_DrawingOffset(CB);
-            break;
-         case 0xE6:
-            G_Command_MaskSetting(CB);
-            break;
-         default:
-            if (cc >= 0xA0 && cc <= 0xBF)
-               G_Command_FBWrite(CB);
-            else if (cc >= 0xC0 && cc <= 0xDF)
-               G_Command_FBRead(CB);
-            else if (cc >= 0x80 && cc <= 0x9F)
-               G_Command_FBCopy(CB);
-            else if(command->func[abr][TexMode])
-               command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
-            break;
+            case 0x02:
+               G_Command_FBFill(CB);
+               break;
+            case 0x1F:
+               /* Command IRQ */
+               IRQPending = true;
+               IRQ_Assert(IRQ_GPU, IRQPending);
+               break;
+            case 0xE1:
+               /* Command DrawMode */
+               TexPageX = (*cb & 0xF) * 64;
+               TexPageY = (*cb & 0x10) * 16;
+
+               SpriteFlip = *cb & 0x3000;
+
+               abr = (*cb >> 5) & 0x3;
+               TexMode = (*cb >> 7) & 0x3;
+
+               dtd = (*cb >> 9) & 1;
+               dfe = (*cb >> 10) & 1;
+               //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
+               break;
+            case 0xE2:
+               /* Command TexWindow */
+               tww = (*cb & 0x1F);
+               twh = ((*cb >> 5) & 0x1F);
+               twx = ((*cb >> 10) & 0x1F);
+               twy = ((*cb >> 15) & 0x1F);
+
+               GPU_RecalcTexWindowLUT();
+               break;
+            case 0xE3:
+               /* Command Clip0 */
+               ClipX0 = *cb & 1023;
+               ClipY0 = (*cb >> 10) & 1023;
+               break;
+            case 0xE4:
+               /* Command Clip1 */
+               ClipX1 = *cb & 1023;
+               ClipY1 = (*cb >> 10) & 1023;
+               break;
+            case 0xE5:
+               /* Command DrawingOffset */
+               OffsX = sign_x_to_s32(11, (*cb & 2047));
+               OffsY = sign_x_to_s32(11, ((*cb >> 11) & 2047));
+
+               //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
+               break;
+            case 0xE6:
+               /* Command Mask Setting */
+               //printf("Mask setting: %08x\n", *cb);
+               MaskSetOR   = (*cb & 1) ? 0x8000 : 0x0000;
+               MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
+               break;
+            default:
+               if(command->func[abr][TexMode])
+                  command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
+               break;
+         }
       }
    }
 }
