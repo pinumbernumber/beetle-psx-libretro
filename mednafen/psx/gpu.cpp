@@ -1286,21 +1286,17 @@ static void G_Command_DrawPolygon(int numvertices, bool shaded, bool textured, i
    //
    //
 
+   bound_coord_us = 0;
+   bound_coord_ls = 0;
+   right_facing = (bool)(vertices[1].x > vertices[0].x);
 
-   if(vertices[1].y == vertices[0].y)
-   {
-      bound_coord_us = 0;
-      right_facing = (bool)(vertices[1].x > vertices[0].x);
-   }
-   else
+   if(vertices[1].y != vertices[0].y)
    {
       bound_coord_us = MakePolyXFPStep((vertices[1].x - vertices[0].x), (vertices[1].y - vertices[0].y));
       right_facing = (bool)(bound_coord_us > base_step);
    }
 
-   if(vertices[2].y == vertices[1].y)
-      bound_coord_ls = 0;
-   else
+   if(vertices[2].y != vertices[1].y)
       bound_coord_ls = MakePolyXFPStep((vertices[2].x - vertices[1].x), (vertices[2].y - vertices[1].y));
 
    if(y_start < ClipY0)
