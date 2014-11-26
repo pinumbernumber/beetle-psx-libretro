@@ -35,9 +35,7 @@ void Deinterlacer_Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *
 
    if(!FieldBuffer || FieldBuffer->w < surface->w || FieldBuffer->h < (surface->h / 2))
    {
-      if(FieldBuffer)
-         delete FieldBuffer;
-
+      MDFN_Surface_Free(FieldBuffer);
       FieldBuffer = (MDFN_Surface*)MDFN_Surface_New(NULL, surface->w, surface->h / 2, surface->w);
       LWBuffer.resize(FieldBuffer->h);
    }
