@@ -1988,6 +1988,203 @@ static void G_Command_DrawSprite(const uint32 *cb)
    }
 }
 
+static void G_Command_DrawSprite(uint8 raw_size, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
+{
+   int32 x, y;
+   int32 w, h;
+   bool FlipX = false;
+   bool FlipY = false;
+   bool tex_multiply = true;
+   uint8 u = 0, v = 0;
+   uint32 color = 0;
+   uint32 clut = 0;
+
+   DrawTimeAvail -= 16;	// FIXME, correct time.
+
+   color = *cb & 0x00FFFFFF;
+   cb++;
+
+   x = sign_x_to_s32(11, (*cb & 0xFFFF));
+   y = sign_x_to_s32(11, (*cb >> 16));
+   cb++;
+
+   if(textured)
+   {
+      u = *cb & 0xFF;
+      v = (*cb >> 8) & 0xFF;
+      clut = ((*cb >> 16) & 0xFFFF) << 4;
+      cb++;
+   }
+
+   switch(raw_size)
+   {
+      default:
+      case 0:
+         w = (*cb & 0x3FF);
+         h = (*cb >> 16) & 0x1FF;
+         cb++;
+         break;
+
+      case 1:
+         w = 1;
+         h = 1;
+         break;
+
+      case 2:
+      case 3:
+         w = 1 << (raw_size + 1);
+         h = 1 << (raw_size + 1);
+         break;
+   }
+
+   //printf("SPRITE: %d %d %d -- %d %d\n", raw_size, x, y, w, h);
+
+   x = sign_x_to_s32(11, x + OffsX);
+   y = sign_x_to_s32(11, y + OffsY);
+
+   if(!TexMult || color == 0x808080)
+      tex_multiply = false;
+
+   FlipX = SpriteFlip & 0x1000;
+   FlipY = SpriteFlip & 0x2000;
+
+   {
+      const int32 r = color & 0xFF;
+      const int32 g = (color >> 8) & 0xFF;
+      const int32 b = (color >> 16) & 0xFF;
+      const uint16 fill_color = 0x8000 | ((r >> 3) << 0) | ((g >> 3) << 5) | ((b >> 3) << 10);
+
+      int v_inc = 1, u_inc = 1;
+
+      //printf("[GPU] Sprite: x=%d, y=%d, w=%d, h=%d\n", x, y, w, h);
+
+      int32 x_start = x;
+      int32 x_bound = x + w;
+
+      int32 y_start = y;
+      int32 y_bound = y + h;
+
+      if(textured)
+      {
+         //if(FlipX || FlipY || (u & 1) || (v & 1) || ((TexMode_TA == 0) && ((u & 3) || (v & 3))))
+         // fprintf(stderr, "Flippy: %d %d 0x%02x 0x%02x\n", FlipX, FlipY, u, v);
+
+         if(FlipX)
+         {
+            u_inc = -1;
+            u |= 1;
+         }
+         // FIXME: Something weird happens when lower bit of u is set and we're not doing horizontal flip, but I'm not sure what it is exactly(needs testing)
+         // It may only happen to the first pixel, so look for that case too during testing.
+         //else
+         // u = (u + 1) & ~1;
+
+         if(FlipY)
+         {
+            v_inc = -1;
+         }
+      }
+
+      if(x_start < ClipX0)
+      {
+         if(textured)
+            u += (ClipX0 - x_start) * u_inc;
+
+         x_start = ClipX0;
+      }
+
+      if(y_start < ClipY0)
+      {
+         if(textured)
+            v += (ClipY0 - y_start) * v_inc;
+
+         y_start = ClipY0;
+      }
+
+      if(x_bound > (ClipX1 + 1))
+         x_bound = ClipX1 + 1;
+
+      if(y_bound > (ClipY1 + 1))
+         y_bound = ClipY1 + 1;
+
+      if(y_bound > y_start && x_bound > x_start)
+      {
+         //
+         // Note(TODO): From tests on a PS1, even a 0-width sprite takes up time to "draw" proportional to its height.
+         //
+         int32 suck_time = (x_bound - x_start) * (y_bound - y_start);
+
+         // Disabled until we can get it to take into account texture windowing, which can cause large sprites to be drawn entirely from cache(and not suffer from a texturing
+         // penalty); and disabled until we find a game that needs more accurate sprite draw timing. :b
+#if 0
+         if(textured)
+         {
+            // Empirically-observed approximations of time(66MHz cycles) taken to draw large textured sprites in the various texture depths, when the texture data and CLUT data
+            // was zero(non-zero takes longer to draw, TODO test that more):
+            //  4bpp - area * 2
+            //  8bpp - area * 3
+            //  15/16bpp - area * 5
+            // (other factors come into more importance for smaller sprites)
+            static const int cw[4] = { 64, 32, 32, 32 };
+            static const int ch[4] = { 64, 64, 32, 32 };
+            static const int mm[4] = { 2 - 1, 3 - 1, 5 - 1, 5 - 1 };
+
+            // Parts of the first few(up to texture cache height) horizontal lines can be in cache, so assume they are.
+            suck_time += mm[TexMode_TA] * std::max<int>(0, (x_bound - x_start) - cw[TexMode_TA]) * std::min<int>(ch[TexMode_TA], y_bound - y_start);
+
+            // The rest of the horizontal lines should not possibly have parts in the cache now.
+            suck_time += mm[TexMode_TA] * (x_bound - x_start) * std::max<int>(0, (y_bound - y_start) - ch[TexMode_TA]);
+         }
+         else
+#endif
+
+            if((BlendMode >= BLEND_MODE_AVERAGE) || MaskEval_TA)
+            {
+               suck_time += ((((x_bound + 1) & ~1) - (x_start & ~1)) * (y_bound - y_start)) >> 1;
+            }
+
+         DrawTimeAvail -= suck_time;
+      }
+
+
+      //HeightMode && !dfe && ((y & 1) == ((DisplayFB_YStart + !field_atvs) & 1)) && !DisplayOff
+      //printf("%d:%d, %d, %d ---- heightmode=%d displayfb_ystart=%d field_atvs=%d displayoff=%d\n", w, h, scanline, dfe, HeightMode, DisplayFB_YStart, field_atvs, DisplayOff);
+
+      for(int32 y = y_start; MDFN_LIKELY(y < y_bound); y++)
+      {
+         uint8 u_r;
+
+         if(textured)
+            u_r = u;
+
+         if(!LineSkipTest( y))
+         {
+            for(int32 x = x_start; MDFN_LIKELY(x < x_bound); x++)
+            {
+               if(textured)
+               {
+                  uint16 fbw = GPU_GetTexel(TexMode_TA, clut, u_r, v);
+
+                  if(fbw)
+                  {
+                     if(tex_multiply)
+                        fbw = ModTexel(fbw, r, g, b, 3, 2);
+                     GPU_PlotPixel(BlendMode, MaskEval_TA, true, x, y, fbw);
+                  }
+               }
+               else
+                  GPU_PlotPixel(BlendMode, MaskEval_TA, false, x, y, fill_color);
+
+               if(textured)
+                  u_r += u_inc;
+            }
+         }
+         if(textured)
+            v += v_inc;
+      }
+   }
+}
+
 template<bool polyline, bool shaded, int BlendMode, bool MaskEval_TA>
 static void G_Command_DrawLine(const uint32 *cb)
 {
@@ -2119,6 +2316,142 @@ static void G_Command_DrawLine(const uint32 *cb)
          // FIXME: There has to be a faster way than checking for being inside the drawing area for each pixel.
          if(x >= ClipX0 && x <= ClipX1 && y >= ClipY0 && y <= ClipY1)
             GPU_PlotPixel<BlendMode, MaskEval_TA, false>(x, y, pix);
+      }
+
+      GPU_AddLineStep(shaded, cur_point, step, 1);
+   }
+}
+
+static void G_Command_DrawLine(bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
+{
+   const uint8 cc = cb[0] >> 24; // For pline handling later.
+   line_point points[2];
+
+   DrawTimeAvail -= 16;	// FIXME, correct time.
+
+   if(polyline && InCmd == INCMD_PLINE)
+   {
+      //printf("PLINE N\n");
+      points[0] = InPLine_PrevPoint;
+   }
+   else
+   {
+      points[0].r = (*cb >> 0) & 0xFF;
+      points[0].g = (*cb >> 8) & 0xFF;
+      points[0].b = (*cb >> 16) & 0xFF;
+      cb++;
+
+      points[0].x = sign_x_to_s32(11, ((*cb >> 0) & 0xFFFF)) + OffsX;
+      points[0].y = sign_x_to_s32(11, ((*cb >> 16) & 0xFFFF)) + OffsY;
+      cb++;
+   }
+
+   if(shaded)
+   {
+      points[1].r = (*cb >> 0) & 0xFF;
+      points[1].g = (*cb >> 8) & 0xFF;
+      points[1].b = (*cb >> 16) & 0xFF;
+      cb++;
+   }
+   else
+   {
+      points[1].r = points[0].r;
+      points[1].g = points[0].g;
+      points[1].b = points[0].b;
+   }
+
+   points[1].x = sign_x_to_s32(11, ((*cb >> 0) & 0xFFFF)) + OffsX;
+   points[1].y = sign_x_to_s32(11, ((*cb >> 16) & 0xFFFF)) + OffsY;
+   cb++;
+
+   if(polyline)
+   {
+      InPLine_PrevPoint = points[1];
+
+      if(InCmd != INCMD_PLINE)
+      {
+         InCmd = INCMD_PLINE;
+         InCmd_CC = cc;
+      }
+   }
+
+   int32 i_dx;
+   int32 i_dy;
+   int32 k;
+   line_fxp_coord cur_point;
+   line_fxp_step step;
+
+   i_dx = abs(points[1].x - points[0].x);
+   i_dy = abs(points[1].y - points[0].y);
+   k = (i_dx > i_dy) ? i_dx : i_dy;
+
+   if(i_dx >= 1024 || i_dy >= 512)
+   {
+      //PSX_DBG(PSX_DBG_WARNING, "[GPU] Line too long: i_dx=%d, i_dy=%d\n", i_dx, i_dy);
+      return;
+   }
+
+   // May not be correct(do tests for the case of k == i_dy on real thing.
+   if(points[0].x > points[1].x)
+   {
+      line_point tmp = points[1];
+
+      points[1] = points[0];
+      points[0] = tmp;  
+   }
+
+   DrawTimeAvail -= k * ((BlendMode >= BLEND_MODE_AVERAGE) ? 2 : 1);
+
+   //
+   //
+   //
+
+   GPU_LinePointsToFXPStep(shaded, points[0], points[1], k, step);
+   GPU_LinePointToFXPCoord(shaded, points[0], step, cur_point);
+
+   //
+   //
+   //
+   for(int32 i = 0; i <= k; i++)	// <= is not a typo.
+   {
+      // Sign extension is not necessary here for x and y, due to the maximum values that ClipX1 and ClipY1 can contain.
+      const int32 x = (cur_point.x >> Line_XY_FractBits) & 2047;
+      const int32 y = (cur_point.y >> Line_XY_FractBits) & 2047;
+      uint16 pix = 0x8000;
+
+      if(!LineSkipTest( y))
+      {
+         uint8 r, g, b;
+
+         if(shaded)
+         {
+            r = cur_point.r >> Line_RGB_FractBits;
+            g = cur_point.g >> Line_RGB_FractBits;
+            b = cur_point.b >> Line_RGB_FractBits;
+         }
+         else
+         {
+            r = points[0].r;
+            g = points[0].g;
+            b = points[0].b;
+         }
+
+         if(shaded && dtd)
+         {
+            pix |= DitherLUT[y & 3][x & 3][r] << 0;
+            pix |= DitherLUT[y & 3][x & 3][g] << 5;
+            pix |= DitherLUT[y & 3][x & 3][b] << 10;
+         }
+         else
+         {
+            pix |= (r >> 3) << 0;
+            pix |= (g >> 3) << 5;
+            pix |= (b >> 3) << 10;
+         }
+
+         // FIXME: There has to be a faster way than checking for being inside the drawing area for each pixel.
+         if(x >= ClipX0 && x <= ClipX1 && y >= ClipY0 && y <= ClipY1)
+            GPU_PlotPixel(BlendMode, MaskEval_TA, false, x, y, pix);
       }
 
       GPU_AddLineStep(shaded, cur_point, step, 1);
@@ -2344,6 +2677,7 @@ static void G_Command_MaskSetting(const uint32 *cb)
 //
 //
 
+#define SPR_HELPER_SUB_CUSTOM(bm, cv, tm, mam, CB) G_Command_DrawSprite((cv >> 3) & 0x3,	((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam, CB)
 #define SPR_HELPER_SUB(bm, cv, tm, mam) G_Command_DrawSprite<(cv >> 3) & 0x3,	((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam>
 
 #define SPR_HELPER_FG(bm, cv)						\
@@ -2369,6 +2703,8 @@ static void G_Command_MaskSetting(const uint32 *cb)
 
 //
 //
+
+#define LINE_HELPER_SUB_CUSTOM(bm, cv, mam, CB) G_Command_DrawLine(((cv & 0x08) >> 3), ((cv & 0x10) >> 4), ((cv & 0x2) >> 1) ? bm : -1, mam, CB)
 
 #define LINE_HELPER_SUB(bm, cv, mam) G_Command_DrawLine<((cv & 0x08) >> 3), ((cv & 0x10) >> 4), ((cv & 0x2) >> 1) ? bm : -1, mam>
 
@@ -2704,6 +3040,17 @@ static void GPU_ProcessFIFO(void)
 
       int TexModeLut[4]={0,1,2,2};
       POLY_HELPER_SUB_CUSTOM(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
+   }
+   else if (cc >= 0x40 && cc <= 0x5f)
+   {
+      LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
+      LINE_HELPER_SUB_CUSTOM(abr,cc, (MaskEvalAND ? 0x1 : 0x0), CB);
+   }
+   else if (cc >= 0x60 && cc <= 0x7f)
+   {
+      LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
+      int TexModeLut[4]={0,1,2,2};
+      SPR_HELPER_SUB_CUSTOM(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
    }
    else
    {
