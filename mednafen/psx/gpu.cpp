@@ -1092,17 +1092,6 @@ static INLINE void GPU_LinePointsToFXPStep(bool shaded,
    }
 }
 
-#define GPU_AddLineStep(shaded, point, step, count) \
-   point.x += step.dx_dk * count; \
-   point.y += step.dy_dk * count; \
-   if(shaded) \
-   { \
-      point.r += step.dr_dk * count; \
-      point.g += step.dg_dk * count; \
-      point.b += step.db_dk * count; \
-   }
-
-/* C-style function wrappers so our command table isn't so ginormous(in memory usage). */
 static void G_Command_DrawPolygon(int numvertices, bool shaded, bool textured, int BlendMode,
       bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
 {
@@ -1696,7 +1685,16 @@ static void G_Command_DrawLine(bool polyline, bool shaded, int BlendMode, bool M
             GPU_PlotPixel(BlendMode, MaskEval_TA, false, x, y, pix);
       }
 
-      GPU_AddLineStep(shaded, cur_point, step, 1);
+      /* Add Line Step */
+
+      cur_point.x += step.dx_dk;
+      cur_point.y += step.dy_dk;
+      if(shaded)
+      {
+         cur_point.r += step.dr_dk;
+         cur_point.g += step.dg_dk;
+         cur_point.b += step.db_dk;
+      }
    }
 }
 
