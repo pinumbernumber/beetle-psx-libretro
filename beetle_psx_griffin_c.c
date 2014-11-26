@@ -18,6 +18,7 @@
 #include "mednafen/trio/trio.c"
 #include "mednafen/trio/triostr.c"
 
+#include "mednafen/mednafen-endian.c"
 #include "mednafen/video/surface.c"
 
 #ifdef NEED_CD

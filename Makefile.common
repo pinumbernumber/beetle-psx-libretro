@@ -63,8 +63,7 @@ MEDNAFEN_SOURCES := $(MEDNAFEN_DIR)/error.cpp \
 	$(MEDNAFEN_DIR)/FileStream.cpp \
 	$(MEDNAFEN_DIR)/MemoryStream.cpp \
 	$(MEDNAFEN_DIR)/Stream.cpp \
-	$(MEDNAFEN_DIR)/state.cpp \
-	$(MEDNAFEN_DIR)/endian.cpp
+	$(MEDNAFEN_DIR)/state.cpp
 
 MEDNAFEN_SOURCES += $(CDROM_SOURCES)
 
@@ -75,7 +74,8 @@ MEDNAFEN_SOURCES += $(MEDNAFEN_DIR)/mempatcher.cpp \
 	$(OKIADPCM_SOURCES) \
 	$(MEDNAFEN_DIR)/md5.cpp
 
-MEDNAFEN_SOURCES_C += $(MEDNAFEN_DIR)/video/surface.c
+MEDNAFEN_SOURCES_C += $(MEDNAFEN_DIR)/video/surface.c \
+							 $(MEDNAFEN_DIR)/mednafen-endian.c
 
 LIBRETRO_SOURCES += libretro.cpp
 endif

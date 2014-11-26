@@ -23,7 +23,6 @@
 #include "mednafen/MemoryStream.cpp"
 #include "mednafen/Stream.cpp"
 #include "mednafen/state.cpp"
-#include "mednafen/endian.cpp"
 
 #ifdef NEED_CD
 #include "mednafen/cdrom/CDAccess.cpp"
