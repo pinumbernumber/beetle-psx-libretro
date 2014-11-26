@@ -18,37 +18,23 @@
 #ifndef __MDFN_DEINTERLACER_H
 #define __MDFN_DEINTERLACER_H
 
-#include <vector>
-
-class Deinterlacer
+enum
 {
- public:
-
- Deinterlacer();
- ~Deinterlacer();
-
- enum
- {
-  DEINT_BOB_OFFSET = 0,	// Code will fall-through to this case under certain conditions, too.
-  DEINT_BOB,
-  DEINT_WEAVE,
- };
-
- void SetType(unsigned t);
- inline unsigned GetType(void)
- {
-  return(DeintType);
- }
-
- void Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field);
-
- void ClearState(void);
-
- MDFN_Surface *FieldBuffer;
- std::vector<int32> LWBuffer;
- bool StateValid;
- MDFN_Rect PrevDRect;
- unsigned DeintType;
+   DEINT_BOB_OFFSET = 0,	// Code will fall-through to this case under certain conditions, too.
+   DEINT_BOB,
+   DEINT_WEAVE,
 };
+
+void Deinterlacer_New();
+
+void Deinterlacer_Free();
+
+void Deinterlacer_SetType(unsigned t);
+
+void Deinterlacer_Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field);
+
+void Deinterlacer_ClearState(void);
+
+unsigned Deinterlacer_GetType(void);
 
 #endif

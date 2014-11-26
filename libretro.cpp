@@ -1963,7 +1963,6 @@ static void set_basename(const char *path)
 
 #ifdef NEED_DEINTERLACER
 static bool PrevInterlaced;
-static Deinterlacer deint;
 #endif
 
 #define MEDNAFEN_CORE_NAME_MODULE "psx"
@@ -2120,6 +2119,10 @@ void retro_init(void)
 
 #ifdef NEED_CD
  CDUtility::CDUtility_Init();
+#endif
+
+#ifdef NEED_DEINTERLACER
+ Deinterlacer_New();
 #endif
 
    eject_state = false;
@@ -2701,7 +2704,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
 #ifdef NEED_DEINTERLACER
 	PrevInterlaced = false;
-	deint.ClearState();
+	Deinterlacer_ClearState();
 #endif
 
    //SetInput(0, "gamepad", &input_buf[0]);
@@ -2983,9 +2986,9 @@ void retro_run(void)
    if (spec.InterlaceOn)
    {
       if (!PrevInterlaced)
-         deint.ClearState();
+         Deinterlacer_ClearState();
 
-      deint.Process(spec.surface, spec.DisplayRect, spec.LineWidths, spec.InterlaceField);
+      Deinterlacer_Process(spec.surface, spec.DisplayRect, spec.LineWidths, spec.InterlaceField);
 
       PrevInterlaced = true;
 
@@ -3089,6 +3092,9 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_deinit(void)
 {
+#ifdef NEED_DEINTERLACER
+   Deinterlacer_Free();
+#endif
    MDFN_Surface_Free(surf);
    surf = NULL;
 
