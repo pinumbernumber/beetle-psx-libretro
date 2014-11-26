@@ -2552,14 +2552,6 @@ MDFNGI *MDFNI_LoadCD(const char *force_module, const char *devicename)
   layout_md5.finish(LayoutMD5);
  }
 
- // This if statement will be true if force_module references a system without CDROM support.
- if(!MDFNGameInfo->LoadCD)
- {
-    if (log_cb)
-       log_cb(RETRO_LOG_ERROR, "Specified system \"%s\" doesn't support CDs!", force_module);
-    return 0;
- }
-
  if (log_cb)
  log_cb(RETRO_LOG_INFO, "Using module: %s(%s)\n", MDFNGameInfo->shortname, MDFNGameInfo->fullname);
 
