@@ -16,11 +16,8 @@ Deinterlacer::Deinterlacer() : FieldBuffer(NULL), StateValid(false), DeintType(D
 
 Deinterlacer::~Deinterlacer()
 {
- if(FieldBuffer)
- {
-  delete FieldBuffer;
-  FieldBuffer = NULL;
- }
+   MDFN_Surface_Free(FieldBuffer);
+   FieldBuffer = NULL;
 }
 
 void Deinterlacer::SetType(unsigned dt)
@@ -30,11 +27,10 @@ void Deinterlacer::SetType(unsigned dt)
   DeintType = dt;
 
   LWBuffer.resize(0);
-  if(FieldBuffer)
-  {
-   delete FieldBuffer;
-   FieldBuffer = NULL;
-  }
+
+  MDFN_Surface_Free(FieldBuffer);
+  FieldBuffer = NULL;
+
   StateValid = false;
  }
 }
@@ -50,7 +46,7 @@ void Deinterlacer::Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 
    if(FieldBuffer)
     delete FieldBuffer;
 
-   FieldBuffer = new MDFN_Surface(NULL, surface->w, surface->h / 2, surface->w, surface->format);
+   FieldBuffer = (MDFN_Surface*)MDFN_Surface_New(NULL, surface->w, surface->h / 2, surface->w, surface->format);
    LWBuffer.resize(FieldBuffer->h);
   }
   else if(memcmp(&surface->format, &FieldBuffer->format, sizeof(MDFN_PixelFormat)))

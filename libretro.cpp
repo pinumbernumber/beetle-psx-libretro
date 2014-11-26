@@ -2699,7 +2699,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    MDFN_PixelFormat pix_fmt(16, 8, 0, 24);
    
-   surf = new MDFN_Surface(NULL, MEDNAFEN_CORE_GEOMETRY_MAX_W, (PSX_CalcDiscSCEx() == REGION_EU) ? MEDNAFEN_CORE_GEOMETRY_MAX_H  : 480, MEDNAFEN_CORE_GEOMETRY_MAX_W, pix_fmt);
+   surf = (MDFN_Surface*)MDFN_Surface_New(NULL, MEDNAFEN_CORE_GEOMETRY_MAX_W, (PSX_CalcDiscSCEx() == REGION_EU) ? MEDNAFEN_CORE_GEOMETRY_MAX_H  : 480, MEDNAFEN_CORE_GEOMETRY_MAX_W, pix_fmt);
 
 #ifdef NEED_DEINTERLACER
 	PrevInterlaced = false;
@@ -3091,7 +3091,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_deinit(void)
 {
-   delete surf;
+   MDFN_Surface_Free(surf);
    surf = NULL;
 
    if (log_cb)

@@ -34,37 +34,40 @@ MDFN_PixelFormat::MDFN_PixelFormat(const uint8 p_rs, const uint8 p_gs, const uin
    Ashift = p_as;
 }
 
-MDFN_Surface::MDFN_Surface()
+void *MDFN_Surface_New(void *const p_pixels, const uint32 p_width, const uint32 p_height, const uint32 p_pitchinpix, const MDFN_PixelFormat &nf)
 {
-   memset(&format, 0, sizeof(format));
+   MDFN_Surface *surf = (MDFN_Surface*)calloc(1, sizeof(MDFN_Surface));
 
-   pixels = NULL;
-   pitchinpix = 0;
-   w = 0;
-   h = 0;
+   if (!surf)
+      return NULL;
+
+   memset(&surf->format, 0, sizeof(surf->format));
+
+   surf->pixels     = NULL;
+   surf->pitchinpix = 0;
+   surf->w          = 0;
+   surf->h          = 0;
+   surf->format     = nf;
+
+   surf->pixels = (uint32*)calloc(1, p_pitchinpix * p_height * 4);
+
+   if (!surf->pixels)
+      return NULL;
+
+   surf->w = p_width;
+   surf->h = p_height;
+   surf->pitchinpix = p_pitchinpix;
+
+   return surf;
 }
 
-MDFN_Surface::MDFN_Surface(void *const p_pixels, const uint32 p_width, const uint32 p_height, const uint32 p_pitchinpix, const MDFN_PixelFormat &nf)
+void MDFN_Surface_Free(MDFN_Surface *surf)
 {
-   void *rpix = NULL;
+   if (!surf)
+      return;
 
-   format = nf;
+   if(surf->pixels)
+      free(surf->pixels);
 
-   pixels = NULL;
-
-   if(!(rpix = calloc(1, p_pitchinpix * p_height * 4)))
-      throw(1);
-
-   pixels = (uint32 *)rpix;
-
-   w = p_width;
-   h = p_height;
-
-   pitchinpix = p_pitchinpix;
-}
-
-MDFN_Surface::~MDFN_Surface()
-{
-   if(pixels)
-      free(pixels);
+   free(surf);
 }
