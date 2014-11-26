@@ -1,14 +1,12 @@
-#include "../mednafen.h"
+#include <stdlib.h>
+#include <string.h>
+#include "../mednafen-types.h"
 #include "../video.h"
-#include "../general.h"
-#include "../state.h"
-#include "../driver.h"
 
-#include <vector>
 #include "Deinterlacer.h"
 
 static MDFN_Surface *FieldBuffer;
-static std::vector<int32> LWBuffer;
+static int32 *LWBuffer;
 static bool StateValid;
 static MDFN_Rect PrevDRect;
 
@@ -25,6 +23,8 @@ void Deinterlacer_New()
 
 void Deinterlacer_Free()
 {
+   if (LWBuffer)
+      free(LWBuffer);
    MDFN_Surface_Free(FieldBuffer);
    FieldBuffer = NULL;
 }
@@ -35,9 +35,9 @@ void Deinterlacer_Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *
 
    if(!FieldBuffer || FieldBuffer->w < surface->w || FieldBuffer->h < (surface->h / 2))
    {
-      MDFN_Surface_Free(FieldBuffer);
+      Deinterlacer_Free();
       FieldBuffer = (MDFN_Surface*)MDFN_Surface_New(NULL, surface->w, surface->h / 2, surface->w);
-      LWBuffer.resize(FieldBuffer->h);
+      LWBuffer = (int32*)malloc(FieldBuffer->h * sizeof(int32));
    }
 
    //
