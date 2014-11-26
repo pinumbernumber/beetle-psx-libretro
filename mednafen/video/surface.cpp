@@ -15,10 +15,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../mednafen.h"
+#include <stdlib.h>
+#include <string.h>
 #include "surface.h"
 
-void *MDFN_Surface_New(void *const p_pixels, const uint32 p_width, const uint32 p_height, const uint32 p_pitchinpix, const MDFN_PixelFormat &nf)
+void *MDFN_Surface_New(void *const p_pixels, const uint32 p_width,
+      const uint32 p_height, const uint32 p_pitchinpix)
 {
    MDFN_Surface *surf = (MDFN_Surface*)calloc(1, sizeof(MDFN_Surface));
 
@@ -31,7 +33,6 @@ void *MDFN_Surface_New(void *const p_pixels, const uint32 p_width, const uint32 
    surf->pitchinpix = 0;
    surf->w          = 0;
    surf->h          = 0;
-   surf->format     = nf;
 
    surf->pixels = (uint32*)calloc(1, p_pitchinpix * p_height * 4);
 

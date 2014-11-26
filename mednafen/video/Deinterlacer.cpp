@@ -46,11 +46,9 @@ void Deinterlacer::Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 
    if(FieldBuffer)
     delete FieldBuffer;
 
-   FieldBuffer = (MDFN_Surface*)MDFN_Surface_New(NULL, surface->w, surface->h / 2, surface->w, surface->format);
+   FieldBuffer = (MDFN_Surface*)MDFN_Surface_New(NULL, surface->w, surface->h / 2, surface->w);
    LWBuffer.resize(FieldBuffer->h);
   }
-  else if(memcmp(&surface->format, &FieldBuffer->format, sizeof(MDFN_PixelFormat)))
-   FieldBuffer->format = surface->format;
  }
 
  //

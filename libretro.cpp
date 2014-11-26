@@ -2697,13 +2697,7 @@ bool retro_load_game(const struct retro_game_info *info)
    if (!MDFNI_LoadGame(MEDNAFEN_CORE_NAME_MODULE, info->path))
       return false;
 
-   MDFN_PixelFormat pix_fmt;
-   pix_fmt.Rshift = 16;
-   pix_fmt.Gshift = 8;
-   pix_fmt.Bshift = 0;
-   pix_fmt.Ashift = 24;
-   
-   surf = (MDFN_Surface*)MDFN_Surface_New(NULL, MEDNAFEN_CORE_GEOMETRY_MAX_W, (PSX_CalcDiscSCEx() == REGION_EU) ? MEDNAFEN_CORE_GEOMETRY_MAX_H  : 480, MEDNAFEN_CORE_GEOMETRY_MAX_W, pix_fmt);
+   surf = (MDFN_Surface*)MDFN_Surface_New(NULL, MEDNAFEN_CORE_GEOMETRY_MAX_W, (PSX_CalcDiscSCEx() == REGION_EU) ? MEDNAFEN_CORE_GEOMETRY_MAX_H  : 480, MEDNAFEN_CORE_GEOMETRY_MAX_W);
 
 #ifdef NEED_DEINTERLACER
 	PrevInterlaced = false;
