@@ -866,10 +866,12 @@ static INLINE bool GPU_CalcIDeltas(i_deltas *idl, const tri_vertex *A, const tri
  // 32 is const SA
  int64 num = ((int64)COORD_MF_INT(1)) << 32;
  int64 denom = CALCIS(x, y);
- int64 one_div = num / denom;
+ int64 one_div;
 
  if(!denom)
   return(false);
+
+ one_div = num / denom;
 
  idl->dr_dx = ((one_div * CALCIS(r, y)) + 0x00000000) >> 32;
  idl->dr_dy = ((one_div * CALCIS(x, r)) + 0x00000000) >> 32;
