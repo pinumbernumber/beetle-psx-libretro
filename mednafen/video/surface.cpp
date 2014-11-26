@@ -18,22 +18,6 @@
 #include "../mednafen.h"
 #include "surface.h"
 
-MDFN_PixelFormat::MDFN_PixelFormat()
-{
-   Rshift = 0;
-   Gshift = 0;
-   Bshift = 0;
-   Ashift = 0;
-}
-
-MDFN_PixelFormat::MDFN_PixelFormat(const uint8 p_rs, const uint8 p_gs, const uint8 p_bs, const uint8 p_as)
-{
-   Rshift = p_rs;
-   Gshift = p_gs;
-   Bshift = p_bs;
-   Ashift = p_as;
-}
-
 void *MDFN_Surface_New(void *const p_pixels, const uint32 p_width, const uint32 p_height, const uint32 p_pitchinpix, const MDFN_PixelFormat &nf)
 {
    MDFN_Surface *surf = (MDFN_Surface*)calloc(1, sizeof(MDFN_Surface));

@@ -208,7 +208,7 @@ int32_t InputDevice_GunCon::GPULineHook(const int32_t line_timestamp, bool vsync
    {
     int r, g, b, a;
 
-    format->DecodeColor(pixels[ix], r, g, b, a);
+    DecodeColor(pixels[ix], r, g, b, a);
 
     if((r + g + b) >= 0x40)	// Wrong, but not COMPLETELY ABSOLUTELY wrong, at least. ;)
     {

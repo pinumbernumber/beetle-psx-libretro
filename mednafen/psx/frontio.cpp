@@ -167,7 +167,7 @@ INLINE void InputDevice::DrawCrosshairs(uint32 *pixels, const MDFN_PixelFormat* 
          int r, g, b, a;
          int nr, ng, nb;
 
-         format->DecodeColor(pixels[x], r, g, b, a);
+         DecodeColor(pixels[x], r, g, b, a);
 
          nr = (r + chair_r * 3) >> 2;
          ng = (g + chair_g * 3) >> 2;

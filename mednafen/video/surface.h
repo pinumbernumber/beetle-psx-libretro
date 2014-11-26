@@ -13,28 +13,20 @@ typedef struct
 } MDFN_Rect;
 
 
-class MDFN_PixelFormat
+typedef struct
 {
- public:
-
- MDFN_PixelFormat();
- MDFN_PixelFormat(const uint8 p_rs, const uint8 p_gs, const uint8 p_bs, const uint8 p_as);
-
  uint8 Rshift;  // Bit position of the lowest bit of the red component
  uint8 Gshift;  // [...] green component
  uint8 Bshift;  // [...] blue component
  uint8 Ashift;  // [...] alpha component.
+} MDFN_PixelFormat;
 
- // Gets the R/G/B/A values for the passed 32-bit surface pixel value
- INLINE void DecodeColor(uint32 value, int &r, int &g, int &b, int &a) const
- {
-    r = (value >> RED_SHIFT) & 0xFF;
-    g = (value >> GREEN_SHIFT) & 0xFF;
-    b = (value >> BLUE_SHIFT) & 0xFF;
-    a = (value >> ALPHA_SHIFT) & 0xFF;
- }
-
-}; // MDFN_PixelFormat;
+// Gets the R/G/B/A values for the passed 32-bit surface pixel value
+#define DecodeColor(value, r, g, b, a) \
+   r = (value >> RED_SHIFT) & 0xFF; \
+   g = (value >> GREEN_SHIFT) & 0xFF; \
+   b = (value >> BLUE_SHIFT) & 0xFF; \
+   a = (value >> ALPHA_SHIFT) & 0xFF
 
 typedef struct
 {
