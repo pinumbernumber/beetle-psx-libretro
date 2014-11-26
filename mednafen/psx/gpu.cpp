@@ -1704,16 +1704,6 @@ static void G_Command_DrawLine(bool polyline, bool shaded, int BlendMode, bool M
    }
 }
 
-static void G_Command_ClearCache(const uint32 *cb)
-{
-}
-
-static void G_Command_IRQ(const uint32 *cb)
-{
-   IRQPending = true;
-   IRQ_Assert(IRQ_GPU, IRQPending);
-}
-
 // Special RAM write mode(16 pixels at a time), does *not* appear to use mask drawing environment settings.
 //
 static void G_Command_FBFill(const uint32 *cb)
@@ -1842,56 +1832,8 @@ static void G_Command_FBRead(const uint32 *cb)
       InCmd = INCMD_FBREAD;
 }
 
-static void G_Command_DrawMode(const uint32 *cb)
+static void G_Command_Null(const uint32 *cb)
 {
-   TexPageX = (*cb & 0xF) * 64;
-   TexPageY = (*cb & 0x10) * 16;
-
-   SpriteFlip = *cb & 0x3000;
-
-   abr = (*cb >> 5) & 0x3;
-   TexMode = (*cb >> 7) & 0x3;
-
-   dtd = (*cb >> 9) & 1;
-   dfe = (*cb >> 10) & 1;
-   //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
-}
-
-static void G_Command_TexWindow(const uint32 *cb)
-{
-   tww = (*cb & 0x1F);
-   twh = ((*cb >> 5) & 0x1F);
-   twx = ((*cb >> 10) & 0x1F);
-   twy = ((*cb >> 15) & 0x1F);
-
-   GPU_RecalcTexWindowLUT();
-}
-
-static void G_Command_Clip0(const uint32 *cb)
-{
-   ClipX0 = *cb & 1023;
-   ClipY0 = (*cb >> 10) & 1023;
-}
-
-static void G_Command_Clip1(const uint32 *cb)
-{
-   ClipX1 = *cb & 1023;
-   ClipY1 = (*cb >> 10) & 1023;
-}
-
-static void G_Command_DrawingOffset(const uint32 *cb)
-{
-   OffsX = sign_x_to_s32(11, (*cb & 2047));
-   OffsY = sign_x_to_s32(11, ((*cb >> 11) & 2047));
-
-   //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
-}
-
-static void G_Command_MaskSetting(const uint32 *cb)
-{
-   //printf("Mask setting: %08x\n", *cb);
-   MaskSetOR = (*cb & 1) ? 0x8000 : 0x0000;
-   MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
 }
 
 #define POLY_HELPER_SUB(bm, cv, tm, mam, cb)	\
@@ -1943,26 +1885,18 @@ static void G_Command_MaskSetting(const uint32 *cb)
 
 //#define BM_HELPER(fg) { fg(0), fg(1), fg(2), fg(3) }
 //
-static void Command_ClearCache(const uint32 *cb);
-static void Command_IRQ(const uint32 *cb);
-
 static void Command_FBFill(const uint32 *cb);
 static void Command_FBCopy(const uint32 *cb);
 static void Command_FBWrite(const uint32 *cb);
 static void Command_FBRead(const uint32 *cb);
 
-static void Command_DrawMode(const uint32 *cb);
-static void Command_TexWindow(const uint32 *cb);
-static void Command_Clip0(const uint32 *cb);
-static void Command_Clip1(const uint32 *cb);
-static void Command_DrawingOffset(const uint32 *cb);
-static void Command_MaskSetting(const uint32 *cb);
+static void Command_Null(const uint32 *cb);
 
 static GPU_CTEntry GPU_Commands[256] =
 {
    /* 0x00 */
    NULLCMD(),
-   OTHER_HELPER(1, 2, false, G_Command_ClearCache),
+   OTHER_HELPER(1, 2, false, G_Command_Null),
    OTHER_HELPER(3, 3, false, G_Command_FBFill),
 
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
@@ -1972,7 +1906,7 @@ static GPU_CTEntry GPU_Commands[256] =
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
 
-   OTHER_HELPER(1, 1, false,  G_Command_IRQ),
+   OTHER_HELPER(1, 1, false,  G_Command_Null),
 
    /* 0x20 */
    POLY_HELPER(0x20),
@@ -2086,12 +2020,12 @@ static GPU_CTEntry GPU_Commands[256] =
    /* 0xE0 */
 
    NULLCMD(),
-   OTHER_HELPER(1, 2, false, G_Command_DrawMode),
-   OTHER_HELPER(1, 2, false, G_Command_TexWindow),
-   OTHER_HELPER(1, 1, true,  G_Command_Clip0),
-   OTHER_HELPER(1, 1, true,  G_Command_Clip1),
-   OTHER_HELPER(1, 1, true,  G_Command_DrawingOffset),
-   OTHER_HELPER(1, 2, false, G_Command_MaskSetting),
+   OTHER_HELPER(1, 2, false, G_Command_Null),
+   OTHER_HELPER(1, 2, false, G_Command_Null),
+   OTHER_HELPER(1, 1, true,  G_Command_Null),
+   OTHER_HELPER(1, 1, true,  G_Command_Null),
+   OTHER_HELPER(1, 1, true,  G_Command_Null),
+   OTHER_HELPER(1, 2, false, G_Command_Null),
 
    NULLCMD(),
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
@@ -2254,10 +2188,6 @@ static void GPU_ProcessFIFO(void)
    {
       switch(cc)
       {
-         case 0x00:
-         case 0x01:
-            //G_Command_ClearCache(CB);
-            break;
          case 0x02:
             LOG_GPU_FIFO("CC #%d : FBFill.\n", cc);
 
