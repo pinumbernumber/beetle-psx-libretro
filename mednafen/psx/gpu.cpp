@@ -146,7 +146,6 @@ struct line_fxp_step
 
 struct GPU_CTEntry
 {
-   void (*func[4][8])(const uint32 *cb);
    uint8 len;
    uint8 fifo_fb_len;
    bool ss_cmd;
@@ -1104,12 +1103,7 @@ static INLINE void GPU_LinePointsToFXPStep(bool shaded,
    }
 
 /* C-style function wrappers so our command table isn't so ginormous(in memory usage). */
-static void G_Command_DrawPolygon(const uint32 *cb)
-{
-}
-
-/* C-style function wrappers so our command table isn't so ginormous(in memory usage). */
-static void G_Command_DrawPolygon_Custom(int numvertices, bool shaded, bool textured, int BlendMode,
+static void G_Command_DrawPolygon(int numvertices, bool shaded, bool textured, int BlendMode,
       bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
 {
    const unsigned cb0 = cb[0];
@@ -1377,10 +1371,6 @@ static void G_Command_DrawPolygon_Custom(int numvertices, bool shaded, bool text
 #endif
 }
 
-static void G_Command_DrawSprite(const uint32 *cb)
-{
-}
-
 static void G_Command_DrawSprite(uint8 raw_size, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
 {
    int32 x, y;
@@ -1576,10 +1566,6 @@ static void G_Command_DrawSprite(uint8 raw_size, bool textured, int BlendMode, b
             v += v_inc;
       }
    }
-}
-
-static void G_Command_DrawLine(const uint32 *cb)
-{
 }
 
 static void G_Command_DrawLine(bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
@@ -1908,27 +1894,11 @@ static void G_Command_MaskSetting(const uint32 *cb)
    MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
 }
 
-#define POLY_HELPER_SUB(bm, cv, tm, mam)	\
-   G_Command_DrawPolygon
-
-#define POLY_HELPER_SUB_CUSTOM(bm, cv, tm, mam, cb)	\
-   G_Command_DrawPolygon_Custom(3 + ((cv & 0x8) >> 3), ((cv & 0x10) >> 4), ((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam , cb)
-
-#define POLY_HELPER_FG(bm, cv)						\
-{								\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 0 : 0), 0),	\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 1 : 0), 0),	\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 0),	\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 0),	\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 0 : 0), 1),	\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 1 : 0), 1),	\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 1),	\
-   POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 1),	\
-}
+#define POLY_HELPER_SUB(bm, cv, tm, mam, cb)	\
+   G_Command_DrawPolygon(3 + ((cv & 0x8) >> 3), ((cv & 0x10) >> 4), ((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam , cb)
 
 #define POLY_HELPER(cv)														\
 { 															\
-   { POLY_HELPER_FG(0, cv), POLY_HELPER_FG(1, cv), POLY_HELPER_FG(2, cv), POLY_HELPER_FG(3, cv) },			\
    1 + (3 /*+ ((cv & 0x8) >> 3)*/) * ( 1 + ((cv & 0x4) >> 2) + ((cv & 0x10) >> 4) ) - ((cv & 0x10) >> 4),			\
    1,															\
    false															\
@@ -1937,25 +1907,10 @@ static void G_Command_MaskSetting(const uint32 *cb)
 //
 //
 
-#define SPR_HELPER_SUB_CUSTOM(bm, cv, tm, mam, CB) G_Command_DrawSprite((cv >> 3) & 0x3,	((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam, CB)
-#define SPR_HELPER_SUB(bm, cv, tm, mam) G_Command_DrawSprite
-
-#define SPR_HELPER_FG(bm, cv)						\
-{								\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 0 : 0), 0),	\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 1 : 0), 0),	\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 0),	\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 0),	\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 0 : 0), 1),	\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 1 : 0), 1),	\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 1),	\
-   SPR_HELPER_SUB(bm, cv, ((cv & 0x4) ? 2 : 0), 1),	\
-}
-
+#define SPR_HELPER_SUB(bm, cv, tm, mam, CB) G_Command_DrawSprite((cv >> 3) & 0x3,	((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam, CB)
 
 #define SPR_HELPER(cv)												\
 {													\
-   { SPR_HELPER_FG(0, cv), SPR_HELPER_FG(1, cv), SPR_HELPER_FG(2, cv), SPR_HELPER_FG(3, cv) },		\
    2 + ((cv & 0x4) >> 2) + ((cv & 0x18) ? 0 : 1),								\
    2 | ((cv & 0x4) >> 2) | ((cv & 0x18) ? 0 : 1),		/* |, not +, for this */			\
    false													\
@@ -1964,25 +1919,10 @@ static void G_Command_MaskSetting(const uint32 *cb)
 //
 //
 
-#define LINE_HELPER_SUB_CUSTOM(bm, cv, mam, CB) G_Command_DrawLine(((cv & 0x08) >> 3), ((cv & 0x10) >> 4), ((cv & 0x2) >> 1) ? bm : -1, mam, CB)
-
-#define LINE_HELPER_SUB(bm, cv, mam) G_Command_DrawLine
-
-#define LINE_HELPER_FG(bm, cv)											\
-{													\
-   LINE_HELPER_SUB(bm, cv, 0),									\
-   LINE_HELPER_SUB(bm, cv, 0),									\
-   LINE_HELPER_SUB(bm, cv, 0),									\
-   LINE_HELPER_SUB(bm, cv, 0),									\
-   LINE_HELPER_SUB(bm, cv, 1),									\
-   LINE_HELPER_SUB(bm, cv, 1),									\
-   LINE_HELPER_SUB(bm, cv, 1),									\
-   LINE_HELPER_SUB(bm, cv, 1)									\
-}
+#define LINE_HELPER_SUB(bm, cv, mam, CB) G_Command_DrawLine(((cv & 0x08) >> 3), ((cv & 0x10) >> 4), ((cv & 0x2) >> 1) ? bm : -1, mam, CB)
 
 #define LINE_HELPER(cv)												\
 { 													\
-   { LINE_HELPER_FG(0, cv), LINE_HELPER_FG(1, cv), LINE_HELPER_FG(2, cv), LINE_HELPER_FG(3, cv) },	\
    3 + ((cv & 0x10) >> 4),										\
    1,													\
    false													\
@@ -1992,16 +1932,14 @@ static void G_Command_MaskSetting(const uint32 *cb)
 //
 
 
-#define OTHER_HELPER_FG(bm, arg_ptr) { arg_ptr, arg_ptr, arg_ptr, arg_ptr, arg_ptr, arg_ptr, arg_ptr, arg_ptr }
-#define OTHER_HELPER(arg_cs, arg_fbcs, arg_ss, arg_ptr) { { OTHER_HELPER_FG(0, arg_ptr), OTHER_HELPER_FG(1, arg_ptr), OTHER_HELPER_FG(2, arg_ptr), OTHER_HELPER_FG(3, arg_ptr) }, arg_cs, arg_fbcs, arg_ss }
+#define OTHER_HELPER(arg_cs, arg_fbcs, arg_ss, arg_ptr) { arg_cs, arg_fbcs, arg_ss }
 #define OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER(arg_cs, arg_fbcs, arg_ss, arg_ptr)
 #define OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss, arg_ptr)
 #define OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss, arg_ptr)
 #define OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss, arg_ptr)
 #define OTHER_HELPER_X32(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss, arg_ptr)
 
-#define NULLCMD_FG(bm) { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL } 
-#define NULLCMD() { { NULLCMD_FG(0), NULLCMD_FG(1), NULLCMD_FG(2), NULLCMD_FG(3) }, 1, 1, true }
+#define NULLCMD() { 1, 1, true }
 
 //#define BM_HELPER(fg) { fg(0), fg(1), fg(2), fg(3) }
 //
@@ -2299,18 +2237,18 @@ static void GPU_ProcessFIFO(void)
       }
 
       int TexModeLut[4]={0,1,2,2};
-      POLY_HELPER_SUB_CUSTOM(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
+      POLY_HELPER_SUB(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
    }
    else if (cc >= 0x40 && cc <= 0x5f)
    {
       LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
-      LINE_HELPER_SUB_CUSTOM(abr,cc, (MaskEvalAND ? 0x1 : 0x0), CB);
+      LINE_HELPER_SUB(abr,cc, (MaskEvalAND ? 0x1 : 0x0), CB);
    }
    else if (cc >= 0x60 && cc <= 0x7f)
    {
       LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
       int TexModeLut[4]={0,1,2,2};
-      SPR_HELPER_SUB_CUSTOM(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
+      SPR_HELPER_SUB(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
    }
    else
    {
