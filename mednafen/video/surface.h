@@ -7,50 +7,22 @@
 #define ALPHA_SHIFT 24
 #define MAKECOLOR(r, g, b, a) ((r << RED_SHIFT) | (g << GREEN_SHIFT) | (b << BLUE_SHIFT) | (a << ALPHA_SHIFT))
 
-struct MDFN_PaletteEntry
-{
- uint8 r, g, b;
-};
-
 typedef struct
 {
  int32 x, y, w, h;
 } MDFN_Rect;
 
-enum
-{
- MDFN_COLORSPACE_RGB = 0,
- MDFN_COLORSPACE_YCbCr = 1,
- MDFN_COLORSPACE_YUV = 2, // TODO, maybe.
-};
 
 class MDFN_PixelFormat
 {
  public:
 
  MDFN_PixelFormat();
- MDFN_PixelFormat(const unsigned int p_colorspace, const uint8 p_rs, const uint8 p_gs, const uint8 p_bs, const uint8 p_as);
+ MDFN_PixelFormat(const uint8 p_rs, const uint8 p_gs, const uint8 p_bs, const uint8 p_as);
 
- union
- {
-  uint8 Rshift;  // Bit position of the lowest bit of the red component
-  uint8 Yshift;
- };
-
- union
- {
-  uint8 Gshift;  // [...] green component
-  uint8 Ushift;
-  uint8 Cbshift;
- };
-
- union
- {
-  uint8 Bshift;  // [...] blue component
-  uint8 Vshift;
-  uint8 Crshift;
- };
-
+ uint8 Rshift;  // Bit position of the lowest bit of the red component
+ uint8 Gshift;  // [...] green component
+ uint8 Bshift;  // [...] blue component
  uint8 Ashift;  // [...] alpha component.
 
  // Gets the R/G/B/A values for the passed 32-bit surface pixel value

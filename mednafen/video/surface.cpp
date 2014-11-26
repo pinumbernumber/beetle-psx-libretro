@@ -26,7 +26,7 @@ MDFN_PixelFormat::MDFN_PixelFormat()
    Ashift = 0;
 }
 
-MDFN_PixelFormat::MDFN_PixelFormat(const unsigned int p_colorspace, const uint8 p_rs, const uint8 p_gs, const uint8 p_bs, const uint8 p_as)
+MDFN_PixelFormat::MDFN_PixelFormat(const uint8 p_rs, const uint8 p_gs, const uint8 p_bs, const uint8 p_as)
 {
    Rshift = p_rs;
    Gshift = p_gs;
