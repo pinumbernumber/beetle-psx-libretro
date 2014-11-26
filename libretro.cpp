@@ -1018,116 +1018,117 @@ const char *PSX_CalcDiscSCEx_BySYSTEMCNF(CDIF *c, unsigned *rr)
    Stream *fp = NULL;
    CDUtility::TOC toc;
 
-   try
+   uint8_t pvd[2048];
+   unsigned pvd_search_count = 0;
+
+   fp = (Stream*)CDIF_MakeStream(c, 0, ~0U);
+   fp->seek(0x8000, SEEK_SET);
+
+   do
    {
-      uint8_t pvd[2048];
-      unsigned pvd_search_count = 0;
-
-      fp = (Stream*)CDIF_MakeStream(c, 0, ~0U);
-      fp->seek(0x8000, SEEK_SET);
-
-      do
+      if((pvd_search_count++) == 32)
       {
-         if((pvd_search_count++) == 32)
-            throw MDFN_Error(0, "PVD search count limit met.");
+         log_cb(RETRO_LOG_ERROR, "PVD search count limit met.\n");
+         return NULL;
+      }
 
-         fp->read(pvd, 2048);
+      fp->read(pvd, 2048);
 
-         if(memcmp(&pvd[1], "CD001", 5))
-            throw MDFN_Error(0, "Not ISO-9660");
-
-         if(pvd[0] == 0xFF)
-            throw MDFN_Error(0, "Missing Primary Volume Descriptor");
-      } while(pvd[0] != 0x01);
-      //[156 ... 189], 34 bytes
-      uint32_t rdel = MDFN_de32lsb(&pvd[0x9E]);
-      uint32_t rdel_len = MDFN_de32lsb(&pvd[0xA6]);
-
-      if(rdel_len >= (1024 * 1024 * 10))	// Arbitrary sanity check.
-         throw MDFN_Error(0, "Root directory table too large");
-
-      fp->seek((int64)rdel * 2048, SEEK_SET);
-      //printf("%08x, %08x\n", rdel * 2048, rdel_len);
-      while(fp->tell() < (((int64)rdel * 2048) + rdel_len))
+      if(memcmp(&pvd[1], "CD001", 5))
       {
-         uint8_t len_dr = fp->get_u8();
-         uint8_t dr[256 + 1];
+         log_cb(RETRO_LOG_ERROR, "Not ISO-9660.\n");
+         return NULL;
+      }
 
-         memset(dr, 0xFF, sizeof(dr));
+      if(pvd[0] == 0xFF)
+      {
+         log_cb(RETRO_LOG_ERROR, "Missing Primary Volume Descriptor.\n");
+         return NULL;
+      }
+   } while(pvd[0] != 0x01);
+   //[156 ... 189], 34 bytes
+   uint32_t rdel = MDFN_de32lsb(&pvd[0x9E]);
+   uint32_t rdel_len = MDFN_de32lsb(&pvd[0xA6]);
 
-         if(!len_dr)
-            break;
+   if(rdel_len >= (1024 * 1024 * 10))	// Arbitrary sanity check.
+   {
+      log_cb(RETRO_LOG_ERROR, "Root directory table too large.\n");
+      return NULL;
+   }
 
-         memset(dr, 0, sizeof(dr));
-         dr[0] = len_dr;
-         fp->read(dr + 1, len_dr - 1);
+   fp->seek((int64)rdel * 2048, SEEK_SET);
+   //printf("%08x, %08x\n", rdel * 2048, rdel_len);
+   while(fp->tell() < (((int64)rdel * 2048) + rdel_len))
+   {
+      uint8_t len_dr = fp->get_u8();
+      uint8_t dr[256 + 1];
 
-         uint8_t len_fi = dr[0x20];
+      memset(dr, 0xFF, sizeof(dr));
 
-         if(len_fi == 12 && !memcmp(&dr[0x21], "SYSTEM.CNF;1", 12))
+      if(!len_dr)
+         break;
+
+      memset(dr, 0, sizeof(dr));
+      dr[0] = len_dr;
+      fp->read(dr + 1, len_dr - 1);
+
+      uint8_t len_fi = dr[0x20];
+
+      if(len_fi == 12 && !memcmp(&dr[0x21], "SYSTEM.CNF;1", 12))
+      {
+         uint32_t file_lba = MDFN_de32lsb(&dr[0x02]);
+         //uint32_t file_len = MDFN_de32lsb(&dr[0x0A]);
+         uint8_t fb[2048 + 1];
+         char *bootpos;
+
+         memset(fb, 0, sizeof(fb));
+         fp->seek(file_lba * 2048, SEEK_SET);
+         fp->read(fb, 2048);
+
+         bootpos = strstr((char*)fb, "BOOT") + 4;
+         while(*bootpos == ' ' || *bootpos == '\t') bootpos++;
+         if(*bootpos == '=')
          {
-            uint32_t file_lba = MDFN_de32lsb(&dr[0x02]);
-            //uint32_t file_len = MDFN_de32lsb(&dr[0x0A]);
-            uint8_t fb[2048 + 1];
-            char *bootpos;
-
-            memset(fb, 0, sizeof(fb));
-            fp->seek(file_lba * 2048, SEEK_SET);
-            fp->read(fb, 2048);
-
-            bootpos = strstr((char*)fb, "BOOT") + 4;
+            bootpos++;
             while(*bootpos == ' ' || *bootpos == '\t') bootpos++;
-            if(*bootpos == '=')
-            {
-               bootpos++;
-               while(*bootpos == ' ' || *bootpos == '\t') bootpos++;
-               if(!strncasecmp(bootpos, "cdrom:\\", 7))
-               { 
-                  bootpos += 7;
-                  char *tmp;
+            if(!strncasecmp(bootpos, "cdrom:\\", 7))
+            { 
+               bootpos += 7;
+               char *tmp;
 
-                  if((tmp = strchr(bootpos, '_'))) *tmp = 0;
-                  if((tmp = strchr(bootpos, '.'))) *tmp = 0;
-                  if((tmp = strchr(bootpos, ';'))) *tmp = 0;
-                  //puts(bootpos);
+               if((tmp = strchr(bootpos, '_'))) *tmp = 0;
+               if((tmp = strchr(bootpos, '.'))) *tmp = 0;
+               if((tmp = strchr(bootpos, ';'))) *tmp = 0;
+               //puts(bootpos);
 
-                  if(strlen(bootpos) == 4 && bootpos[0] == 'S' && (bootpos[1] == 'C' || bootpos[1] == 'L' || bootpos[1] == 'I'))
+               if(strlen(bootpos) == 4 && bootpos[0] == 'S' && (bootpos[1] == 'C' || bootpos[1] == 'L' || bootpos[1] == 'I'))
+               {
+                  switch(bootpos[2])
                   {
-                     switch(bootpos[2])
-                     {
-                        case 'E': if(rr)
-                                     *rr = REGION_EU;
-                                  ret = "SCEE";
-                                  goto Breakout;
+                     case 'E': if(rr)
+                                  *rr = REGION_EU;
+                               ret = "SCEE";
+                               goto Breakout;
 
-                        case 'U': if(rr)
-                                     *rr = REGION_NA;
-                                  ret = "SCEA";
-                                  goto Breakout;
+                     case 'U': if(rr)
+                                  *rr = REGION_NA;
+                               ret = "SCEA";
+                               goto Breakout;
 
-                        case 'K':	// Korea?
-                        case 'B':
-                        case 'P': if(rr)
-                                     *rr = REGION_JP;
-                                  ret = "SCEI";
-                                  goto Breakout;
-                     }
+                     case 'K':	// Korea?
+                     case 'B':
+                     case 'P': if(rr)
+                                  *rr = REGION_JP;
+                               ret = "SCEI";
+                               goto Breakout;
                   }
                }
             }
-
-            //puts((char*)fb);
-            //puts("ASOFKOASDFKO");
          }
-      }
-   }
-   catch(std::exception &e)
-   {
-      //puts(e.what());
-   }
-   catch(...)
-   {
 
+         //puts((char*)fb);
+         //puts("ASOFKOASDFKO");
+      }
    }
 
 Breakout:
@@ -1393,7 +1394,7 @@ static void InitCommon(std::vector<CDIF *> *CDInterfaces, const bool EmulateMemc
    PSX_Power();
 }
 
-static void LoadEXE(const uint8_t *data, const uint32_t size, bool ignore_pcsp = false)
+static bool LoadEXE(const uint8_t *data, const uint32_t size, bool ignore_pcsp = false)
 {
    uint32 PC;
    uint32 SP;
@@ -1401,7 +1402,10 @@ static void LoadEXE(const uint8_t *data, const uint32_t size, bool ignore_pcsp =
    uint32 TextSize;
 
    if(size < 0x800)
-      throw(MDFN_Error(0, "PS-EXE is too small."));
+   {
+      log_cb(RETRO_LOG_ERROR, "PS-EXE is too small.\n");
+      return false;
+   }
 
    PC = MDFN_de32lsb(&data[0x10]);
    SP = MDFN_de32lsb(&data[0x30]);
@@ -1417,14 +1421,15 @@ static void LoadEXE(const uint8_t *data, const uint32_t size, bool ignore_pcsp =
 
    if(TextSize > 2048 * 1024)
    {
-      throw(MDFN_Error(0, "Text section too large"));
+      log_cb(RETRO_LOG_ERROR, "Text section too large.\n");
+      return false;
    }
 
-   if(TextSize > (size - 0x800))
-      throw(MDFN_Error(0, "Text section recorded size is larger than data available in file.  Header=0x%08x, Available=0x%08x", TextSize, size - 0x800));
-
-   if(TextSize < (size - 0x800))
-      throw(MDFN_Error(0, "Text section recorded size is smaller than data available in file.  Header=0x%08x, Available=0x%08x", TextSize, size - 0x800));
+   if((TextSize > (size - 0x800)) || (TextSize < (size - 0x800)))
+   {
+      log_cb(RETRO_LOG_ERROR, "Text section recorded size is larger than data available in file.  Header=0x%08x, Available=0x%08x\n", TextSize, size - 0x800);
+      return false;
+   }
 
    if(!TextMem.size())
    {
@@ -1564,25 +1569,27 @@ static void LoadEXE(const uint8_t *data, const uint32_t size, bool ignore_pcsp =
    po += 4;
    MDFN_en32lsb(po, 0);	// NOP(kinda)
    po += 4;
+
+   return true;
 }
 
 static void Cleanup(void);
 static int Load(const char *name, MDFNFILE *fp)
 {
- {
-  const bool IsPSF = false;
+   if(!TestMagic(name, fp))
+   {
+      log_cb(RETRO_LOG_ERROR, "File format is unknown.\n");
+      return 0;
+   }
 
-  if(!TestMagic(name, fp))
-   throw MDFN_Error(0, _("File format is unknown to module \"%s\"."), MDFNGameInfo->shortname);
+   InitCommon(NULL, true, true);
 
-  InitCommon(NULL, !IsPSF, true);
+   TextMem.resize(0);
 
-  TextMem.resize(0);
+   if (!LoadEXE(GET_FDATA_PTR(fp), GET_FSIZE_PTR(fp)))
+      return 0;
 
-   LoadEXE(GET_FDATA_PTR(fp), GET_FSIZE_PTR(fp));
- }
-
- return(1);
+   return(1);
 }
 
 static int LoadCD(std::vector<CDIF *> *CDInterfaces)
