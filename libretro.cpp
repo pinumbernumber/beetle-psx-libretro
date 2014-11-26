@@ -1595,7 +1595,6 @@ static int Load(const char *name, MDFNFILE *fp)
 static int LoadCD(std::vector<CDIF *> *CDInterfaces)
 {
    InitCommon(CDInterfaces);
-   MDFNGameInfo->GameType = GMT_CDROM;
 
    return(1);
 }
@@ -1878,12 +1877,6 @@ MDFNGI EmulatedPSX =
  "psx",
  "Sony PlayStation",
  KnownExtensions,
- MODPRIO_INTERNAL_HIGH,
- #ifdef WANT_DEBUGGER
- &PSX_DBGInfo,
- #else
- NULL,
- #endif
  &FIO_InputInfo,
  Load,
  TestMagic,
@@ -1897,8 +1890,6 @@ MDFNGI EmulatedPSX =
  NULL,
  NULL,
  NULL,
- NULL,
- false,
  StateAction,
  NULL,
  SetInput,
@@ -2901,12 +2892,8 @@ void retro_run(void)
    spec.SoundRate = 44100;
    spec.SoundBuf = NULL;
    spec.LineWidths = rects;
-   spec.SoundBufMaxSize = 0;
-   spec.SoundVolume = 1.0;
-   spec.soundmultiplier = 1.0;
    spec.SoundBufSize = 0;
    spec.VideoFormatChanged = false;
-   spec.SoundFormatChanged = false;
 
    EmulateSpecStruct *espec = (EmulateSpecStruct*)&spec;
    /* start of Emulate */
