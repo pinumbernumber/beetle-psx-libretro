@@ -3,6 +3,10 @@
 
 #include "../mednafen-types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RED_SHIFT 16
 #define GREEN_SHIFT 8
 #define BLUE_SHIFT 0
@@ -51,5 +55,9 @@ void *MDFN_Surface_New(void *const p_pixels, const uint32 p_width,
       const uint32 p_height, const uint32 p_pitchinpix);
 
 void MDFN_Surface_Free(MDFN_Surface *surf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
