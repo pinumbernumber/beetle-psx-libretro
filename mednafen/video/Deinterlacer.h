@@ -29,12 +29,8 @@ void Deinterlacer_New();
 
 void Deinterlacer_Free();
 
-void Deinterlacer_SetType(unsigned t);
-
 void Deinterlacer_Process(MDFN_Surface *surface, MDFN_Rect &DisplayRect, int32 *LineWidths, const bool field);
 
 void Deinterlacer_ClearState(void);
-
-unsigned Deinterlacer_GetType(void);
 
 #endif
