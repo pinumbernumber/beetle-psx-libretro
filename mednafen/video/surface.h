@@ -31,9 +31,6 @@ class MDFN_PixelFormat
  MDFN_PixelFormat();
  MDFN_PixelFormat(const unsigned int p_colorspace, const uint8 p_rs, const uint8 p_gs, const uint8 p_bs, const uint8 p_as);
 
- unsigned int bpp;
- unsigned int colorspace;
-
  union
  {
   uint8 Rshift;  // Bit position of the lowest bit of the red component
