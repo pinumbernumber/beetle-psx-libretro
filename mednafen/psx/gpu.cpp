@@ -1121,7 +1121,8 @@ static void G_Command_DrawPolygon_Custom(int numvertices, bool shaded, bool text
    {
       DrawTimeAvail -= (28 + 18);
 
-      memcpy(&vertices[0], &InQuad_F3Vertices[1], 2 * sizeof(tri_vertex));
+      vertices[0] = InQuad_F3Vertices[1];
+      vertices[1] = InQuad_F3Vertices[2];
       clut = InQuad_clut;
       sv = 2;
    }
@@ -1182,7 +1183,8 @@ static void G_Command_DrawPolygon_Custom(int numvertices, bool shaded, bool text
       {
          InCmd = INCMD_QUAD;
          InCmd_CC = cb0 >> 24;
-         memcpy(&InQuad_F3Vertices[0], &vertices[0], sizeof(tri_vertex) * 3);
+         InQuad_F3Vertices[1] = vertices[1];
+         InQuad_F3Vertices[2] = vertices[2];
          InQuad_clut = clut;
       }
    }
