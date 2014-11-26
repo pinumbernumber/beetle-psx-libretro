@@ -681,6 +681,67 @@ static INLINE void GPU_PlotPixel(int32 x, int32 y, uint16_t fore_pix)
       GPURAM[y][x] = (textured ? pix : (pix & 0x7FFF)) | MaskSetOR;
 }
 
+static INLINE void GPU_PlotPixel(int BlendMode, bool MaskEval_TA, bool textured, int32 x, int32 y, uint16_t fore_pix)
+{
+   y &= 511;	// More Y precision bits than GPU RAM installed in (non-arcade, at least) Playstation hardware.
+   uint16_t pix = fore_pix;
+
+   if(BlendMode >= BLEND_MODE_AVERAGE && (fore_pix & 0x8000))
+   {
+      uint16_t bg_pix = GPURAM[y][x];	// Don't use bg_pix for mask evaluation, it's modified in blending code paths.
+      pix = 0;
+
+      /*
+         static const int32 tab[4][2] =
+         {
+         { 2,  2 },
+         { 4,  4 },
+         { 4, -4 },
+         { 4,  1 }
+         };
+         */
+      // Efficient 15bpp pixel math algorithms from blargg
+      switch(BlendMode)
+      {
+         case BLEND_MODE_AVERAGE:
+            bg_pix |= 0x8000;
+            pix = ((fore_pix + bg_pix) - ((fore_pix ^ bg_pix) & 0x0421)) >> 1;
+            break;
+
+         case BLEND_MODE_ADD:
+         case BLEND_MODE_ADD_FOURTH:
+            {
+               uint32_t sum, carry;
+               bg_pix &= ~0x8000;
+               if (BlendMode == BLEND_MODE_ADD_FOURTH)
+                  fore_pix = ((fore_pix >> 2) & 0x1CE7) | 0x8000;
+
+               sum = fore_pix + bg_pix;
+               carry = (sum - ((fore_pix ^ bg_pix) & 0x8421)) & 0x8420;
+
+               pix = (sum - carry) | (carry - (carry >> 5));
+            }
+            break;
+
+         case BLEND_MODE_SUBTRACT:
+            {
+               uint32_t diff, borrow;
+               bg_pix |= 0x8000;
+               fore_pix &= ~0x8000;
+
+               diff = bg_pix - fore_pix + 0x108420;
+               borrow = (diff - ((bg_pix ^ fore_pix) & 0x108420)) & 0x108420;
+
+               pix = (diff - borrow) & (borrow - (borrow >> 5));
+            }
+            break;
+      }
+   }
+
+   if(!MaskEval_TA || !(GPURAM[y][x] & 0x8000))
+      GPURAM[y][x] = (textured ? pix : (pix & 0x7FFF)) | MaskSetOR;
+}
+
 static INLINE uint16_t GPU_GetTexel(uint32_t TexMode_TA, const uint32_t clut_offset, int32 u_arg, int32 v_arg)
 {
    uint32_t u = TexWindowXLUT[u_arg];
@@ -1028,6 +1089,104 @@ static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, 
    }
 }
 
+static INLINE void GPU_DrawSpan(bool shaded, bool textured, int BlendMode, bool TexMult,
+      uint32 TexMode_TA, bool MaskEval_TA, int y, uint32 clut_offset, const int32 x_start,
+      const int32 x_bound, i_group ig, const i_deltas &idl)
+{
+   int32 xs = x_start, xb = x_bound;
+
+   if(LineSkipTest( y))
+      return;
+
+   if(xs < xb)	// (xs != xb)
+   {
+      if(xs < ClipX0)
+         xs = ClipX0;
+
+      if(xb > (ClipX1 + 1))
+         xb = ClipX1 + 1;
+
+      if(xs < xb)
+      {
+         DrawTimeAvail -= (xb - xs);
+
+         if(shaded || textured)
+         {
+            DrawTimeAvail -= (xb - xs);
+         }
+         else if((BlendMode >= BLEND_MODE_AVERAGE) || MaskEval_TA)
+         {
+            DrawTimeAvail -= (((xb + 1) & ~1) - (xs & ~1)) >> 1;
+         }
+      }
+
+      if(textured)
+      {
+         ig.u += (xs * idl.du_dx) + (y * idl.du_dy);
+         ig.v += (xs * idl.dv_dx) + (y * idl.dv_dy);
+      }
+
+      if(shaded)
+      {
+         ig.r += (xs * idl.dr_dx) + (y * idl.dr_dy);
+         ig.g += (xs * idl.dg_dx) + (y * idl.dg_dy);
+         ig.b += (xs * idl.db_dx) + (y * idl.db_dy);
+      }
+
+      for(int32 x = xs; MDFN_LIKELY(x < xb); x++)
+      {
+         uint32 r, g, b;
+
+         if(shaded)
+         {
+            r = RGB8SAT[COORD_GET_INT(ig.r)];
+            g = RGB8SAT[COORD_GET_INT(ig.g)];
+            b = RGB8SAT[COORD_GET_INT(ig.b)];
+         }
+         else
+         {
+            r = COORD_GET_INT(ig.r);
+            g = COORD_GET_INT(ig.g);
+            b = COORD_GET_INT(ig.b);
+         }
+
+         if(textured)
+         {
+            uint16 fbw = GPU_GetTexel(TexMode_TA, clut_offset, COORD_GET_INT(ig.u), COORD_GET_INT(ig.v));
+
+            if(fbw)
+            {
+               if(TexMult)
+                  fbw = ModTexel(fbw, r, g, b, (dtd) ? (x & 3) : 3, (dtd) ? (y & 3) : 2);
+               GPU_PlotPixel(BlendMode, MaskEval_TA, true, x, y, fbw);
+            }
+         }
+         else
+         {
+            uint16 pix = 0x8000;
+
+            if(shaded && dtd)
+            {
+               pix |= DitherLUT[y & 3][x & 3][r] << 0;
+               pix |= DitherLUT[y & 3][x & 3][g] << 5;
+               pix |= DitherLUT[y & 3][x & 3][b] << 10;
+            }
+            else
+            {
+               pix |= (r >> 3) << 0;
+               pix |= (g >> 3) << 5;
+               pix |= (b >> 3) << 10;
+            }
+
+            GPU_PlotPixel(BlendMode, MaskEval_TA, false, x, y, pix);
+         }
+
+         GPU_AddIDeltas_DX(shaded, textured, ig, idl, 1);
+         //AddStep<shaded, textured>(perp_coord, perp_step);
+      }
+   }
+}
+
 static INLINE void GPU_LinePointToFXPCoord(bool shaded, const line_point &point,
       const line_fxp_step &step, line_fxp_coord &coord)
 {
@@ -1349,6 +1508,273 @@ static void G_Command_DrawPolygon(const uint32 *cb)
       for(int32 y = y_middle; y < y_bound; y++)
       {
          GPU_DrawSpan<shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA>(y, clut, GetPolyXFP_Int(bound_coord_ll), GetPolyXFP_Int(base_coord), ig, idl);
+         base_coord += base_step;
+         bound_coord_ll += bound_coord_ls;
+      }
+   }
+
+#if 0
+   printf("[GPU] Vertices: %d:%d(r=%d, g=%d, b=%d) -> %d:%d(r=%d, g=%d, b=%d) -> %d:%d(r=%d, g=%d, b=%d)\n\n\n", vertices[0].x, vertices[0].y,
+         vertices[0].r, vertices[0].g, vertices[0].b,
+         vertices[1].x, vertices[1].y,
+         vertices[1].r, vertices[1].g, vertices[1].b,
+         vertices[2].x, vertices[2].y,
+         vertices[2].r, vertices[2].g, vertices[2].b);
+#endif
+}
+
+/* C-style function wrappers so our command table isn't so ginormous(in memory usage). */
+static void G_Command_DrawPolygon_Custom(int numvertices, bool shaded, bool textured, int BlendMode,
+      bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
+{
+   const unsigned cb0 = cb[0];
+   tri_vertex vertices[3];
+   uint32 clut = 0;
+   unsigned sv = 0;
+   //uint32 tpage = 0;
+
+   // Base timing is approximate, and could be improved.
+   if(numvertices == 4 && InCmd == INCMD_QUAD)
+   {
+      DrawTimeAvail -= (28 + 18);
+
+      memcpy(&vertices[0], &InQuad_F3Vertices[1], 2 * sizeof(tri_vertex));
+      clut = InQuad_clut;
+      sv = 2;
+   }
+   else
+      DrawTimeAvail -= (64 + 18);
+
+   if(shaded && textured)
+      DrawTimeAvail -= 150 * 3;
+   else if(shaded)
+      DrawTimeAvail -= 96 * 3;
+   else if(textured)
+      DrawTimeAvail -= 60 * 3;
+
+   for(unsigned v = sv; v < 3; v++)
+   {
+      if(v == 0 || shaded)
+      {
+         uint32 raw_color = (*cb & 0xFFFFFF);
+
+         vertices[v].r = raw_color & 0xFF;
+         vertices[v].g = (raw_color >> 8) & 0xFF;
+         vertices[v].b = (raw_color >> 16) & 0xFF;
+
+         cb++;
+      }
+      else
+      {
+         vertices[v].r = vertices[0].r;
+         vertices[v].g = vertices[0].g;
+         vertices[v].b = vertices[0].b;
+      }
+
+      vertices[v].x = sign_x_to_s32(11, ((int16)(*cb & 0xFFFF))) + OffsX;
+      vertices[v].y = sign_x_to_s32(11, ((int16)(*cb >> 16))) + OffsY;
+      cb++;
+
+      if(textured)
+      {
+         vertices[v].u = (*cb & 0xFF);
+         vertices[v].v = (*cb >> 8) & 0xFF;
+
+         if(v == 0)
+         {
+            clut = ((*cb >> 16) & 0xFFFF) << 4;
+         }
+
+         cb++;
+      }
+   }
+
+   if(numvertices == 4)
+   {
+      if(InCmd == INCMD_QUAD)
+      {
+         InCmd = INCMD_NONE;
+      }
+      else
+      {
+         InCmd = INCMD_QUAD;
+         InCmd_CC = cb0 >> 24;
+         memcpy(&InQuad_F3Vertices[0], &vertices[0], sizeof(tri_vertex) * 3);
+         InQuad_clut = clut;
+      }
+   }
+
+   i_deltas idl;
+
+   //
+   // Sort vertices by y.
+   //
+   if(vertices[2].y < vertices[1].y)
+   {
+      tri_vertex tmp = vertices[1];
+      vertices[1] = vertices[2];
+      vertices[2] = tmp;
+   }
+
+   if(vertices[1].y < vertices[0].y)
+   {
+      tri_vertex tmp = vertices[0];
+      vertices[0] = vertices[1];
+      vertices[1] = tmp;
+   }
+
+   if(vertices[2].y < vertices[1].y)
+   {
+      tri_vertex tmp = vertices[1];
+      vertices[1] = vertices[2];
+      vertices[2] = tmp;
+   }
+
+   if(vertices[0].y == vertices[2].y)
+      return;
+
+   if((vertices[2].y - vertices[0].y) >= 512)
+   {
+      //PSX_WARNING("[GPU] Triangle height too large: %d", (vertices[2].y - vertices[0].y));
+      return;
+   }
+
+   if(abs(vertices[2].x - vertices[0].x) >= 1024 ||
+         abs(vertices[2].x - vertices[1].x) >= 1024 ||
+         abs(vertices[1].x - vertices[0].x) >= 1024)
+   {
+      //PSX_WARNING("[GPU] Triangle width too large: %d %d %d", abs(vertices[2].x - vertices[0].x), abs(vertices[2].x - vertices[1].x), abs(vertices[1].x - vertices[0].x));
+      return;
+   }
+
+   if(!GPU_CalcIDeltas(&idl, &vertices[0], &vertices[1], &vertices[2]))
+      return;
+
+   // [0] should be top vertex, [2] should be bottom vertex, [1] should be off to the side vertex.
+   //
+   //
+   int32 y_start = vertices[0].y;
+   int32 y_middle = vertices[1].y;
+   int32 y_bound = vertices[2].y;
+
+   int64 base_coord;
+   int64 base_step;
+
+   int64 bound_coord_ul;
+   int64 bound_coord_us;
+
+   int64 bound_coord_ll;
+   int64 bound_coord_ls;
+
+   bool right_facing;
+   //bool bottom_up;
+   i_group ig;
+
+   //
+   // Find vertex with lowest X coordinate, and use as the base for calculating interpolants from.
+   //
+   {
+      unsigned iggvi = 0;
+
+      //
+      // <=, not <
+      //
+      if(vertices[1].x <= vertices[iggvi].x)
+         iggvi = 1;
+
+      if(vertices[2].x <= vertices[iggvi].x)
+         iggvi = 2;
+
+      ig.u = COORD_MF_INT(vertices[iggvi].u) + (1 << (COORD_FBS - 1));
+      ig.v = COORD_MF_INT(vertices[iggvi].v) + (1 << (COORD_FBS - 1));
+      ig.r = COORD_MF_INT(vertices[iggvi].r);
+      ig.g = COORD_MF_INT(vertices[iggvi].g);
+      ig.b = COORD_MF_INT(vertices[iggvi].b);
+
+      GPU_AddIDeltas_DX(shaded, textured, ig, idl, -vertices[iggvi].x);
+      GPU_AddIDeltas_DY(shaded, textured, ig, idl, -vertices[iggvi].y);
+   }
+
+   base_coord = MakePolyXFP(vertices[0].x);
+   base_step = MakePolyXFPStep((vertices[2].x - vertices[0].x), (vertices[2].y - vertices[0].y));
+
+   bound_coord_ul = MakePolyXFP(vertices[0].x);
+   bound_coord_ll = MakePolyXFP(vertices[1].x);
+
+   //
+   //
+   //
+
+
+   if(vertices[1].y == vertices[0].y)
+   {
+      bound_coord_us = 0;
+      right_facing = (bool)(vertices[1].x > vertices[0].x);
+   }
+   else
+   {
+      bound_coord_us = MakePolyXFPStep((vertices[1].x - vertices[0].x), (vertices[1].y - vertices[0].y));
+      right_facing = (bool)(bound_coord_us > base_step);
+   }
+
+   if(vertices[2].y == vertices[1].y)
+      bound_coord_ls = 0;
+   else
+      bound_coord_ls = MakePolyXFPStep((vertices[2].x - vertices[1].x), (vertices[2].y - vertices[1].y));
+
+   if(y_start < ClipY0)
+   {
+      int32 count = ClipY0 - y_start;
+
+      y_start = ClipY0;
+      base_coord += base_step * count;
+      bound_coord_ul += bound_coord_us * count;
+
+      if(y_middle < ClipY0)
+      {
+         int32 count_ls = ClipY0 - y_middle;
+
+         y_middle = ClipY0;
+         bound_coord_ll += bound_coord_ls * count_ls;
+      }
+   }
+
+   if(y_bound > (ClipY1 + 1))
+   {
+      y_bound = ClipY1 + 1;
+
+      if(y_middle > y_bound)
+         y_middle = y_bound;
+   }
+
+   if(right_facing)
+   {
+      for(int32 y = y_start; y < y_middle; y++)
+      {
+         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ul), ig, idl);
+         base_coord += base_step;
+         bound_coord_ul += bound_coord_us;
+      }
+
+      for(int32 y = y_middle; y < y_bound; y++)
+      {
+         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ll), ig, idl);
+         base_coord += base_step;
+         bound_coord_ll += bound_coord_ls;
+      }
+   }
+   else
+   {
+      for(int32 y = y_start; y < y_middle; y++)
+      {
+         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(bound_coord_ul), GetPolyXFP_Int(base_coord), ig, idl);
+         base_coord += base_step;
+         bound_coord_ul += bound_coord_us;
+      }
+
+      for(int32 y = y_middle; y < y_bound; y++)
+      {
+         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(bound_coord_ll), GetPolyXFP_Int(base_coord), ig, idl);
          base_coord += base_step;
          bound_coord_ll += bound_coord_ls;
       }
@@ -1892,6 +2318,9 @@ static void G_Command_MaskSetting(const uint32 *cb)
 #define POLY_HELPER_SUB(bm, cv, tm, mam)	\
    G_Command_DrawPolygon<3 + ((cv & 0x8) >> 3), ((cv & 0x10) >> 4), ((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam >
 
+#define POLY_HELPER_SUB_CUSTOM(bm, cv, tm, mam, cb)	\
+   G_Command_DrawPolygon_Custom(3 + ((cv & 0x8) >> 3), ((cv & 0x10) >> 4), ((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam , cb)
+
 #define POLY_HELPER_FG(bm, cv)						\
 {								\
    POLY_HELPER_SUB(bm, cv, ((cv & 0x4) ? 0 : 0), 0),	\
@@ -2273,8 +2702,8 @@ static void GPU_ProcessFIFO(void)
          TexMode = (tpage >> 7) & 0x3;
       }
 
-      if(command->func[abr][TexMode])
-         command->func[abr][TexMode | (MaskEvalAND ? 0x4 : 0x0)]( CB);
+      int TexModeLut[4]={0,1,2,2};
+      POLY_HELPER_SUB_CUSTOM(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
    }
    else
    {
