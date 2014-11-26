@@ -619,11 +619,6 @@ void GPU_ResetTS(void)
    lastts = 0;
 }
 
-template<int BlendMode, bool MaskEval_TA, bool textured>
-static INLINE void GPU_PlotPixel(int32 x, int32 y, uint16_t fore_pix)
-{
-}
-
 static INLINE void GPU_PlotPixel(int BlendMode, bool MaskEval_TA, bool textured, int32 x, int32 y, uint16_t fore_pix)
 {
    y &= 511;	// More Y precision bits than GPU RAM installed in (non-arcade, at least) Playstation hardware.
@@ -935,7 +930,6 @@ static INLINE void GPU_AddIDeltas_DY(bool shaded, bool textured, i_group &ig, co
    }
 }
 
-template<bool shaded, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
 static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, const int32 x_bound, i_group ig, const i_deltas &idl)
 {
 }
@@ -1108,7 +1102,6 @@ static INLINE void GPU_LinePointsToFXPStep(bool shaded,
    }
 
 /* C-style function wrappers so our command table isn't so ginormous(in memory usage). */
-template<int numvertices, bool shaded, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
 static void G_Command_DrawPolygon(const uint32 *cb)
 {
 }
@@ -1380,7 +1373,6 @@ static void G_Command_DrawPolygon_Custom(int numvertices, bool shaded, bool text
 #endif
 }
 
-template<uint8 raw_size, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA>
 static void G_Command_DrawSprite(const uint32 *cb)
 {
 }
@@ -1582,7 +1574,6 @@ static void G_Command_DrawSprite(uint8 raw_size, bool textured, int BlendMode, b
    }
 }
 
-template<bool polyline, bool shaded, int BlendMode, bool MaskEval_TA>
 static void G_Command_DrawLine(const uint32 *cb)
 {
 }
@@ -1914,7 +1905,7 @@ static void G_Command_MaskSetting(const uint32 *cb)
 }
 
 #define POLY_HELPER_SUB(bm, cv, tm, mam)	\
-   G_Command_DrawPolygon<3 + ((cv & 0x8) >> 3), ((cv & 0x10) >> 4), ((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam >
+   G_Command_DrawPolygon
 
 #define POLY_HELPER_SUB_CUSTOM(bm, cv, tm, mam, cb)	\
    G_Command_DrawPolygon_Custom(3 + ((cv & 0x8) >> 3), ((cv & 0x10) >> 4), ((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam , cb)
@@ -1943,7 +1934,7 @@ static void G_Command_MaskSetting(const uint32 *cb)
 //
 
 #define SPR_HELPER_SUB_CUSTOM(bm, cv, tm, mam, CB) G_Command_DrawSprite((cv >> 3) & 0x3,	((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam, CB)
-#define SPR_HELPER_SUB(bm, cv, tm, mam) G_Command_DrawSprite<(cv >> 3) & 0x3,	((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam>
+#define SPR_HELPER_SUB(bm, cv, tm, mam) G_Command_DrawSprite
 
 #define SPR_HELPER_FG(bm, cv)						\
 {								\
@@ -1971,7 +1962,7 @@ static void G_Command_MaskSetting(const uint32 *cb)
 
 #define LINE_HELPER_SUB_CUSTOM(bm, cv, mam, CB) G_Command_DrawLine(((cv & 0x08) >> 3), ((cv & 0x10) >> 4), ((cv & 0x2) >> 1) ? bm : -1, mam, CB)
 
-#define LINE_HELPER_SUB(bm, cv, mam) G_Command_DrawLine<((cv & 0x08) >> 3), ((cv & 0x10) >> 4), ((cv & 0x2) >> 1) ? bm : -1, mam>
+#define LINE_HELPER_SUB(bm, cv, mam) G_Command_DrawLine
 
 #define LINE_HELPER_FG(bm, cv)											\
 {													\
