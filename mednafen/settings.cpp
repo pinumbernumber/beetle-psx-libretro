@@ -131,8 +131,6 @@ std::string MDFN_GetSettingS(const char *name)
    /* FILESYS */
    if (!strcmp("filesys.path_firmware", name))
       return retro_base_directory;
-   if (!strcmp("filesys.path_palette", name))
-      return retro_base_directory;
    if (!strcmp("filesys.path_sav", name))
       return retro_base_directory;
    if (!strcmp("filesys.path_state", name))
