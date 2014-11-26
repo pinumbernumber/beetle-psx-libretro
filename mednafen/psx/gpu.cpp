@@ -1109,7 +1109,13 @@ static void G_Command_DrawPolygon(const uint32 *cb)
 
    // Base timing is approximate, and could be improved.
    if(numvertices == 4 && InCmd == INCMD_QUAD)
+   {
       DrawTimeAvail -= (28 + 18);
+
+      memcpy(&vertices[0], &InQuad_F3Vertices[1], 2 * sizeof(tri_vertex));
+      clut = InQuad_clut;
+      sv = 2;
+   }
    else
       DrawTimeAvail -= (64 + 18);
 
@@ -1119,18 +1125,6 @@ static void G_Command_DrawPolygon(const uint32 *cb)
       DrawTimeAvail -= 96 * 3;
    else if(textured)
       DrawTimeAvail -= 60 * 3;
-
-   if(numvertices == 4)
-   {
-      if(InCmd == INCMD_QUAD)
-      {
-         memcpy(&vertices[0], &InQuad_F3Vertices[1], 2 * sizeof(tri_vertex));
-         clut = InQuad_clut;
-         sv = 2;
-      }
-   }
-   //else
-   // memset(vertices, 0, sizeof(vertices));
 
    for(unsigned v = sv; v < 3; v++)
    {
