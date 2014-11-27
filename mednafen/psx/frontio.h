@@ -32,7 +32,6 @@ class InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);	// Currently unused.
 
  virtual bool Clock(bool TxD, int32_t &dsr_pulse_delay);
 
@@ -69,7 +68,6 @@ class InputDevice_Memcard : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  //

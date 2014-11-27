@@ -101,7 +101,6 @@ class InputDevice_Gamepad : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  bool dtr;
@@ -133,7 +132,6 @@ class InputDevice_DualAnalog : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  bool joystick_mode;
@@ -170,7 +168,6 @@ class InputDevice_DualShock : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  void CheckManualAnaModeChange(void);
@@ -236,7 +233,6 @@ class InputDevice_Multitap : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  InputDevice *pad_devices[4];
@@ -276,7 +272,6 @@ class InputDevice_neGcon : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  bool dtr;
@@ -312,7 +307,6 @@ class InputDevice_GunCon : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  bool dtr;
@@ -424,17 +418,6 @@ void InputDevice_DualAnalog::SetDTR(bool new_dtr)
  }
 
  dtr = new_dtr;
-}
-
-bool InputDevice_DualAnalog::GetDSR(void)
-{
- if(!dtr)
-  return(0);
-
- if(!bitpos && transmit_count)
-  return(1);
-
- return(0);
 }
 
 bool InputDevice_DualAnalog::Clock(bool TxD, int32 &dsr_pulse_delay)
@@ -806,17 +789,6 @@ void InputDevice_DualShock::SetDTR(bool new_dtr)
   //if(bitpos || transmit_count)
   // printf("[PAD] Abort communication!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
  }
-}
-
-bool InputDevice_DualShock::GetDSR(void)
-{
- if(!dtr)
-  return(0);
-
- if(!bitpos && transmit_count)
-  return(1);
-
- return(0);
 }
 
 bool InputDevice_DualShock::Clock(bool TxD, int32 &dsr_pulse_delay)
@@ -1621,17 +1593,6 @@ void InputDevice_Gamepad::SetDTR(bool new_dtr)
  dtr = new_dtr;
 }
 
-bool InputDevice_Gamepad::GetDSR(void)
-{
- if(!dtr)
-  return(0);
-
- if(!bitpos && transmit_count)
-  return(1);
-
- return(0);
-}
-
 bool InputDevice_Gamepad::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
  bool ret = 1;
@@ -1908,17 +1869,6 @@ void InputDevice_GunCon::SetDTR(bool new_dtr)
  dtr = new_dtr;
 }
 
-bool InputDevice_GunCon::GetDSR(void)
-{
- if(!dtr)
-  return(0);
-
- if(!bitpos && transmit_count)
-  return(1);
-
- return(0);
-}
-
 bool InputDevice_GunCon::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
  bool ret = 1;
@@ -2050,7 +2000,6 @@ class InputDevice_Justifier : public InputDevice
  //
  //
  virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
  bool dtr;
@@ -2233,17 +2182,6 @@ void InputDevice_Justifier::SetDTR(bool new_dtr)
  }
 
  dtr = new_dtr;
-}
-
-bool InputDevice_Justifier::GetDSR(void)
-{
- if(!dtr)
-  return(0);
-
- if(!bitpos && transmit_count)
-  return(1);
-
- return(0);
 }
 
 bool InputDevice_Justifier::Clock(bool TxD, int32 &dsr_pulse_delay)
@@ -2502,17 +2440,6 @@ void InputDevice_Memcard::SetDTR(bool new_dtr)
  }
 #endif
  dtr = new_dtr;
-}
-
-bool InputDevice_Memcard::GetDSR(void)
-{
- if(!dtr)
-  return(0);
-
- if(!bitpos && transmit_count)
-  return(1);
-
- return(0);
 }
 
 bool InputDevice_Memcard::Clock(bool TxD, int32 &dsr_pulse_delay)
@@ -3244,11 +3171,6 @@ void InputDevice_Multitap::SetDTR(bool new_dtr)
  }
 }
 
-bool InputDevice_Multitap::GetDSR(void)
-{
- return(0);
-}
-
 bool InputDevice_Multitap::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
  if(!dtr)
@@ -3509,17 +3431,6 @@ void InputDevice_neGcon::SetDTR(bool new_dtr)
  }
 
  dtr = new_dtr;
-}
-
-bool InputDevice_neGcon::GetDSR(void)
-{
- if(!dtr)
-  return(0);
-
- if(!bitpos && transmit_count)
-  return(1);
-
- return(0);
 }
 
 bool InputDevice_neGcon::Clock(bool TxD, int32 &dsr_pulse_delay)
@@ -3810,11 +3721,6 @@ int32_t InputDevice::GPULineHook(const int32_t timestamp, bool vsync, uint32 *pi
 void InputDevice::SetDTR(bool new_dtr)
 {
 
-}
-
-bool InputDevice::GetDSR(void)
-{
-   return 0;
 }
 
 bool InputDevice::Clock(bool TxD, int32_t &dsr_pulse_delay)
@@ -4231,6 +4137,26 @@ uint32_t FrontIO_Read(int32_t timestamp, uint32_t A)
 
    return(ret);
 }
+
+#if 0
+bool FrontIO_GetDSR(void)
+{
+   //dualshock
+   //gamepad
+   //guncon
+   //justifier
+   //memcard
+   ////negcon
+   if(!dtr)
+      return(0);
+
+   if(!bitpos && transmit_count)
+      return(1);
+
+   //multitap
+   return(0);
+}
+#endif
 
 int32_t FrontIO_Update(int32_t timestamp)
 {
