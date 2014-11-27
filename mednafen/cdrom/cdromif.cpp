@@ -254,7 +254,6 @@ uint64 CDIF_Stream_Thing::read(void *data, uint64 count, bool error_on_eos)
 
 void CDIF_Stream_Thing::write(const void *data, uint64 count)
 {
- throw MDFN_Error(ErrnoHolder(EBADF));
 }
 
 void CDIF_Stream_Thing::seek(int64 offset, int whence)
@@ -277,7 +276,10 @@ void CDIF_Stream_Thing::seek(int64 offset, int whence)
    }
 
    if(new_position < 0 || new_position > ((int64)sector_count * 2048))
-      throw MDFN_Error(ErrnoHolder(EINVAL));
+   {
+      log_cb(RETRO_LOG_ERROR, "EINVAL.\n");
+      return;
+   }
 
    position = new_position;
 }
