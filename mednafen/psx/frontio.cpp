@@ -4701,6 +4701,34 @@ void FrontIO_UpdateInput(void)
       switch (DevicesType[i])
       {
          case INPUTDEVICE_GAMEPAD:
+            {
+               InputDevice_Gamepad *device = (InputDevice_Gamepad*)Devices[i];
+               uint8 *d8 = (uint8 *)DeviceData[i];
+
+               device->buttons[0] = d8[0];
+               device->buttons[1] = d8[1];
+            }
+            break;
+         case INPUTDEVICE_MOUSE:
+            {
+               InputDevice_Mouse *device = (InputDevice_Mouse*)Devices[i];
+               device->accum_xdelta += (int32)MDFN_de32lsb((uint8*)DeviceData[i] + 0);
+               device->accum_ydelta += (int32)MDFN_de32lsb((uint8*)DeviceData[i] + 4);
+
+               if(device->accum_xdelta > 30 * 127)
+                  device->accum_xdelta = 30 * 127;
+               if(device->accum_xdelta < 30 * -128)
+                  device->accum_xdelta = 30 * -128;
+
+               if(device->accum_ydelta > 30 * 127)
+                  device->accum_ydelta = 30 * 127;
+               if(device->accum_ydelta < 30 * -128)
+                  device->accum_ydelta = 30 * -128;
+
+               device->button |= *((uint8 *)DeviceData[i] + 8);
+               device->button_post_mask = *((uint8 *)DeviceData[i] + 8);
+            }
+            break;
          default:
             Devices[i]->UpdateInput(DeviceData[i]);
             break;
