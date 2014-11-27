@@ -4697,7 +4697,15 @@ void FrontIO_UpdateInput(void)
 {
    int i;
    for(i = 0; i < 8; i++)
-      Devices[i]->UpdateInput(DeviceData[i]);
+   {
+      switch (DevicesType[i])
+      {
+         case INPUTDEVICE_GAMEPAD:
+         default:
+            Devices[i]->UpdateInput(DeviceData[i]);
+            break;
+      }
+   }
 }
 
 void FrontIO_SetInput(unsigned int port, const char *type, void *ptr)
