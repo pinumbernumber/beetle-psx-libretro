@@ -3285,7 +3285,12 @@ void *retro_get_memory_data(unsigned type)
          if (use_mednafen_memcard0_method)
             data = NULL;
          else
-            data = FrontIO_GetMemcardDevice(0)->GetNVData();
+         {
+            InputDevice_Memcard *device = (InputDevice_Memcard*)FrontIO_GetMemcardDevice(0);
+
+            if (device)
+               data = device->card_data;
+         }
          break;
       default:
          data = NULL;

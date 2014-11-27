@@ -2358,68 +2358,6 @@ InputDeviceInputInfoStruct Device_Justifier_IDII[6] =
  { "offscreen_shot", "Offscreen Shot(Simulated)", 3, IDIT_BUTTON, NULL },
 };
 
-class InputDevice_Memcard : public InputDevice
-{
- public:
-
- InputDevice_Memcard();
- virtual ~InputDevice_Memcard();
-
- virtual void Power(void);
- virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
-
- //
- //
- //
- virtual void SetDTR(bool new_dtr);
- virtual bool GetDSR(void);
- virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
-
- //
- //
- virtual uint8 *GetNVData(void);
- virtual uint32 GetNVSize(void);
- virtual void ReadNV(uint8 *buffer, uint32 offset, uint32 size);
- virtual void WriteNV(const uint8 *buffer, uint32 offset, uint32 size);
-
- virtual uint64 GetNVDirtyCount(void);
- virtual void ResetNVDirtyCount(void);
-
- void Format(void);
-
- bool presence_new;
-
- uint8 card_data[1 << 17];
- uint8 rw_buffer[128];
- uint8 write_xor;
-
- //
- // Used to avoid saving unused memory cards' card data in save states.
- // Set to false on object initialization, set to true when data is written to card_data that differs
- // from existing data(either from loading a memory card saved to disk, or from a game writing to the memory card).
- //
- // Save and load its state to/from save states.
- //
- bool data_used;
-
- //
- // Do not save dirty_count in save states!
- //
- uint64 dirty_count;
-
- bool dtr;
- int32 command_phase;
- uint32 bitpos;
- uint8 receive_buffer;
-
- uint8 command;
- uint16 addr;
- uint8 calced_xor;
-
- uint8 transmit_buffer;
- uint32 transmit_count;
-};
-
 void InputDevice_Memcard::Format(void)
 {
    memset(card_data, 0x00, sizeof(card_data));
@@ -2821,11 +2759,6 @@ bool InputDevice_Memcard::Clock(bool TxD, int32 &dsr_pulse_delay)
  return(ret);
 }
 
-uint8 *InputDevice_Memcard::GetNVData(void)
-{
-   return card_data;
-}
-
 uint32 InputDevice_Memcard::GetNVSize(void)
 {
  return(sizeof(card_data));
@@ -2863,12 +2796,6 @@ uint64 InputDevice_Memcard::GetNVDirtyCount(void)
 {
  return(dirty_count);
 }
-
-void InputDevice_Memcard::ResetNVDirtyCount(void)
-{
- dirty_count = 0;
-}
-
 
 class InputDevice_Mouse : public InputDevice
 {
@@ -3917,11 +3844,6 @@ uint64_t InputDevice::GetNVDirtyCount(void)
    return 0;
 }
 
-void InputDevice::ResetNVDirtyCount(void)
-{
-
-}
-
 static unsigned EP_to_MP(bool emulate_multitap[2], unsigned ep)
 {
    if(!emulate_multitap[0] && emulate_multitap[1])
@@ -3946,7 +3868,7 @@ static INLINE unsigned EP_to_SP(bool emulate_multitap[2], unsigned ep)
    return(ep & 0x3);
 }
 
-InputDevice *FrontIO_GetMemcardDevice(unsigned int which)
+void *FrontIO_GetMemcardDevice(unsigned int which)
 {
    if (DevicesMC[which])
       return DevicesMC[which];
@@ -4722,8 +4644,9 @@ void FrontIO_LoadMemcard(unsigned int which)
 
    if(DevicesMC[which]->GetNVSize())
    {
-      DevicesMC[which]->WriteNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-      DevicesMC[which]->ResetNVDirtyCount();		// There's no need to rewrite the file if it's the same data.
+      InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
+      device->WriteNV(device->card_data, 0, (1 << 17));
+      device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
    }
 }
 
@@ -4737,10 +4660,11 @@ void FrontIO_LoadMemcard(unsigned int which, const char *path)
 
       if (fp != NULL)
       {
-         fread(DevicesMC[which]->GetNVData(), 1, 1 << 17, fp);
+         InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
+         fread(device->card_data, 1, 1 << 17, fp);
          fclose(fp);
-         DevicesMC[which]->WriteNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-         DevicesMC[which]->ResetNVDirtyCount();		// There's no need to rewrite the file if it's the same data.
+         device->WriteNV(device->card_data, 0, (1 << 17));
+         device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
       }
    }
 }
@@ -4751,8 +4675,9 @@ void FrontIO_SaveMemcard(unsigned int which)
 
    if(DevicesMC[which]->GetNVSize() && DevicesMC[which]->GetNVDirtyCount())
    {
-      DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-      DevicesMC[which]->ResetNVDirtyCount();
+      InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
+      device->ReadNV(device->card_data, 0, (1 << 17));
+      device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
    }
 }
 
@@ -4764,12 +4689,13 @@ void FrontIO_SaveMemcard(unsigned int which, const char *path)
    {
       FILE *fp = fopen(path, "rb");
 
-      if (fp != NULL)
+      if (fp)
       {
-         DevicesMC[which]->ReadNV(DevicesMC[which]->GetNVData(), 0, (1 << 17));
-         fwrite(DevicesMC[which]->GetNVData(), 1, (1 << 17), fp);
+         InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
+         device->ReadNV(device->card_data, 0, (1 << 17));
+         fwrite(device->card_data, 1, (1 << 17), fp);
          fclose(fp);
-         DevicesMC[which]->ResetNVDirtyCount();
+         device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
       }
    }
 }

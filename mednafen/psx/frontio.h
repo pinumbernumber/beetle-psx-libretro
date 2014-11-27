@@ -38,7 +38,6 @@ class InputDevice
 
  //
  //
- virtual uint8 *GetNVData() { return NULL; }
  virtual uint32_t GetNVSize(void);
  virtual void ReadNV(uint8_t *buffer, uint32_t offset, uint32_t count);
  virtual void WriteNV(const uint8_t *buffer, uint32_t offset, uint32_t count);
@@ -48,13 +47,72 @@ class InputDevice
  // nonvolatile memory(IE Clock() in the correct command phase, and WriteNV()).
  //
  virtual uint64_t GetNVDirtyCount(void);
- virtual void ResetNVDirtyCount(void);
 
  private:
  unsigned chair_r, chair_g, chair_b;
  bool draw_chair;
  protected:
  int32 chair_x, chair_y;
+};
+
+class InputDevice_Memcard : public InputDevice
+{
+ public:
+
+ InputDevice_Memcard();
+ virtual ~InputDevice_Memcard();
+
+ virtual void Power(void);
+ virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
+
+ //
+ //
+ //
+ virtual void SetDTR(bool new_dtr);
+ virtual bool GetDSR(void);
+ virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
+
+ //
+ //
+ virtual uint32 GetNVSize(void);
+ virtual void ReadNV(uint8 *buffer, uint32 offset, uint32 size);
+ virtual void WriteNV(const uint8 *buffer, uint32 offset, uint32 size);
+
+ virtual uint64 GetNVDirtyCount(void);
+
+ void Format(void);
+
+ bool presence_new;
+
+ uint8 card_data[1 << 17];
+ uint8 rw_buffer[128];
+ uint8 write_xor;
+
+ //
+ // Used to avoid saving unused memory cards' card data in save states.
+ // Set to false on object initialization, set to true when data is written to card_data that differs
+ // from existing data(either from loading a memory card saved to disk, or from a game writing to the memory card).
+ //
+ // Save and load its state to/from save states.
+ //
+ bool data_used;
+
+ //
+ // Do not save dirty_count in save states!
+ //
+ uint64 dirty_count;
+
+ bool dtr;
+ int32 command_phase;
+ uint32 bitpos;
+ uint8 receive_buffer;
+
+ uint8 command;
+ uint16 addr;
+ uint8 calced_xor;
+
+ uint8 transmit_buffer;
+ uint32 transmit_count;
 };
 
 void FrontIO_New(bool emulate_memcards_[8], bool emulate_multitap_[2]);
@@ -80,7 +138,7 @@ void FrontIO_SetInput(unsigned int port, const char *type, void *ptr);
 void FrontIO_SetAMCT(bool enabled);
 void FrontIO_SetCrosshairsColor(unsigned port, uint32_t color);
 
-InputDevice *FrontIO_GetMemcardDevice(unsigned int which);
+void *FrontIO_GetMemcardDevice(unsigned int which);
 uint64_t FrontIO_GetMemcardDirtyCount(unsigned int which);
 void FrontIO_LoadMemcard(unsigned int which, const char *path);
 void FrontIO_LoadMemcard(unsigned int which);
