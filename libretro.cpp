@@ -75,8 +75,6 @@ void PSX_SetDMASuckSuck(unsigned suckage)
  sucksuck = suckage;
 }
 
-namespace MDFN_IEN_PSX
-{
 #if PSX_DBGPRINT_ENABLE
 static unsigned psx_dbg_level = 0;
 
@@ -944,10 +942,6 @@ void PSX_GPULineHook(const int32_t timestamp, const int32_t line_timestamp, bool
 {
    FrontIO_GPULineHook(timestamp, line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
 }
-
-}
-
-using namespace MDFN_IEN_PSX;
 
 static bool TestMagic(const char *name, MDFNFILE *fp)
 {

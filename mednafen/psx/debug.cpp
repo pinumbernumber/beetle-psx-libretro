@@ -20,9 +20,6 @@
 #include "cdc.h"
 #include "spu.h"
 
-namespace MDFN_IEN_PSX
-{
-
 extern PS_GPU *GPU;
 extern PS_SPU *SPU;
 
@@ -672,8 +669,3 @@ bool DBG_Init(void)
  ASpace_Add(GetAddressSpaceBytes, PutAddressSpaceBytes, "gpu", "GPU RAM", 20);
  return(true);
 }
-
-
-
-}
-

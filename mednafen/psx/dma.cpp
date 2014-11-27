@@ -382,7 +382,7 @@ static INLINE void RunChannelI(const unsigned ch, const uint32_t CRModeCache, in
                break;
             }
 
-            header = MDFN_IEN_PSX::MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
+            header = MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
             DMACH[ch].CurAddr = (DMACH[ch].CurAddr + 4) & 0xFFFFFF;
 
             DMACH[ch].WordCounter = header >> 24;
@@ -437,12 +437,12 @@ static INLINE void RunChannelI(const unsigned ch, const uint32_t CRModeCache, in
          }
 
          if(CRModeCache & 0x1)
-            vtmp = MDFN_IEN_PSX::MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
+            vtmp = MainRAM.ReadU32(DMACH[ch].CurAddr & 0x1FFFFC);
 
          ChRW(ch, CRModeCache, &vtmp, &voffs);
 
          if(!(CRModeCache & 0x1))
-            MDFN_IEN_PSX::MainRAM.WriteU32((DMACH[ch].CurAddr + (voffs << 2)) & 0x1FFFFC, vtmp);
+            MainRAM.WriteU32((DMACH[ch].CurAddr + (voffs << 2)) & 0x1FFFFC, vtmp);
       }
 
       if(CRModeCache & 0x2)
@@ -695,7 +695,7 @@ void DMA_Write(const int32_t timestamp, uint32_t A, uint32_t V)
          }
          break;
    }
-   PSX_SetEventNT(MDFN_IEN_PSX::PSX_EVENT_DMA, timestamp + CalcNextEvent(0x10000000));
+   PSX_SetEventNT(PSX_EVENT_DMA, timestamp + CalcNextEvent(0x10000000));
 }
 
 uint32_t DMA_Read(const int32_t timestamp, uint32_t A)

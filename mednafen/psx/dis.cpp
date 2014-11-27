@@ -17,9 +17,6 @@
 
 #include "psx.h"
 
-namespace MDFN_IEN_PSX
-{
-
 struct OpEntry
 {
  uint32 mask;
@@ -403,6 +400,3 @@ std::string DisassembleMIPS(uint32 PC, uint32 instr)
 
  return(ret);
 }
-
-}
-

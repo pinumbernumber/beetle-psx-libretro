@@ -90,9 +90,6 @@ enum
    GSREG_EPC,
 };
 
-namespace MDFN_IEN_PSX
-{
-
 #define PS_CPU_EMULATE_ICACHE 1
 
 class PS_CPU
@@ -193,7 +190,6 @@ class PS_CPU
  void (*ADDBT)(uint32_t from, uint32_t to, bool exception);
 };
 
-}
 
 #ifdef __cplusplus
 extern "C" {

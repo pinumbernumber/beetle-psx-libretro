@@ -63,9 +63,6 @@ struct
 static uint32_t IPCache;
 static bool Halted;
 
-namespace MDFN_IEN_PSX
-{
-
 
 PS_CPU::PS_CPU()
 {
@@ -939,7 +936,4 @@ void PS_CPU::CheckBreakpoints(void (*callback)(bool write, uint32_t address, uns
     END_OPF;
 
  }
-}
-
-
 }

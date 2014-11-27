@@ -1446,7 +1446,7 @@ void CDC_Write(const int32_t timestamp, uint32 A, uint8 V)
 		}
 #endif
 
-      PendingCommandCounter = 10500 + MDFN_IEN_PSX::PSX_GetRandU32(0, 3000) + 1815;
+      PendingCommandCounter = 10500 + PSX_GetRandU32(0, 3000) + 1815;
       PendingCommand = V;
       PendingCommandPhase = -1;
       ArgsReceiveIn = 0;
@@ -1572,7 +1572,7 @@ void CDC_Write(const int32_t timestamp, uint32 A, uint8 V)
 		}
 		break;
   }
-  PSX_SetEventNT(MDFN_IEN_PSX::PSX_EVENT_CDC, timestamp + CDC_CalcNextEvent());
+  PSX_SetEventNT(PSX_EVENT_CDC, timestamp + CDC_CalcNextEvent());
  }
 }
 
@@ -1743,7 +1743,7 @@ int32 CDC_CalcSeekTime(int32 initial, int32 target, bool motor_on, bool paused)
       }
    }
 
-   ret += MDFN_IEN_PSX::PSX_GetRandU32(0, 25000);
+   ret += PSX_GetRandU32(0, 25000);
 
    //PSX_DBG(PSX_DBG_SPARSE, "[CDC] CalcSeekTime() = %d\n", ret);
 

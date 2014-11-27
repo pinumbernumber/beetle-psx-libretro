@@ -3965,7 +3965,7 @@ static void FrontIO_CheckStartStopPending(int32_t timestamp, bool skip_event_set
       ClockDivider = 0;
 
    if(!(skip_event_set))
-      PSX_SetEventNT(MDFN_IEN_PSX::PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
+      PSX_SetEventNT(PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
 }
 
 /* DSR IRQ bit setting appears(from indirect tests on real PS1) 
@@ -4683,7 +4683,7 @@ void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
          Devices[i]->DrawCrosshairs(pixels, format, width, pix_clock);
    }
 
-   PSX_SetEventNT(MDFN_IEN_PSX::PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
+   PSX_SetEventNT(PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
 }
 
 

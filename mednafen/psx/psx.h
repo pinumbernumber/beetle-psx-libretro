@@ -25,8 +25,6 @@
 //
 //
 
-namespace MDFN_IEN_PSX
-{
  #define PSX_DBG_ERROR		0	// Emulator-level error.
  #define PSX_DBG_WARNING	1	// Warning about game doing questionable things/hitting stuff that might not be emulated correctly.
  #define PSX_DBG_BIOS_PRINT	2	// BIOS printf/putchar output.
@@ -89,7 +87,6 @@ namespace MDFN_IEN_PSX
  void PSX_GPULineHook(const int32_t timestamp, const int32_t line_timestamp, bool vsync, uint32_t *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divide);
 
  uint32_t PSX_GetRandU32(uint32_t mina, uint32_t maxa);
-};
 
 
 #include "dis.h"
@@ -100,11 +97,8 @@ namespace MDFN_IEN_PSX
 //#include "sio.h"
 #include "debug.h"
 
-namespace MDFN_IEN_PSX
-{
  extern PS_CPU *CPU;
  extern MultiAccessSizeMem<2048 * 1024, uint32_t, false> MainRAM;
-};
 
 
 #endif

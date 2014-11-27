@@ -2643,7 +2643,7 @@ int32_t GPU_Update(const int32_t sys_timestamp)
 
       if(!LineClockCounter)
       {
-         PSX_SetEventNT(MDFN_IEN_PSX::PSX_EVENT_TIMER, TIMER_Update(sys_timestamp));  // We could just call this at the top of GPU_Update(), but do it here for slightly less CPU usage(presumably).
+         PSX_SetEventNT(PSX_EVENT_TIMER, TIMER_Update(sys_timestamp));  // We could just call this at the top of GPU_Update(), but do it here for slightly less CPU usage(presumably).
 
          LinePhase = (LinePhase + 1) & 1;
 
@@ -2680,7 +2680,7 @@ int32_t GPU_Update(const int32_t sys_timestamp)
                if(sl_zero_reached)
                {
                   //printf("Req Exit(visible fallthrough case): %u\n", scanline);
-                  MDFN_IEN_PSX::PSX_RequestMLExit();
+                  PSX_RequestMLExit();
                }
             }
 
@@ -2689,7 +2689,7 @@ int32_t GPU_Update(const int32_t sys_timestamp)
                if(sl_zero_reached)
                {
                   //printf("Req Exit(final fallthrough case): %u\n", scanline);
-                  MDFN_IEN_PSX::PSX_RequestMLExit();
+                  PSX_RequestMLExit();
                }
 
                if(DisplayMode & 0x20)
@@ -2771,12 +2771,14 @@ int32_t GPU_Update(const int32_t sys_timestamp)
                   if(scanline >= (FirstVisibleLine + VisibleLineCount) || (scanline >= (HardwarePALType ? 260 : 232)))
                   {
                      //printf("Req Exit(vblank case): %u\n", scanline);
-                     MDFN_IEN_PSX::PSX_RequestMLExit();
+                     PSX_RequestMLExit();
                   }
+#if 0
                   else
                   {
                      //printf("VBlank too early, chickening out early exit!\n");
                   }
+#endif
                }
 
                //printf("VBLANK: %u\n", scanline);
@@ -2876,7 +2878,7 @@ int32_t GPU_Update(const int32_t sys_timestamp)
                pix_clock = (HardwarePALType ? 53203425 : 53693182) / DotClockRatios[dmc];
                pix_clock_div = DotClockRatios[dmc];
             }
-            MDFN_IEN_PSX::PSX_GPULineHook(sys_timestamp, sys_timestamp - ((uint64)gpu_clocks * 65536) / GPUClockRatio, scanline == 0, dest, &surface->format, dmw_width, pix_clock_offset, pix_clock, pix_clock_div);
+            PSX_GPULineHook(sys_timestamp, sys_timestamp - ((uint64)gpu_clocks * 65536) / GPUClockRatio, scanline == 0, dest, &surface->format, dmw_width, pix_clock_offset, pix_clock, pix_clock_div);
 
             if(!InVBlank)
                DisplayFB_CurYOffset = (DisplayFB_CurYOffset + 1) & 0x1FF;
