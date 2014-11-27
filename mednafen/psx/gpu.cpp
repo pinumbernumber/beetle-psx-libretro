@@ -1092,7 +1092,7 @@ static INLINE void GPU_LinePointsToFXPStep(bool shaded,
    }
 }
 
-static void G_Command_DrawPolygon(int numvertices, bool shaded, bool textured, int BlendMode,
+static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool textured, int BlendMode,
       bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
 {
    const unsigned cb0 = cb[0];
@@ -1553,7 +1553,7 @@ static INLINE void G_Command_DrawSprite(uint8 raw_size, bool textured, int Blend
    }
 }
 
-static void G_Command_DrawLine(bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
+static INLINE void G_Command_DrawLine(bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
 {
    const uint8 cc = cb[0] >> 24; // For pline handling later.
    line_point points[2];
@@ -2159,113 +2159,100 @@ static void GPU_ProcessFIFO(void)
 
       int TexModeLut[4]={0,1,2,2};
 
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3),
-                            ((cc & 0x10) >> 4),
-                            ((cc & 0x4) >> 2),
-                            ((cc & 0x2) >> 1) ? abr : -1,
-                            ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
-                            (cc&0x4)?TexModeLut[TexMode]:0,
-                            MaskEvalAND,
-                            cb);
+      /*
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3),
+                               ((cc & 0x10) >> 4),
+                               ((cc & 0x4) >> 2),
+                               ((cc & 0x2) >> 1) ? abr : -1,
+                               ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+                               (cc&0x4)?TexModeLut[TexMode]:0,
+                               MaskEvalAND,
+                               cb);
+      */
+
+      switch(cc&0x7)
+      {
+      case 0x0:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x1:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x2:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x3:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x4:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x5:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x6:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x7:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+
+      }
    }
    else if (cc >= 0x40 && cc <= 0x5f)
    {
       LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
+
 
       G_Command_DrawLine(((cc & 0x08) >> 3),
                          ((cc & 0x10) >> 4),
                          ((cc & 0x2) >> 1) ? abr : -1,
                          MaskEvalAND,
                          CB);
+
    }
    else if (cc >= 0x60 && cc <= 0x7f)
    {
       LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
       int TexModeLut[4]={0,1,2,2};
 
+      /*
+         G_Command_DrawSprite((cc >> 3) & 0x3,
+                              ((cc & 0x4) >> 2),
+                              ((cc & 0x2) >> 1) ? abr : -1,
+                              ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+                              (cc&0x4)?TexModeLut[TexMode]:0,
+                              MaskEvalAND,
+                              CB);
+      */
+
      switch(cc&0x7)
      {
      case 0x0:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             0,
-                             -1,
-                             0,
-                             0,
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, -1, 0, 0, MaskEvalAND, CB);
         break;
      case 0x1:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             0,
-                             -1,
-                             0,
-                             0,
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, -1, 0, 0, MaskEvalAND, CB);
         break;
      case 0x2:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             0,
-                             abr,
-                             0,
-                             0,
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, abr, 0, 0, MaskEvalAND, CB);
         break;
      case 0x3:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             0,
-                             abr,
-                             0,
-                             0,
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, abr, 0, 0, MaskEvalAND, CB);
         break;
      case 0x4:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             1,
-                             -1,
-                             1,
-                             TexModeLut[TexMode],
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
         break;
      case 0x5:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             1,
-                             -1,
-                             0,
-                             TexModeLut[TexMode],
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
         break;
      case 0x6:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             1,
-                             abr,
-                             1,
-                             TexModeLut[TexMode],
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
         break;
      case 0x7:
-        G_Command_DrawSprite((cc >> 3) & 0x3,
-                             1,
-                             abr,
-                             0,
-                             TexModeLut[TexMode],
-                             MaskEvalAND,
-                             CB);
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
         break;
      }
-
-//      G_Command_DrawSprite((cc >> 3) & 0x3,
-//                           ((cc & 0x4) >> 2),
-//                           ((cc & 0x2) >> 1) ? abr : -1,
-//                           ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
-//                           (cc&0x4)?TexModeLut[TexMode]:0,
-//                           MaskEvalAND,
-//                           CB);
    }
    else
    {
