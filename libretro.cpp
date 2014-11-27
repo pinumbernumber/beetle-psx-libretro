@@ -391,13 +391,6 @@ void DMA_CheckReadDebug(uint32_t A);
 // Remember to update MemPeek<>() when we change address decoding in MemRW()
 template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32_t &timestamp, uint32_t A, uint32_t &V)
 {
-#if 0
-   if(IsWrite)
-      printf("Write%d: %08x(orig=%08x), %08x\n", (int)(sizeof(T) * 8), A & mask[A >> 29], A, V);
-   else
-      printf("Read%d: %08x(orig=%08x)\n", (int)(sizeof(T) * 8), A & mask[A >> 29], A);
-#endif
-
    if(!IsWrite)
       timestamp += sucksuck;
 
@@ -407,14 +400,8 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
    if(A < 0x00800000)
       //if(A <= 0x1FFFFF)
    {
-      if(IsWrite)
-      {
-         //timestamp++;	// Best-case timing.
-      }
-      else
-      {
+      if(!IsWrite)
          timestamp += 3;
-      }
 
       //DMA_CheckReadDebug(A);
       //assert(A <= 0x1FFFFF);
@@ -712,11 +699,7 @@ template<typename T, bool IsWrite, bool Access24> static INLINE void MemRW(int32
       return;
    }
 
-   if(IsWrite)
-   {
-      PSX_WARNING("[MEM] Unknown write%d to %08x at time %d, =%08x(%d)", (int)(sizeof(T) * 8), A, timestamp, V, V);
-   }
-   else
+   if(!IsWrite)
    {
       V = 0;
       PSX_WARNING("[MEM] Unknown read%d from %08x at time %d", (int)(sizeof(T) * 8), A, timestamp);
@@ -798,6 +781,7 @@ template<typename T, bool Access24> static INLINE uint32_t MemPeek(int32_t times
 
    if(A >= 0x1F801000 && A <= 0x1F802FFF)
    {
+#if 0
       if(A >= 0x1F801C00 && A <= 0x1F801FFF) // SPU
       {
          // TODO
@@ -823,6 +807,7 @@ template<typename T, bool Access24> static INLINE uint32_t MemPeek(int32_t times
          // TODO
 
       }
+#endif
 
       if(A >= 0x1F801000 && A <= 0x1F801023)
       {
@@ -830,6 +815,7 @@ template<typename T, bool Access24> static INLINE uint32_t MemPeek(int32_t times
          return((SysControl.Regs[index] | SysControl_OR[index]) >> ((A & 3) * 8));
       }
 
+#if 0
       if(A >= 0x1F801040 && A <= 0x1F80104F)
       {
          // TODO
@@ -860,6 +846,7 @@ template<typename T, bool Access24> static INLINE uint32_t MemPeek(int32_t times
          // TODO
 
       }
+#endif
    }
 
 
