@@ -1830,9 +1830,6 @@ static void G_Command_Null(const uint32 *cb)
 {
 }
 
-#define POLY_HELPER_SUB(bm, cv, tm, mam, cb)	\
-   G_Command_DrawPolygon(3 + ((cv & 0x8) >> 3), ((cv & 0x10) >> 4), ((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam , cb)
-
 #define POLY_HELPER(cv)														\
 { 															\
    1 + (3 /*+ ((cv & 0x8) >> 3)*/) * ( 1 + ((cv & 0x4) >> 2) + ((cv & 0x10) >> 4) ) - ((cv & 0x10) >> 4),			\
@@ -1843,8 +1840,6 @@ static void G_Command_Null(const uint32 *cb)
 //
 //
 
-#define SPR_HELPER_SUB(bm, cv, tm, mam, CB) G_Command_DrawSprite((cv >> 3) & 0x3,	((cv & 0x4) >> 2), ((cv & 0x2) >> 1) ? bm : -1, ((cv & 1) ^ 1) & ((cv & 0x4) >> 2), tm, mam, CB)
-
 #define SPR_HELPER(cv)												\
 {													\
    2 + ((cv & 0x4) >> 2) + ((cv & 0x18) ? 0 : 1),								\
@@ -1854,8 +1849,6 @@ static void G_Command_Null(const uint32 *cb)
 
 //
 //
-
-#define LINE_HELPER_SUB(bm, cv, mam, CB) G_Command_DrawLine(((cv & 0x08) >> 3), ((cv & 0x10) >> 4), ((cv & 0x2) >> 1) ? bm : -1, mam, CB)
 
 #define LINE_HELPER(cv)												\
 { 													\
@@ -2165,18 +2158,38 @@ static void GPU_ProcessFIFO(void)
       }
 
       int TexModeLut[4]={0,1,2,2};
-      POLY_HELPER_SUB(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
+
+      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3),
+                            ((cc & 0x10) >> 4),
+                            ((cc & 0x4) >> 2),
+                            ((cc & 0x2) >> 1) ? abr : -1,
+                            ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+                            (cc&0x4)?TexModeLut[TexMode]:0,
+                            (MaskEvalAND ? 0x1 : 0x0),
+                            cb);
    }
    else if (cc >= 0x40 && cc <= 0x5f)
    {
       LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
-      LINE_HELPER_SUB(abr,cc, (MaskEvalAND ? 0x1 : 0x0), CB);
+
+      G_Command_DrawLine(((cc & 0x08) >> 3),
+                         ((cc & 0x10) >> 4),
+                         ((cc & 0x2) >> 1) ? abr : -1,
+                         (MaskEvalAND ? 0x1 : 0x0),
+                         CB);
    }
    else if (cc >= 0x60 && cc <= 0x7f)
    {
       LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
       int TexModeLut[4]={0,1,2,2};
-      SPR_HELPER_SUB(abr,cc, (cc&0x4)?TexModeLut[TexMode]:0,(MaskEvalAND ? 0x1 : 0x0), CB);
+
+      G_Command_DrawSprite((cc >> 3) & 0x3,
+                           ((cc & 0x4) >> 2),
+                           ((cc & 0x2) >> 1) ? abr : -1,
+                           ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+                           (cc&0x4)?TexModeLut[TexMode]:0,
+                           (MaskEvalAND ? 0x1 : 0x0),
+                           CB);
    }
    else
    {
