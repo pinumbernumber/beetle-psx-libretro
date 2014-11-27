@@ -1,9 +1,6 @@
 #ifndef __MDFN_PSX_FRONTIO_H
 #define __MDFN_PSX_FRONTIO_H
 
-namespace MDFN_IEN_PSX
-{
-
 class InputDevice_Multitap;
 
 class InputDevice
@@ -95,5 +92,4 @@ int FrontIO_StateAction(StateMem* sm, int load, int data_only);
 
 extern InputInfoStruct FIO_InputInfo;
 
-}
 #endif

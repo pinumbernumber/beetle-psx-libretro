@@ -8,16 +8,8 @@ else
 	$(CORE_DIR)/dis.cpp \
 	$(CORE_DIR)/cdc.cpp \
 	$(CORE_DIR)/spu.cpp \
-	$(CORE_DIR)/gpu.cpp \
-	$(CORE_DIR)/input/gamepad.cpp \
-	$(CORE_DIR)/input/dualanalog.cpp \
-	$(CORE_DIR)/input/dualshock.cpp \
-	$(CORE_DIR)/input/justifier.cpp \
-	$(CORE_DIR)/input/guncon.cpp \
-	$(CORE_DIR)/input/negcon.cpp \
-	$(CORE_DIR)/input/memcard.cpp \
-	$(CORE_DIR)/input/multitap.cpp \
-	$(CORE_DIR)/input/mouse.cpp
+	$(CORE_DIR)/gpu.cpp
+
 	CORE_SOURCES_C := $(CORE_DIR)/sio.c \
 	$(CORE_DIR)/irq.c \
 	$(CORE_DIR)/timer.c \
