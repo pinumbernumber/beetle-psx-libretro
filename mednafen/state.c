@@ -15,10 +15,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "mednafen.h"
+#include <boolean.h>
+#include "mednafen-types.h"
+#include "mednafen-endian.h"
 #include "state.h"
-#include "video.h"
 #include "msvc_compat.h"
 #define RLSB      MDFNSTATE_RLSB //0x80000000
 

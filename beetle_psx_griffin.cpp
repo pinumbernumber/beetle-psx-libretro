@@ -21,7 +21,6 @@
 #include "mednafen/FileStream.cpp"
 #include "mednafen/MemoryStream.cpp"
 #include "mednafen/Stream.cpp"
-#include "mednafen/state.cpp"
 
 #ifdef NEED_CD
 #include "mednafen/cdrom/CDAccess.cpp"

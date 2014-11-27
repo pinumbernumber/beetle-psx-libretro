@@ -1,6 +1,10 @@
 #ifndef _STATE_H
 #define _STATE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "state-common.h"
 
 // Eh, we abuse the smem_* in-memory stream code
@@ -26,5 +30,9 @@ int smem_read32le(StateMem *st, uint32 *b);
 #define MDFNSTATE_RLSB64          0x10000000
 
 #define MDFNSTATE_BOOL		  0x08000000
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

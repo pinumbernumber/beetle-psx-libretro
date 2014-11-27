@@ -19,6 +19,7 @@
 #include "mednafen/trio/triostr.c"
 
 #include "mednafen/mednafen-endian.c"
+#include "mednafen/state.c"
 #include "mednafen/video/Deinterlacer.c"
 #include "mednafen/video/surface.c"
 
