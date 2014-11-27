@@ -565,12 +565,6 @@ bool InputDevice_DualAnalog::Clock(bool TxD, int32 &dsr_pulse_delay)
  return(ret);
 }
 
-InputDevice *Device_DualAnalog_Create(bool joystick_mode)
-{
- return new InputDevice_DualAnalog(joystick_mode);
-}
-
-
 InputDeviceInputInfoStruct Device_DualAnalog_IDII[24] =
 {
  { "select", "SELECT", 4, IDIT_BUTTON, NULL },
@@ -1622,12 +1616,6 @@ bool InputDevice_DualShock::Clock(bool TxD, int32 &dsr_pulse_delay)
  return(ret);
 }
 
-InputDevice *Device_DualShock_Create(const std::string &name)
-{
- return new InputDevice_DualShock(name);
-}
-
-
 InputDeviceInputInfoStruct Device_DualShock_IDII[26] =
 {
  { "select", "SELECT", 4, IDIT_BUTTON, NULL },
@@ -1847,12 +1835,6 @@ bool InputDevice_Gamepad::Clock(bool TxD, int32 &dsr_pulse_delay)
 
  return(ret);
 }
-
-InputDevice *Device_Gamepad_Create(void)
-{
- return new InputDevice_Gamepad();
-}
-
 
 InputDeviceInputInfoStruct Device_Gamepad_IDII[16] =
 {
@@ -2186,12 +2168,6 @@ bool InputDevice_GunCon::Clock(bool TxD, int32 &dsr_pulse_delay)
 
  return(ret);
 }
-
-InputDevice *Device_GunCon_Create(void)
-{
- return new InputDevice_GunCon();
-}
-
 
 InputDeviceInputInfoStruct Device_GunCon_IDII[6] =
 {
@@ -2539,12 +2515,6 @@ bool InputDevice_Justifier::Clock(bool TxD, int32 &dsr_pulse_delay)
 
  return(ret);
 }
-
-InputDevice *Device_Justifier_Create(void)
-{
- return new InputDevice_Justifier();
-}
-
 
 InputDeviceInputInfoStruct Device_Justifier_IDII[6] =
 {
@@ -3073,11 +3043,6 @@ void InputDevice_Memcard::ResetNVDirtyCount(void)
 }
 
 
-InputDevice *Device_Memcard_Create(void)
-{
- return new InputDevice_Memcard();
-}
-
 class InputDevice_Mouse : public InputDevice
 {
  public:
@@ -3345,12 +3310,6 @@ bool InputDevice_Mouse::Clock(bool TxD, int32 &dsr_pulse_delay)
 
  return(ret);
 }
-
-InputDevice *Device_Mouse_Create(void)
-{
- return new InputDevice_Mouse();
-}
-
 
 InputDeviceInputInfoStruct Device_Mouse_IDII[4] =
 {
@@ -3932,12 +3891,6 @@ bool InputDevice_neGcon::Clock(bool TxD, int32 &dsr_pulse_delay)
  return(ret);
 }
 
-InputDevice *Device_neGcon_Create(void)
-{
- return new InputDevice_neGcon();
-}
-
-
 InputDeviceInputInfoStruct Device_neGcon_IDII[21] =
 {
  { NULL, "empty", -1, IDIT_BUTTON, NULL },
@@ -4281,7 +4234,7 @@ void FrontIO_New(bool emulate_memcards_[8], bool emulate_multitap_[2])
    {
       DeviceData[i] = NULL;
       Devices[i] = new InputDevice();
-      DevicesMC[i] = Device_Memcard_Create();
+      DevicesMC[i] = new InputDevice_Memcard();
       chair_colors[i] = 1 << 24;
       Devices[i]->SetCrosshairsColor(chair_colors[i]);
    }
@@ -4774,44 +4727,44 @@ void FrontIO_SetInput(unsigned int port, const char *type, void *ptr)
 
    if(!strcmp(type, "gamepad") || !strcmp(type, "dancepad"))
    {
-      Devices[port] = Device_Gamepad_Create();
+      Devices[port] = new InputDevice_Gamepad();
       DevicesType[port] = INPUTDEVICE_GAMEPAD;
    }
    else if(!strcmp(type, "dualanalog"))
    {
-      Devices[port] = Device_DualAnalog_Create(false);
+      Devices[port] = new InputDevice_DualAnalog(false);
       DevicesType[port] = INPUTDEVICE_DUALANALOG;
    }
    else if(!strcmp(type, "analogjoy"))
    {
-      Devices[port] = Device_DualAnalog_Create(true);
+      Devices[port] = new InputDevice_DualAnalog(true);
       DevicesType[port] = INPUTDEVICE_ANALOG_JOYSTICK;
    }
    else if(!strcmp(type, "dualshock"))
    {
       char name[256];
       snprintf(name, 256, _("DualShock on port %u"), port + 1);
-      Devices[port] = Device_DualShock_Create(std::string(name));
+      Devices[port] = new InputDevice_DualShock(std::string(name));
       DevicesType[port] = INPUTDEVICE_DUALSHOCK;
    }
    else if(!strcmp(type, "mouse"))
    {
-      Devices[port] = Device_Mouse_Create();
+      Devices[port] = new InputDevice_Mouse();
       DevicesType[port] = INPUTDEVICE_MOUSE;
    }
    else if(!strcmp(type, "negcon"))
    {
-      Devices[port] = Device_neGcon_Create();
+      Devices[port] = new InputDevice_neGcon();
       DevicesType[port] = INPUTDEVICE_NEGCON;
    }
    else if(!strcmp(type, "guncon"))
    {
-      Devices[port] = Device_GunCon_Create();
+      Devices[port] = new InputDevice_GunCon();
       DevicesType[port] = INPUTDEVICE_GUNCON;
    }
    else if(!strcmp(type, "justifier"))
    {
-      Devices[port] = Device_Justifier_Create();
+      Devices[port] = new InputDevice_Justifier();
       DevicesType[port] = INPUTDEVICE_JUSTIFIER;
    }
    else
