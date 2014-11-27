@@ -2124,6 +2124,235 @@ static void GPU_ProcessFIFO(void)
       CB[i] = SimpleFIFO_ReadUnit(BlitterFIFO);
       SimpleFIFO_ReadUnitIncrement(BlitterFIFO);
    }
+#if 1
+   int TexModeLut[4]={0,1,2,2};
+
+   switch(cc>>5)
+   {
+   case 0x0:
+      switch(cc)
+      {
+         case 0x02:
+            LOG_GPU_FIFO("CC #%d : FBFill.\n", cc);
+
+            G_Command_FBFill(CB);
+            break;
+         case 0x1F:
+            LOG_GPU_FIFO("CC #%d : IRQ.\n", cc);
+
+            IRQPending = true;
+            IRQ_Assert(IRQ_GPU, IRQPending);
+            break;
+      }
+      break;
+   case 0x1:
+      LOG_GPU_FIFO("CC #%d : DrawPolygon.\n", cc);
+      // A very very ugly kludge to support texture mode specialization. fixme/cleanup/SOMETHING in the future.
+      if(InCmd == INCMD_NONE && (cc & 0x4))
+      {
+         uint32 tpage = CB[4 + ((cc >> 4) & 0x1)] >> 16;
+
+         TexPageX = (tpage & 0xF) * 64;
+         TexPageY = (tpage & 0x10) * 16;
+
+         SpriteFlip = tpage & 0x3000;
+
+         abr = (tpage >> 5) & 0x3;
+         TexMode = (tpage >> 7) & 0x3;
+      }
+
+      /*
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3),
+                               ((cc & 0x10) >> 4),
+                               ((cc & 0x4) >> 2),
+                               ((cc & 0x2) >> 1) ? abr : -1,
+                               ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+                               (cc&0x4)?TexModeLut[TexMode]:0,
+                               MaskEvalAND,
+                               cb);
+      */
+
+      switch(cc&0x7)
+      {
+      case 0x0:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x1:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x2:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x3:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x4:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x5:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x6:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x7:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+
+      }
+      break;
+   case 0x2:
+      LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
+
+      /*
+         G_Command_DrawLine(((cc & 0x08) >> 3),
+                            ((cc & 0x10) >> 4),
+                            ((cc & 0x2) >> 1) ? abr : -1,
+                            MaskEvalAND,
+                            CB);
+      */
+
+      switch(((cc & 0x02) >> 1) | ((cc & 0x18) >> 2))
+      {
+      case 0x00:
+         G_Command_DrawLine(0, 0, -1, MaskEvalAND, CB);
+         break;
+      case 0x01:
+         G_Command_DrawLine(0, 0, abr, MaskEvalAND, CB);
+         break;
+      case 0x02:
+         G_Command_DrawLine(1, 0, -1, MaskEvalAND, CB);
+         break;
+      case 0x03:
+         G_Command_DrawLine(1, 0, abr, MaskEvalAND, CB);
+         break;
+      case 0x04:
+         G_Command_DrawLine(0, 1, -1, MaskEvalAND, CB);
+         break;
+      case 0x05:
+         G_Command_DrawLine(0, 1, abr, MaskEvalAND, CB);
+         break;
+      case 0x06:
+         G_Command_DrawLine(1, 1, -1, MaskEvalAND, CB);
+         break;
+      case 0x07:
+         G_Command_DrawLine(1, 1, abr, MaskEvalAND, CB);
+         break;
+      }
+      break;
+   case 0x3:
+      LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
+
+      /*
+         G_Command_DrawSprite((cc >> 3) & 0x3,
+                              ((cc & 0x4) >> 2),
+                              ((cc & 0x2) >> 1) ? abr : -1,
+                              ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+                              (cc&0x4)?TexModeLut[TexMode]:0,
+                              MaskEvalAND,
+                              CB);
+      */
+
+     switch(cc&0x7)
+     {
+     case 0x0:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, -1, 0, 0, MaskEvalAND, CB);
+        break;
+     case 0x1:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, -1, 0, 0, MaskEvalAND, CB);
+        break;
+     case 0x2:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, abr, 0, 0, MaskEvalAND, CB);
+        break;
+     case 0x3:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 0, abr, 0, 0, MaskEvalAND, CB);
+        break;
+     case 0x4:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+        break;
+     case 0x5:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+        break;
+     case 0x6:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+        break;
+     case 0x7:
+        G_Command_DrawSprite((cc >> 3) & 0x3, 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+        break;
+     }
+     break;
+   case 0x4:
+      LOG_GPU_FIFO("CC #%d : FBCopy.\n", cc);
+      G_Command_FBCopy(CB);
+      break;
+   case 0x5:
+      LOG_GPU_FIFO("CC #%d : FBWrite.\n", cc);
+      G_Command_FBWrite(CB);
+      break;
+   case 0x6:
+      LOG_GPU_FIFO("CC #%d : FBRead.\n", cc);
+      G_Command_FBRead(CB);
+      break;
+   case 0x7:
+      switch(cc)
+      {
+      case 0xE1:
+         LOG_GPU_FIFO("CC #%d : DrawMode.\n", cc);
+
+         TexPageX = (*cb & 0xF) * 64;
+         TexPageY = (*cb & 0x10) * 16;
+
+         SpriteFlip = *cb & 0x3000;
+
+         abr = (*cb >> 5) & 0x3;
+         TexMode = (*cb >> 7) & 0x3;
+
+         dtd = (*cb >> 9) & 1;
+         dfe = (*cb >> 10) & 1;
+         //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
+         break;
+      case 0xE2:
+         LOG_GPU_FIFO("CC #%d : TexWindow.\n", cc);
+
+         tww = (*cb & 0x1F);
+         twh = ((*cb >> 5) & 0x1F);
+         twx = ((*cb >> 10) & 0x1F);
+         twy = ((*cb >> 15) & 0x1F);
+
+         GPU_RecalcTexWindowLUT();
+         break;
+      case 0xE3:
+         LOG_GPU_FIFO("CC #%d : Clip0.\n", cc);
+
+         ClipX0 = *cb & 1023;
+         ClipY0 = (*cb >> 10) & 1023;
+         break;
+      case 0xE4:
+         LOG_GPU_FIFO("CC #%d : Clip1.\n", cc);
+
+         ClipX1 = *cb & 1023;
+         ClipY1 = (*cb >> 10) & 1023;
+         break;
+      case 0xE5:
+         LOG_GPU_FIFO("CC #%d : DrawingOffset.\n", cc);
+
+         OffsX = sign_x_to_s32(11, (*cb & 2047));
+         OffsY = sign_x_to_s32(11, ((*cb >> 11) & 2047));
+
+         //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
+         break;
+      case 0xE6:
+         LOG_GPU_FIFO("CC #%d : MaskSetting.\n", cc);
+
+         //printf("Mask setting: %08x\n", *cb);
+         MaskSetOR   = (*cb & 1) ? 0x8000 : 0x0000;
+         MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
+         break;
+      }
+   }
+
+
+#else
 
    if (cc >= 0xA0 && cc <= 0xBF)
    {
@@ -2352,6 +2581,7 @@ static void GPU_ProcessFIFO(void)
             break;
       }
    }
+#endif
 }
 
 static INLINE void GPU_WriteCB(uint32_t InData)
