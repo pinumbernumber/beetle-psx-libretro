@@ -13,7 +13,6 @@ class InputDevice
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
 
- virtual bool RequireNoFrameskip(void);
  // Divide mouse X coordinate by pix_clock_divider in the lightgun code to get the coordinate in pixel(clocks).
  virtual int32_t GPULineHook(const int32_t line_timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider);
 
@@ -122,8 +121,6 @@ uint32_t FrontIO_Read(int32_t timestamp, uint32_t A);
 int32_t FrontIO_CalcNextEventTS(int32_t timestamp, int32_t next_event);
 int32_t FrontIO_Update(int32_t timestamp);
 void FrontIO_ResetTS(void);
-
-bool FrontIO_RequireNoFrameskip(void);
 
 void FrontIO_GPULineHook(const int32_t timestamp,
       const int32_t line_timestamp, bool vsync,

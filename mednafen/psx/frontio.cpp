@@ -305,7 +305,6 @@ class InputDevice_GunCon : public InputDevice
 
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
- virtual bool RequireNoFrameskip(void);
  virtual int32_t GPULineHook(const int32_t line_timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider);
 
  //
@@ -1811,11 +1810,6 @@ int InputDevice_GunCon::StateAction(StateMem* sm, int load, int data_only, const
    return(ret);
 }
 
-bool InputDevice_GunCon::RequireNoFrameskip(void)
-{
- return(true);
-}
-
 int32_t InputDevice_GunCon::GPULineHook(const int32_t line_timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width,
       const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider)
 {
@@ -1999,7 +1993,6 @@ class InputDevice_Justifier : public InputDevice
 
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
- virtual bool RequireNoFrameskip(void);
  virtual int32_t GPULineHook(const int32_t timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider);
 
  //
@@ -2124,11 +2117,6 @@ int InputDevice_Justifier::StateAction(StateMem* sm, int load, int data_only, co
    }
 
    return(ret);
-}
-
-bool InputDevice_Justifier::RequireNoFrameskip(void)
-{
- return(true);
 }
 
 int32_t InputDevice_Justifier::GPULineHook(const int32_t timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider)
@@ -3716,11 +3704,6 @@ int FrontIO_StateAction(StateMem* sm, int load, int data_only)
    return(ret);
 }
 
-bool InputDevice::RequireNoFrameskip(void)
-{
- return false;
-}
-
 int32_t InputDevice::GPULineHook(const int32_t timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider)
 {
  return(PSX_EVENT_MAXTS);
@@ -4648,16 +4631,24 @@ void FrontIO_SaveMemcard(unsigned int which, const char *path)
    }
 }
 
-bool FrontIO_RequireNoFrameskip(void)
+#if 0
+static bool FrontIO_RequireNoFrameskip(void)
 {
    unsigned i;
 
    for(i = 0; i < 8; i++)
-      if(Devices[i]->RequireNoFrameskip())
-         return(true);
+   {
+      switch (DevicesType[i])
+      {
+         case INPUTDEVICE_GUNCON:
+         case INPUTDEVICE_JUSTIFIER:
+            return true;
+      }
+   }
 
    return(false);
 }
+#endif
 
 void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
       bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format,
