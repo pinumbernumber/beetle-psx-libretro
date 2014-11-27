@@ -65,7 +65,8 @@ CDIF *CDIF_New(CDAccess *cda)
 
    if(cdif->disc_toc.first_track < 1 || cdif->disc_toc.last_track > 99 || cdif->disc_toc.first_track > cdif->disc_toc.last_track)
    {
-      throw(MDFN_Error(0, _("TOC first(%d)/last(%d) track numbers bad."), cdif->disc_toc.first_track, cdif->disc_toc.last_track));
+      log_cb(RETRO_LOG_ERROR, "TOC first(%d)/last(%d) track numbers bad.\n", cdif->disc_toc.first_track, cdif->disc_toc.last_track);
+      return NULL;
    }
 
    return cdif;
@@ -162,7 +163,7 @@ bool CDIF_ReadRawSector(CDIF *cdif, uint8 *buf, uint32 lba)
 bool CDIF_Eject(CDIF *cdif, bool eject_status)
 {
    if(cdif->UnrecoverableError)
-      return(false);
+      return false;
 
    int32 old_de = cdif->DiscEjected;
    cdif->DiscEjected = eject_status;
@@ -177,12 +178,13 @@ bool CDIF_Eject(CDIF *cdif, bool eject_status)
 
          if(cdif->disc_toc.first_track < 1 || cdif->disc_toc.last_track > 99 || cdif->disc_toc.first_track > cdif->disc_toc.last_track)
          {
-            throw(MDFN_Error(0, _("TOC first(%d)/last(%d) track numbers bad."), cdif->disc_toc.first_track, cdif->disc_toc.last_track));
+            log_cb(RETRO_LOG_ERROR, "TOC first(%d)/last(%d) track numbers bad.\n", cdif->disc_toc.first_track, cdif->disc_toc.last_track);
+            return false;
          }
       }
    }
 
-   return(true);
+   return true;
 }
 
 
@@ -220,35 +222,34 @@ CDIF_Stream_Thing::~CDIF_Stream_Thing()
 
 uint64 CDIF_Stream_Thing::read(void *data, uint64 count, bool error_on_eos)
 {
- if(count > (((uint64)sector_count * 2048) - position))
- {
-  if(error_on_eos)
-  {
-   throw MDFN_Error(0, "EOF");
-  }
+   if(count > (((uint64)sector_count * 2048) - position))
+   {
+      if(error_on_eos)
+      {
+         log_cb(RETRO_LOG_ERROR, "EOF.\n");
+         return 0;
+      }
 
-  count = ((uint64)sector_count * 2048) - position;
- }
+      count = ((uint64)sector_count * 2048) - position;
+   }
 
- if(!count)
-  return(0);
+   if(!count)
+      return 0;
 
- for(uint64 rp = position; rp < (position + count); rp = (rp &~ 2047) + 2048)
- {
-  uint8 buf[2048];  
+   for(uint64 rp = position; rp < (position + count); rp = (rp &~ 2047) + 2048)
+   {
+      uint8 buf[2048];  
 
-  if(!CDIF_ReadSector(cdintf, buf, start_lba + (rp / 2048), 1))
-  {
-   throw MDFN_Error(ErrnoHolder(EIO));
-  }
-  
-  //::printf("Meow: %08llx -- %08llx\n", count, (rp - position) + std::min<uint64>(2048 - (rp & 2047), count - (rp - position)));
-  memcpy((uint8*)data + (rp - position), buf + (rp & 2047), std::min<uint64>(2048 - (rp & 2047), count - (rp - position)));
- }
+      if(!CDIF_ReadSector(cdintf, buf, start_lba + (rp / 2048), 1))
+         return 0;
 
- position += count;
+      //::printf("Meow: %08llx -- %08llx\n", count, (rp - position) + std::min<uint64>(2048 - (rp & 2047), count - (rp - position)));
+      memcpy((uint8*)data + (rp - position), buf + (rp & 2047), std::min<uint64>(2048 - (rp & 2047), count - (rp - position)));
+   }
 
- return count;
+   position += count;
+
+   return count;
 }
 
 void CDIF_Stream_Thing::write(const void *data, uint64 count)
@@ -258,31 +259,27 @@ void CDIF_Stream_Thing::write(const void *data, uint64 count)
 
 void CDIF_Stream_Thing::seek(int64 offset, int whence)
 {
- int64 new_position;
+   int64 new_position;
 
- switch(whence)
- {
-  default:
-	throw MDFN_Error(ErrnoHolder(EINVAL));
-	break;
+   switch(whence)
+   {
+      case SEEK_SET:
+         new_position = offset;
+         break;
 
-  case SEEK_SET:
-	new_position = offset;
-	break;
+      case SEEK_CUR:
+         new_position = position + offset;
+         break;
 
-  case SEEK_CUR:
-	new_position = position + offset;
-	break;
+      case SEEK_END:
+         new_position = ((int64)sector_count * 2048) + offset;
+         break;
+   }
 
-  case SEEK_END:
-	new_position = ((int64)sector_count * 2048) + offset;
-	break;
- }
+   if(new_position < 0 || new_position > ((int64)sector_count * 2048))
+      throw MDFN_Error(ErrnoHolder(EINVAL));
 
- if(new_position < 0 || new_position > ((int64)sector_count * 2048))
-  throw MDFN_Error(ErrnoHolder(EINVAL));
-
- position = new_position;
+   position = new_position;
 }
 
 int64 CDIF_Stream_Thing::tell(void)
