@@ -96,7 +96,6 @@ class InputDevice_Gamepad : public InputDevice
 
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
- virtual void UpdateInput(const void *data);
 
  //
  //
@@ -129,7 +128,6 @@ class InputDevice_DualAnalog : public InputDevice
 
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
- virtual void UpdateInput(const void *data);
 
  //
  //
@@ -166,7 +164,6 @@ class InputDevice_DualShock : public InputDevice
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
  virtual void Update(const int32_t timestamp);
  virtual void ResetTS(void);
- virtual void UpdateInput(const void *data);
 
  virtual void SetAMCT(bool enabled);
  //
@@ -274,7 +271,6 @@ class InputDevice_neGcon : public InputDevice
  virtual ~InputDevice_neGcon();
 
  virtual void Power(void);
- virtual void UpdateInput(const void *data);
 
  //
  //
@@ -309,7 +305,6 @@ class InputDevice_GunCon : public InputDevice
 
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
- virtual void UpdateInput(const void *data);
  virtual bool RequireNoFrameskip(void);
  virtual int32_t GPULineHook(const int32_t line_timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider);
 
@@ -412,35 +407,6 @@ int InputDevice_DualAnalog::StateAction(StateMem* sm, int load, int data_only, c
 
  return(ret);
 }
-
-void InputDevice_DualAnalog::UpdateInput(const void *data)
-{
- uint8 *d8 = (uint8 *)data;
-
- buttons[0] = d8[0];
- buttons[1] = d8[1];
-
- for(int stick = 0; stick < 2; stick++)
- {
-  for(int axis = 0; axis < 2; axis++)
-  {
-     const uint8* aba = &d8[2] + stick * 8 + axis * 4;
-   int32 tmp;
-   
-   //revert to 0.9.33, should be fixed on libretro side instead
-   //tmp = 32768 + MDFN_de16lsb(&aba[0]) - ((int32)MDFN_de16lsb(&aba[2]) * 32768 / 32767);
-   
-   tmp = 32768 + MDFN_de32lsb((const uint8 *)data + stick * 16 + axis * 8 + 4) - ((int32)MDFN_de32lsb((const uint8 *)data + stick * 16 + axis * 8 + 8) * 32768 / 32767);
-   tmp >>= 8;
-
-   axes[stick][axis] = tmp;
-  }
- }
-
- //printf("%d %d %d %d\n", axes[0][0], axes[0][1], axes[1][0], axes[1][1]);
-
-}
-
 
 void InputDevice_DualAnalog::SetDTR(bool new_dtr)
 {
@@ -821,77 +787,6 @@ int InputDevice_DualShock::StateAction(StateMem* sm, int load, int data_only, co
 
  return(ret);
 }
-
-void InputDevice_DualShock::UpdateInput(const void *data)
-{
- uint8 *d8 = (uint8 *)data;
- uint8* const rumb_dp = &d8[3 + 16];
-
- buttons[0] = d8[0];
- buttons[1] = d8[1];
- cur_ana_button_state = d8[2] & 0x01;
-
- for(int stick = 0; stick < 2; stick++)
- {
-  for(int axis = 0; axis < 2; axis++)
-  {
-     const uint8* aba = &d8[3] + stick * 8 + axis * 4;
-   int32 tmp;
-
-   //revert to 0.9.33, should be fixed on libretro side instead
-   //tmp = 32767 + MDFN_de16lsb(&aba[0]) - MDFN_de16lsb(&aba[2]);
-   //tmp = (tmp * 0x100) / 0xFFFF;
-   
-   tmp = 32768 + MDFN_de32lsb((const uint8 *)data + stick * 16 + axis * 8 + 4) - ((int32)MDFN_de32lsb((const uint8 *)data + stick * 16 + axis * 8 + 8) * 32768 / 32767);
-   tmp >>= 8;
-   axes[stick][axis] = tmp;
-  }
- }
-
- //printf("%3d:%3d, %3d:%3d\n", axes[0][0], axes[0][1], axes[1][0], axes[1][1]);
-
- //printf("RUMBLE: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n", rumble_magic[0], rumble_magic[1], rumble_magic[2], rumble_magic[3], rumble_magic[4], rumble_magic[5]);
- //printf("%d, 0x%02x 0x%02x\n", da_rumble_compat, rumble_param[0], rumble_param[1]);
- if(da_rumble_compat == false)
- {
-  uint8 sneaky_weaky = 0;
-
-  if(rumble_param[0] == 0x01)
-   sneaky_weaky = 0xFF;
-
-   //revert to 0.9.33, should be fixed on libretro side instead
-   //MDFN_en16lsb(rumb_dp, (sneaky_weaky << 0) | (rumble_param[1] << 8));
-   
-   MDFN_en32lsb(&d8[4 + 32 + 0], (sneaky_weaky << 0) | (rumble_param[1] << 8));
- }
- else
- {
-  uint8 sneaky_weaky = 0;
-
-  if(((rumble_param[0] & 0xC0) == 0x40) && ((rumble_param[1] & 0x01) == 0x01))
-   sneaky_weaky = 0xFF;
-
-   //revert to 0.9.33, should be fixed on libretro side instead
-   //MDFN_en16lsb(rumb_dp, sneaky_weaky << 0);
-   MDFN_en32lsb(&d8[4 + 32 + 0], sneaky_weaky << 0);
- }
-
- //printf("%d %d %d %d\n", axes[0][0], axes[0][1], axes[1][0], axes[1][1]);
-
- //
- //
- //
- CheckManualAnaModeChange();
-
- if(am_prev_info != analog_mode || aml_prev_info != analog_mode_locked)
- {
-	//MDFN_DispMessage(_("%s: Analog mode is %s(%s)."), gp_name.c_str(), analog_mode ? _("on") : _("off"), analog_mode_locked ? _("locked") : _("unlocked"));
-    MDFN_DispMessage(_("%s: Analog toggle is %s, sticks are %s"), gp_name.c_str(), amct_enabled ? _("ENABLED") : _("DISABLED"), analog_mode ? _("ON") : _("OFF"));  
- }
- aml_prev_info = analog_mode_locked;
- am_prev_info = analog_mode;
-}
-
 
 void InputDevice_DualShock::SetDTR(bool new_dtr)
 {
@@ -1706,16 +1601,6 @@ int InputDevice_Gamepad::StateAction(StateMem* sm, int load, int data_only, cons
  return(ret);
 }
 
-
-void InputDevice_Gamepad::UpdateInput(const void *data)
-{
- uint8 *d8 = (uint8 *)data;
-
- buttons[0] = d8[0];
- buttons[1] = d8[1];
-}
-
-
 void InputDevice_Gamepad::SetDTR(bool new_dtr)
 {
  if(!dtr && new_dtr)
@@ -1960,28 +1845,6 @@ int InputDevice_GunCon::StateAction(StateMem* sm, int load, int data_only, const
    return(ret);
 }
 
-void InputDevice_GunCon::UpdateInput(const void *data)
-{
- uint8 *d8 = (uint8 *)data;
-
- nom_x = (int16)MDFN_de16lsb(&d8[0]);
- nom_y = (int16)MDFN_de16lsb(&d8[2]);
-
- trigger_noclear = (bool)(d8[4] & 0x1);
- trigger_eff |= trigger_noclear;
-
- buttons = d8[4] >> 1;
-
- if(os_shot_counter > 0)	// FIXME if UpdateInput() is ever called more than once per video frame(at ~50 or ~60Hz).
-  os_shot_counter--;
-
- if((d8[4] & 0x8) && !prev_oss && os_shot_counter == 0)
-  os_shot_counter = 4;
- prev_oss = d8[4] & 0x8;
-
- //MDFN_DispMessage("%08x %08x", nom_x, nom_y);
-}
-
 bool InputDevice_GunCon::RequireNoFrameskip(void)
 {
  return(true);
@@ -2180,7 +2043,6 @@ class InputDevice_Justifier : public InputDevice
 
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
- virtual void UpdateInput(const void *data);
  virtual bool RequireNoFrameskip(void);
  virtual int32_t GPULineHook(const int32_t timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider);
 
@@ -2261,26 +2123,6 @@ void InputDevice_Justifier::Power(void)
 
  prev_vsync = 0;
  line_counter = 0;
-}
-
-void InputDevice_Justifier::UpdateInput(const void *data)
-{
- uint8 *d8 = (uint8 *)data;
-
- nom_x = (int16)MDFN_de16lsb(&d8[0]);
- nom_y = (int16)MDFN_de16lsb(&d8[2]);
-
- trigger_noclear = (bool)(d8[4] & 0x1);
- trigger_eff |= trigger_noclear;
-
- buttons = (d8[4] >> 1) & 0x3;
-
- if(os_shot_counter > 0)	// FIXME if UpdateInput() is ever called more than once per video frame(at ~50 or ~60Hz).
-  os_shot_counter--;
-
- if((d8[4] & 0x8) && !prev_oss && os_shot_counter == 0)
-  os_shot_counter = 10;
- prev_oss = d8[4] & 0x8;
 }
 
 int InputDevice_Justifier::StateAction(StateMem* sm, int load, int data_only, const char* section_name)
@@ -3037,7 +2879,6 @@ class InputDevice_Mouse : public InputDevice
 
  virtual void Power(void);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
- virtual void UpdateInput(const void *data);
 
  virtual void Update(const int32_t timestamp);
  virtual void ResetTS(void);
@@ -3165,26 +3006,6 @@ int InputDevice_Mouse::StateAction(StateMem* sm, int load, int data_only, const 
 
  return(ret);
 }
-
-void InputDevice_Mouse::UpdateInput(const void *data)
-{
- accum_xdelta += (int32)MDFN_de32lsb((uint8*)data + 0);
- accum_ydelta += (int32)MDFN_de32lsb((uint8*)data + 4);
-
- if(accum_xdelta > 30 * 127) accum_xdelta = 30 * 127;
- if(accum_xdelta < 30 * -128) accum_xdelta = 30 * -128;
-
- if(accum_ydelta > 30 * 127) accum_ydelta = 30 * 127;
- if(accum_ydelta < 30 * -128) accum_ydelta = 30 * -128;
-
- button |= *((uint8 *)data + 8);
- button_post_mask = *((uint8 *)data + 8);
-
- //if(button)
- // MDFN_DispMessage("Button\n");
- //printf("%d %d\n", accum_xdelta, accum_ydelta);
-}
-
 
 void InputDevice_Mouse::SetDTR(bool new_dtr)
 {
@@ -3745,23 +3566,6 @@ void InputDevice_neGcon::Power(void)
  transmit_count = 0;
 }
 
-void InputDevice_neGcon::UpdateInput(const void *data)
-{
- uint8 *d8 = (uint8 *)data;
-
- buttons[0] = d8[0];
- buttons[1] = d8[1];
-
- twist = ((32768 + MDFN_de32lsb((const uint8 *)data + 4) - (((int32)MDFN_de32lsb((const uint8 *)data + 8) * 32768 + 16383) / 32767)) * 255 + 32767) / 65535;
-
- anabuttons[0] = (MDFN_de32lsb((const uint8 *)data + 12) * 255 + 16383) / 32767; 
- anabuttons[1] = (MDFN_de32lsb((const uint8 *)data + 16) * 255 + 16383) / 32767;
- anabuttons[2] = (MDFN_de32lsb((const uint8 *)data + 20) * 255 + 16383) / 32767;
-
- //printf("%02x %02x %02x %02x\n", twist, anabuttons[0], anabuttons[1], anabuttons[2]);
-}
-
-
 void InputDevice_neGcon::SetDTR(bool new_dtr)
 {
  if(!dtr && new_dtr)
@@ -4073,11 +3877,6 @@ bool InputDevice::RequireNoFrameskip(void)
 int32_t InputDevice::GPULineHook(const int32_t timestamp, bool vsync, uint32 *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider)
 {
  return(PSX_EVENT_MAXTS);
-}
-
-
-void InputDevice::UpdateInput(const void *data)
-{
 }
 
 
@@ -4729,8 +4528,123 @@ void FrontIO_UpdateInput(void)
                device->button_post_mask = *((uint8 *)DeviceData[i] + 8);
             }
             break;
-         default:
-            Devices[i]->UpdateInput(DeviceData[i]);
+         case INPUTDEVICE_DUALANALOG:
+            {
+               int stick, axis;
+               InputDevice_DualAnalog *device = (InputDevice_DualAnalog*)Devices[i];
+               uint8 *d8 = (uint8 *)DeviceData[i];
+
+               device->buttons[0] = d8[0];
+               device->buttons[1] = d8[1];
+
+               for(stick = 0; stick < 2; stick++)
+               {
+                  for(axis = 0; axis < 2; axis++)
+                  {
+                     const uint8* aba = &d8[2] + stick * 8 + axis * 4;
+                     int32 tmp;
+
+                     //revert to 0.9.33, should be fixed on libretro side instead
+                     //tmp = 32768 + MDFN_de16lsb(&aba[0]) - ((int32)MDFN_de16lsb(&aba[2]) * 32768 / 32767);
+
+                     tmp = 32768 + MDFN_de32lsb((const uint8 *)DeviceData[i] + 
+                           stick * 16 + axis * 8 + 4) - ((int32)MDFN_de32lsb((const uint8 *)DeviceData[i] + stick * 16 + axis * 8 + 8) * 32768 / 32767);
+                     tmp >>= 8;
+
+                     device->axes[stick][axis] = tmp;
+                  }
+               }
+
+               //printf("%d %d %d %d\n", device->axes[0][0], device->axes[0][1], device->axes[1][0], device->axes[1][1]);
+            }
+            break;
+         case INPUTDEVICE_DUALSHOCK:
+            {
+               int stick, axis;
+               InputDevice_DualShock *device = (InputDevice_DualShock*)Devices[i];
+               uint8 *d8 = (uint8 *)DeviceData[i];
+               uint8* const rumb_dp = &d8[3 + 16];
+
+               device->buttons[0] = d8[0];
+               device->buttons[1] = d8[1];
+               device->cur_ana_button_state = d8[2] & 0x01;
+
+               for(stick = 0; stick < 2; stick++)
+               {
+                  for(axis = 0; axis < 2; axis++)
+                  {
+                     const uint8* aba = &d8[3] + stick * 8 + axis * 4;
+                     int32 tmp;
+
+                     //revert to 0.9.33, should be fixed on libretro side instead
+                     //tmp = 32767 + MDFN_de16lsb(&aba[0]) - MDFN_de16lsb(&aba[2]);
+                     //tmp = (tmp * 0x100) / 0xFFFF;
+
+                     tmp = 32768 + MDFN_de32lsb((const uint8 *)DeviceData[i] + stick * 16 + axis * 8 + 4) - ((int32)MDFN_de32lsb((const uint8 *)DeviceData[i] + stick * 16 + axis * 8 + 8) * 32768 / 32767);
+                     tmp >>= 8;
+                     device->axes[stick][axis] = tmp;
+                  }
+               }
+
+               //printf("%3d:%3d, %3d:%3d\n", axes[0][0], axes[0][1], axes[1][0], axes[1][1]);
+            }
+            break;
+         case INPUTDEVICE_NEGCON:
+            {
+               InputDevice_neGcon *device = (InputDevice_neGcon*)Devices[i];
+               uint8 *d8 = (uint8 *)DeviceData[i];
+
+               device->buttons[0] = d8[0];
+               device->buttons[1] = d8[1];
+
+               device->twist = ((32768 + MDFN_de32lsb((const uint8 *)DeviceData[i] + 4) - (((int32)MDFN_de32lsb((const uint8 *)DeviceData[i] + 8) * 32768 + 16383) / 32767)) * 255 + 32767) / 65535;
+
+               device->anabuttons[0] = (MDFN_de32lsb((const uint8 *)DeviceData[i] + 12) * 255 + 16383) / 32767; 
+               device->anabuttons[1] = (MDFN_de32lsb((const uint8 *)DeviceData[i] + 16) * 255 + 16383) / 32767;
+               device->anabuttons[2] = (MDFN_de32lsb((const uint8 *)DeviceData[i] + 20) * 255 + 16383) / 32767;
+            }
+            break;
+         case INPUTDEVICE_GUNCON:
+            {
+               InputDevice_GunCon *device = (InputDevice_GunCon*)Devices[i];
+               uint8 *d8 = (uint8 *)DeviceData[i];
+
+               device->nom_x = (int16)MDFN_de16lsb(&d8[0]);
+               device->nom_y = (int16)MDFN_de16lsb(&d8[2]);
+
+               device->trigger_noclear = (bool)(d8[4] & 0x1);
+               device->trigger_eff |= device->trigger_noclear;
+
+               device->buttons = d8[4] >> 1;
+
+               if(device->os_shot_counter > 0)	// FIXME if UpdateInput() is ever called more than once per video frame(at ~50 or ~60Hz).
+                  device->os_shot_counter--;
+
+               if((d8[4] & 0x8) && !device->prev_oss && device->os_shot_counter == 0)
+                  device->os_shot_counter = 4;
+               device->prev_oss = d8[4] & 0x8;
+            }
+            break;
+         case INPUTDEVICE_JUSTIFIER:
+            {
+               InputDevice_Justifier *device = (InputDevice_Justifier*)Devices[i];
+               uint8 *d8 = (uint8 *)DeviceData[i];
+
+               device->nom_x = (int16)MDFN_de16lsb(&d8[0]);
+               device->nom_y = (int16)MDFN_de16lsb(&d8[2]);
+
+               device->trigger_noclear = (bool)(d8[4] & 0x1);
+               device->trigger_eff |= device->trigger_noclear;
+
+               device->buttons = (d8[4] >> 1) & 0x3;
+
+               if(device->os_shot_counter > 0)	// FIXME if UpdateInput() is ever called more than once per video frame(at ~50 or ~60Hz).
+                  device->os_shot_counter--;
+
+               if((d8[4] & 0x8) && !device->prev_oss && device->os_shot_counter == 0)
+                  device->os_shot_counter = 10;
+               device->prev_oss = d8[4] & 0x8;
+            }
             break;
       }
    }

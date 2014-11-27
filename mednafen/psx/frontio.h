@@ -11,7 +11,6 @@ class InputDevice
  virtual ~InputDevice();
 
  virtual void Power(void);
- virtual void UpdateInput(const void *data);
  virtual int StateAction(StateMem* sm, int load, int data_only, const char* section_name);
 
  virtual bool RequireNoFrameskip(void);
