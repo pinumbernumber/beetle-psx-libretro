@@ -2203,12 +2203,41 @@ static void GPU_ProcessFIFO(void)
    {
       LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
 
+      /*
+         G_Command_DrawLine(((cc & 0x08) >> 3),
+                            ((cc & 0x10) >> 4),
+                            ((cc & 0x2) >> 1) ? abr : -1,
+                            MaskEvalAND,
+                            CB);
+      */
 
-      G_Command_DrawLine(((cc & 0x08) >> 3),
-                         ((cc & 0x10) >> 4),
-                         ((cc & 0x2) >> 1) ? abr : -1,
-                         MaskEvalAND,
-                         CB);
+      switch(((cc & 0x02) >> 1) | ((cc & 0x18) >> 2))
+      {
+      case 0x00:
+         G_Command_DrawLine(0, 0, -1, MaskEvalAND, CB);
+         break;
+      case 0x01:
+         G_Command_DrawLine(0, 0, abr, MaskEvalAND, CB);
+         break;
+      case 0x02:
+         G_Command_DrawLine(1, 0, -1, MaskEvalAND, CB);
+         break;
+      case 0x03:
+         G_Command_DrawLine(1, 0, abr, MaskEvalAND, CB);
+         break;
+      case 0x04:
+         G_Command_DrawLine(0, 1, -1, MaskEvalAND, CB);
+         break;
+      case 0x05:
+         G_Command_DrawLine(0, 1, abr, MaskEvalAND, CB);
+         break;
+      case 0x06:
+         G_Command_DrawLine(1, 1, -1, MaskEvalAND, CB);
+         break;
+      case 0x07:
+         G_Command_DrawLine(1, 1, abr, MaskEvalAND, CB);
+         break;
+      }
 
    }
    else if (cc >= 0x60 && cc <= 0x7f)
