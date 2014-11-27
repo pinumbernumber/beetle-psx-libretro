@@ -105,8 +105,6 @@ class InputDevice_Gamepad : public InputDevice
  virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
- private:
-
  bool dtr;
 
  uint8 buttons[2];
@@ -139,8 +137,6 @@ class InputDevice_DualAnalog : public InputDevice
  virtual void SetDTR(bool new_dtr);
  virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
-
- private:
 
  bool joystick_mode;
  bool dtr;
@@ -179,8 +175,6 @@ class InputDevice_DualShock : public InputDevice
  virtual void SetDTR(bool new_dtr);
  virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
-
- private:
 
  void CheckManualAnaModeChange(void);
 
@@ -227,6 +221,7 @@ class InputDevice_DualShock : public InputDevice
  //
  //
  bool amct_enabled;
+
 };
 
 class InputDevice_Multitap : public InputDevice
@@ -246,8 +241,6 @@ class InputDevice_Multitap : public InputDevice
  virtual void SetDTR(bool new_dtr);
  virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
-
- private:
 
  InputDevice *pad_devices[4];
  InputDevice *mc_devices[4];
@@ -290,8 +283,6 @@ class InputDevice_neGcon : public InputDevice
  virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
- private:
-
  bool dtr;
 
  uint8 buttons[2];
@@ -328,8 +319,6 @@ class InputDevice_GunCon : public InputDevice
  virtual void SetDTR(bool new_dtr);
  virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
-
- private:
 
  bool dtr;
 
@@ -2202,8 +2191,6 @@ class InputDevice_Justifier : public InputDevice
  virtual bool GetDSR(void);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
 
- private:
-
  bool dtr;
 
  uint8 buttons;
@@ -2555,8 +2542,6 @@ class InputDevice_Memcard : public InputDevice
 
  virtual uint64 GetNVDirtyCount(void);
  virtual void ResetNVDirtyCount(void);
-
- private:
 
  void Format(void);
 
@@ -3062,8 +3047,6 @@ class InputDevice_Mouse : public InputDevice
  //
  virtual void SetDTR(bool new_dtr);
  virtual bool Clock(bool TxD, int32 &dsr_pulse_delay);
-
- private:
 
  int32 lastts;
  int32 clear_timeout;
