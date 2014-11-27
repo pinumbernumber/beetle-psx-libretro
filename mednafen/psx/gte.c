@@ -77,13 +77,6 @@ typedef struct
    int16_t Y;
 } gtexy;
 
-/* begin of forward decls */
-int16_t Lm_B(unsigned int which, int32_t value, int lm);
-uint8_t Lm_C(unsigned int which, int32_t value);
-
-int32_t Lm_G(unsigned int which, int32_t value);
-int32_t Lm_H(int32_t value);
-
 /* end of forward decls */
 
 static uint32_t CR[32];
@@ -683,7 +676,7 @@ uint32_t GTE_ReadDR(unsigned int which)
 
 #define sign_x_to_s64(_bits, _value) (((int64)((uint64)(_value) << (64 - _bits))) >> (64 - _bits))
 
-INLINE int64_t A_MV(unsigned which, int64_t value)
+static INLINE int64_t A_MV(unsigned which, int64_t value)
 {
    if(value >= (1LL << 43))
       FLAGS |= 1 << (30 - which);
@@ -694,7 +687,7 @@ INLINE int64_t A_MV(unsigned which, int64_t value)
    return sign_x_to_s64(44, value);
 }
 
-INLINE int64_t F(int64_t value)
+static INLINE int64_t F(int64_t value)
 {
    if(value < -2147483648LL)
    {
@@ -711,7 +704,7 @@ INLINE int64_t F(int64_t value)
 }
 
 
-INLINE int16_t Lm_B(unsigned int which, int32_t value, int lm)
+static INLINE int16_t Lm_B(unsigned int which, int32_t value, int lm)
 {
    int32_t tmp = lm << 15;
 
@@ -732,7 +725,7 @@ INLINE int16_t Lm_B(unsigned int which, int32_t value, int lm)
    return(value);
 }
 
-INLINE int16_t Lm_B_PTZ(unsigned int which, int32_t value, int32_t ftv_value, int lm)
+static INLINE int16_t Lm_B_PTZ(unsigned int which, int32_t value, int32_t ftv_value, int lm)
 {
    int32_t tmp = lm << 15;
 
@@ -747,7 +740,7 @@ INLINE int16_t Lm_B_PTZ(unsigned int which, int32_t value, int32_t ftv_value, in
    return(value);
 }
 
-INLINE uint8_t Lm_C(unsigned int which, int32_t value)
+static INLINE uint8_t Lm_C(unsigned int which, int32_t value)
 {
    if(value & ~0xFF)
    {
@@ -764,7 +757,7 @@ INLINE uint8_t Lm_C(unsigned int which, int32_t value)
    return(value);
 }
 
-INLINE int32_t Lm_D(int32_t value, int unchained)
+static INLINE int32_t Lm_D(int32_t value, int unchained)
 {
    // Not sure if we should have it as int64, or just chain on to and special case when the F flags are set.
    if(!unchained)
@@ -798,7 +791,7 @@ INLINE int32_t Lm_D(int32_t value, int unchained)
    return(value);
 }
 
-INLINE int32_t Lm_G(unsigned int which, int32_t value)
+static INLINE int32_t Lm_G(unsigned int which, int32_t value)
 {
    if(value < -1024)
    {
@@ -818,7 +811,7 @@ INLINE int32_t Lm_G(unsigned int which, int32_t value)
 }
 
 // limit to 4096, not 4095
-INLINE int32_t Lm_H(int32_t value)
+static INLINE int32_t Lm_H(int32_t value)
 {
 #if 0
    if(FLAGS & (1 << 15))
@@ -920,7 +913,7 @@ static INLINE void MultiplyMatrixByVector(const gtematrix *matrix,
 }
 
 
-INLINE void MultiplyMatrixByVector_PT(const gtematrix *matrix,
+static INLINE void MultiplyMatrixByVector_PT(const gtematrix *matrix,
       const int16_t *v, const int32_t *crv, uint32_t sf, int lm)
 {
    int64_t tmp[3];
