@@ -429,85 +429,85 @@ void InputDevice_DualAnalog::SetDTR(bool new_dtr)
 
 bool InputDevice_DualAnalog::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- bool ret = 1;
+   bool ret = 1;
 
- dsr_pulse_delay = 0;
+   dsr_pulse_delay = 0;
 
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- if(transmit_count)
-  ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
+   if(transmit_count)
+      ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
 
- receive_buffer &= ~(1 << bitpos);
- receive_buffer |= TxD << bitpos;
- bitpos = (bitpos + 1) & 0x7;
+   receive_buffer &= ~(1 << bitpos);
+   receive_buffer |= TxD << bitpos;
+   bitpos = (bitpos + 1) & 0x7;
 
- if(!bitpos)
- {
-  //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+   if(bitpos)
+      return ret;
 
-  if(transmit_count)
-  {
-   transmit_pos++;
-   transmit_count--;
-  }
+   //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+
+   if(transmit_count)
+   {
+      transmit_pos++;
+      transmit_count--;
+   }
 
 
-  switch(command_phase)
-  {
-   case 0:
- 	  if(receive_buffer != 0x01)
-	    command_phase = -1;
-	  else
-	  {
-	   transmit_buffer[0] = joystick_mode ? 0x53 : 0x73;
-	   transmit_pos = 0;
-	   transmit_count = 1;
-	   command_phase++;
-	  }
-	  break;
+   switch(command_phase)
+   {
+      case 0:
+         if(receive_buffer != 0x01)
+            command_phase = -1;
+         else
+         {
+            transmit_buffer[0] = joystick_mode ? 0x53 : 0x73;
+            transmit_pos = 0;
+            transmit_count = 1;
+            command_phase++;
+         }
+         break;
 
-   case 1:
-	command = receive_buffer;
-	command_phase++;
+      case 1:
+         command = receive_buffer;
+         command_phase++;
 
-	transmit_buffer[0] = 0x5A;
+         transmit_buffer[0] = 0x5A;
 
-	//if(command != 0x42)
-	// fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
+         //if(command != 0x42)
+         // fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
 
-	if(command == 0x42)
-	{
-	 transmit_buffer[1] = 0xFF ^ buttons[0];
-	 transmit_buffer[2] = 0xFF ^ buttons[1];
-	 transmit_buffer[3] = axes[0][0];
-	 transmit_buffer[4] = axes[0][1];
-	 transmit_buffer[5] = axes[1][0];
-	 transmit_buffer[6] = axes[1][1];
-         transmit_pos = 0;
-         transmit_count = 7;
-	}
-	else
-	{
-	 command_phase = -1;
-	 transmit_buffer[1] = 0;
-	 transmit_buffer[2] = 0;
-         transmit_pos = 0;
-         transmit_count = 0;
-	}
-	break;
-   case 2:
-	//if(receive_buffer)
-	// printf("%d: %02x\n", 7 - transmit_count, receive_buffer);
-	break;
-  }
- }
+         if(command == 0x42)
+         {
+            transmit_buffer[1] = 0xFF ^ buttons[0];
+            transmit_buffer[2] = 0xFF ^ buttons[1];
+            transmit_buffer[3] = axes[0][0];
+            transmit_buffer[4] = axes[0][1];
+            transmit_buffer[5] = axes[1][0];
+            transmit_buffer[6] = axes[1][1];
+            transmit_pos = 0;
+            transmit_count = 7;
+         }
+         else
+         {
+            command_phase = -1;
+            transmit_buffer[1] = 0;
+            transmit_buffer[2] = 0;
+            transmit_pos = 0;
+            transmit_count = 0;
+         }
+         break;
+      case 2:
+         //if(receive_buffer)
+         // printf("%d: %02x\n", 7 - transmit_count, receive_buffer);
+         break;
+   }
 
- if(!bitpos && transmit_count)
-  dsr_pulse_delay = 0x40; //0x100;
+   if(transmit_count)
+      dsr_pulse_delay = 0x40; //0x100;
 
- return(ret);
+   return(ret);
 }
 
 InputDeviceInputInfoStruct Device_DualAnalog_IDII[24] =
@@ -800,683 +800,682 @@ void InputDevice_DualShock::SetDTR(bool new_dtr)
 
 bool InputDevice_DualShock::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- bool ret = 1;
+   bool ret = 1;
 
- dsr_pulse_delay = 0;
+   dsr_pulse_delay = 0;
 
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- if(transmit_count)
-  ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
+   if(transmit_count)
+      ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
 
- receive_buffer &= ~(1 << bitpos);
- receive_buffer |= TxD << bitpos;
- bitpos = (bitpos + 1) & 0x7;
+   receive_buffer &= ~(1 << bitpos);
+   receive_buffer |= TxD << bitpos;
+   bitpos = (bitpos + 1) & 0x7;
 
- if(!bitpos)
- {
-  //if(command == 0x44)
-  //if(command == 0x4D) //mad_munchkins) // || command == 0x43)
-  // fprintf(stderr, "[PAD] Receive: %02x -- command=%02x, command_phase=%d, transmit_pos=%d\n", receive_buffer, command, command_phase, transmit_pos);
+   if(bitpos)
+      return ret;
 
-  if(transmit_count)
-  {
-   transmit_pos++;
-   transmit_count--;
-  }
+   //if(command == 0x44)
+   //if(command == 0x4D) //mad_munchkins) // || command == 0x43)
+   // fprintf(stderr, "[PAD] Receive: %02x -- command=%02x, command_phase=%d, transmit_pos=%d\n", receive_buffer, command, command_phase, transmit_pos);
 
-  switch(command_phase)
-  {
-   case 0:
- 	  if(receive_buffer != 0x01)
-	    command_phase = -1;
-	  else
-	  {
-	   if(mad_munchkins)
-	   {
-	    transmit_buffer[0] = 0xF3;
-	    transmit_pos = 0;
-	    transmit_count = 1;
-	    command_phase = 101;
-	   }
-	   else
-	   {
-	    transmit_buffer[0] = analog_mode ? 0x73 : 0x41;
-	    transmit_pos = 0;
-	    transmit_count = 1;
-	    command_phase++;
-	   }
-	  }
-	  break;
+   if(transmit_count)
+   {
+      transmit_pos++;
+      transmit_count--;
+   }
 
-   case 1:
-	command = receive_buffer;
-	command_phase++;
+   switch(command_phase)
+   {
+      case 0:
+         if(receive_buffer != 0x01)
+            command_phase = -1;
+         else
+         {
+            if(mad_munchkins)
+            {
+               transmit_buffer[0] = 0xF3;
+               transmit_pos = 0;
+               transmit_count = 1;
+               command_phase = 101;
+            }
+            else
+            {
+               transmit_buffer[0] = analog_mode ? 0x73 : 0x41;
+               transmit_pos = 0;
+               transmit_count = 1;
+               command_phase++;
+            }
+         }
+         break;
 
-	transmit_buffer[0] = 0x5A;
+      case 1:
+         command = receive_buffer;
+         command_phase++;
 
-	//fprintf(stderr, "Gamepad command: 0x%02x\n", command);
-	//if(command != 0x42 && command != 0x43)
-	// fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
+         transmit_buffer[0] = 0x5A;
 
-	if(command == 0x42)
-	{
-	 transmit_buffer[0] = 0x5A;
-	 transmit_pos = 0;
-	 transmit_count = 1;
-	 command_phase = (command << 8) | 0x00;
-	}
-	else if(command == 0x43)
-	{
-	 transmit_pos = 0;
-	 if(analog_mode)
-	 {
-	  transmit_buffer[1] = 0xFF ^ buttons[0];
-	  transmit_buffer[2] = 0xFF ^ buttons[1];
-	  transmit_buffer[3] = axes[0][0];
-	  transmit_buffer[4] = axes[0][1];
-	  transmit_buffer[5] = axes[1][0];
-	  transmit_buffer[6] = axes[1][1];
-          transmit_count = 7;
-	 }
-	 else
-	 {
-	  transmit_buffer[1] = 0xFF ^ buttons[0];
- 	  transmit_buffer[2] = 0xFF ^ buttons[1];
- 	  transmit_count = 3;
-	 }
-	}
-	else
-	{
-	 command_phase = -1;
-	 transmit_buffer[1] = 0;
-	 transmit_buffer[2] = 0;
+         //fprintf(stderr, "Gamepad command: 0x%02x\n", command);
+         //if(command != 0x42 && command != 0x43)
+         // fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
+
+         if(command == 0x42)
+         {
+            transmit_buffer[0] = 0x5A;
+            transmit_pos = 0;
+            transmit_count = 1;
+            command_phase = (command << 8) | 0x00;
+         }
+         else if(command == 0x43)
+         {
+            transmit_pos = 0;
+            if(analog_mode)
+            {
+               transmit_buffer[1] = 0xFF ^ buttons[0];
+               transmit_buffer[2] = 0xFF ^ buttons[1];
+               transmit_buffer[3] = axes[0][0];
+               transmit_buffer[4] = axes[0][1];
+               transmit_buffer[5] = axes[1][0];
+               transmit_buffer[6] = axes[1][1];
+               transmit_count = 7;
+            }
+            else
+            {
+               transmit_buffer[1] = 0xFF ^ buttons[0];
+               transmit_buffer[2] = 0xFF ^ buttons[1];
+               transmit_count = 3;
+            }
+         }
+         else
+         {
+            command_phase = -1;
+            transmit_buffer[1] = 0;
+            transmit_buffer[2] = 0;
+            transmit_pos = 0;
+            transmit_count = 0;
+         }
+         break;
+
+      case 2:
+         {
+            if(command == 0x43 && transmit_pos == 2 && (receive_buffer == 0x01))
+            {
+               //fprintf(stderr, "Mad Munchkins mode entered!\n");
+               mad_munchkins = true;
+
+               if(da_rumble_compat)
+               {
+                  rumble_param[0] = 0;
+                  rumble_param[1] = 0;
+                  da_rumble_compat = false;
+               }
+               command_phase = -1;
+            }
+         }
+         break;
+
+      case 101:
+         command = receive_buffer;
+
+         //fprintf(stderr, "Mad Munchkins DualShock command: 0x%02x\n", command);
+
+         if(command >= 0x40 && command <= 0x4F)
+         {
+            transmit_buffer[0] = 0x5A;
+            transmit_pos = 0;
+            transmit_count = 1;
+            command_phase = (command << 8) | 0x00;
+         }
+         else
+         {
+            transmit_count = 0;
+            command_phase = -1;
+         }
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x40 */
+         /************************/
+      case 0x4000:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4001:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
          transmit_pos = 0;
-         transmit_count = 0;
-	}
-	break;
-
-   case 2:
-	{
-	 if(command == 0x43 && transmit_pos == 2 && (receive_buffer == 0x01))
-	 {
-	  //fprintf(stderr, "Mad Munchkins mode entered!\n");
-	  mad_munchkins = true;
-
-	  if(da_rumble_compat)
-	  {
-	   rumble_param[0] = 0;
-	   rumble_param[1] = 0;
-	   da_rumble_compat = false;
-	  }
-	  command_phase = -1;
-	 }
-	}
-	break;
-
-   case 101:
-	command = receive_buffer;
-
-	//fprintf(stderr, "Mad Munchkins DualShock command: 0x%02x\n", command);
-
-	if(command >= 0x40 && command <= 0x4F)
-	{
-	 transmit_buffer[0] = 0x5A;
-	 transmit_pos = 0;
-	 transmit_count = 1;
-	 command_phase = (command << 8) | 0x00;
-	}
-	else
-	{
-	 transmit_count = 0;
-	 command_phase = -1;
-	}
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x40 */
-  /************************/
-  case 0x4000:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4001:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
 
 
-  /************************/
-  /* MMMode 1, Command 0x41 */
-  /************************/
-  case 0x4100:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
+         /************************/
+         /* MMMode 1, Command 0x41 */
+         /************************/
+      case 0x4100:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
 
-  case 0x4101:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
+      case 0x4101:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
 
-  /**************************/
-  /* MMMode 0&1, Command 0x42 */
-  /**************************/
-  case 0x4200:
-	transmit_pos = 0;
-	if(analog_mode || mad_munchkins)
-	{
-	 transmit_buffer[0] = 0xFF ^ buttons[0];
-	 transmit_buffer[1] = 0xFF ^ buttons[1];
-	 transmit_buffer[2] = axes[0][0];
-	 transmit_buffer[3] = axes[0][1];
-	 transmit_buffer[4] = axes[1][0];
-	 transmit_buffer[5] = axes[1][1];
- 	 transmit_count = 6;
-	}
-	else
-	{
-	 transmit_buffer[0] = 0xFF ^ buttons[0];
-	 transmit_buffer[1] = 0xFF ^ buttons[1];
-	 transmit_count = 2;
+         /**************************/
+         /* MMMode 0&1, Command 0x42 */
+         /**************************/
+      case 0x4200:
+         transmit_pos = 0;
+         if(analog_mode || mad_munchkins)
+         {
+            transmit_buffer[0] = 0xFF ^ buttons[0];
+            transmit_buffer[1] = 0xFF ^ buttons[1];
+            transmit_buffer[2] = axes[0][0];
+            transmit_buffer[3] = axes[0][1];
+            transmit_buffer[4] = axes[1][0];
+            transmit_buffer[5] = axes[1][1];
+            transmit_count = 6;
+         }
+         else
+         {
+            transmit_buffer[0] = 0xFF ^ buttons[0];
+            transmit_buffer[1] = 0xFF ^ buttons[1];
+            transmit_count = 2;
 
-	 if(!(rumble_magic[2] & 0xFE))
-	 {
-	  transmit_buffer[transmit_count++] = 0x00;
-	  transmit_buffer[transmit_count++] = 0x00;
-	 }
-	}
-	command_phase++;
-	break;
- 
-  case 0x4201:			// Weak(in DS mode)
-	if(da_rumble_compat)
-	 rumble_param[0] = receive_buffer;
-	// Dualshock weak
-	else if(rumble_magic[0] == 0x00 && rumble_magic[2] != 0x00 && rumble_magic[3] != 0x00 && rumble_magic[4] != 0x00 && rumble_magic[5] != 0x00)
-	 rumble_param[0] = receive_buffer;
-	command_phase++;
-	break;
+            if(!(rumble_magic[2] & 0xFE))
+            {
+               transmit_buffer[transmit_count++] = 0x00;
+               transmit_buffer[transmit_count++] = 0x00;
+            }
+         }
+         command_phase++;
+         break;
 
-  case 0x4202:
-	if(da_rumble_compat)
-	 rumble_param[1] = receive_buffer;
-	else if(rumble_magic[1] == 0x01)	// DualShock strong
-	 rumble_param[1] = receive_buffer;
-	else if(rumble_magic[1] == 0x00 && rumble_magic[2] != 0x00 && rumble_magic[3] != 0x00 && rumble_magic[4] != 0x00 && rumble_magic[5] != 0x00)	// DualShock weak
-	 rumble_param[0] = receive_buffer;
+      case 0x4201:			// Weak(in DS mode)
+         if(da_rumble_compat)
+            rumble_param[0] = receive_buffer;
+         // Dualshock weak
+         else if(rumble_magic[0] == 0x00 && rumble_magic[2] != 0x00 && rumble_magic[3] != 0x00 && rumble_magic[4] != 0x00 && rumble_magic[5] != 0x00)
+            rumble_param[0] = receive_buffer;
+         command_phase++;
+         break;
 
-	command_phase++;
-	break;
+      case 0x4202:
+         if(da_rumble_compat)
+            rumble_param[1] = receive_buffer;
+         else if(rumble_magic[1] == 0x01)	// DualShock strong
+            rumble_param[1] = receive_buffer;
+         else if(rumble_magic[1] == 0x00 && rumble_magic[2] != 0x00 && rumble_magic[3] != 0x00 && rumble_magic[4] != 0x00 && rumble_magic[5] != 0x00)	// DualShock weak
+            rumble_param[0] = receive_buffer;
 
-  case 0x4203:
-	if(da_rumble_compat)
-	{
+         command_phase++;
+         break;
 
-	}
-	else if(rumble_magic[1] == 0x00 && rumble_magic[2] == 0x01)
-	 rumble_param[1] = receive_buffer;	// DualShock strong.
-	command_phase++;	// Nowhere here we come!
-	break;
+      case 0x4203:
+         if(da_rumble_compat)
+         {
 
-  /************************/
-  /* MMMode 1, Command 0x43 */
-  /************************/
-  case 0x4300:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
+         }
+         else if(rumble_magic[1] == 0x00 && rumble_magic[2] == 0x01)
+            rumble_param[1] = receive_buffer;	// DualShock strong.
+         command_phase++;	// Nowhere here we come!
+         break;
 
-  case 0x4301:
-	if(receive_buffer == 0x00)
-	{
-	 //fprintf(stderr, "Mad Munchkins mode left!\n");
-	 mad_munchkins = false;
-	}
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
+         /************************/
+         /* MMMode 1, Command 0x43 */
+         /************************/
+      case 0x4300:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
 
-  /************************/
-  /* MMMode 1, Command 0x44 */
-  /************************/
-  case 0x4400:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
+      case 0x4301:
+         if(receive_buffer == 0x00)
+         {
+            //fprintf(stderr, "Mad Munchkins mode left!\n");
+            mad_munchkins = false;
+         }
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
 
-  case 0x4401:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase++;
+         /************************/
+         /* MMMode 1, Command 0x44 */
+         /************************/
+      case 0x4400:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
 
-	// Ignores locking state.
-	switch(receive_buffer)
-	{
-	 case 0x00:
-		analog_mode = false;
-		//fprintf(stderr, "Analog mode disabled\n");
-		break;
+      case 0x4401:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase++;
 
-	 case 0x01:
-		analog_mode = true;
-		//fprintf(stderr, "Analog mode enabled\n");
-		break;
-	}
-	break;
+         // Ignores locking state.
+         switch(receive_buffer)
+         {
+            case 0x00:
+               analog_mode = false;
+               //fprintf(stderr, "Analog mode disabled\n");
+               break;
 
-  case 0x4402:
-	switch(receive_buffer)
-	{
-	 case 0x02:
-		analog_mode_locked = false;
-		break;
+            case 0x01:
+               analog_mode = true;
+               //fprintf(stderr, "Analog mode enabled\n");
+               break;
+         }
+         break;
 
-	 case 0x03:
-		analog_mode_locked = true;
-		break;
-	}
-	command_phase = -1;
-	break;
+      case 0x4402:
+         switch(receive_buffer)
+         {
+            case 0x02:
+               analog_mode_locked = false;
+               break;
 
-  /************************/
-  /* MMMode 1, Command 0x45 */
-  /************************/
-  case 0x4500:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0x01; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
+            case 0x03:
+               analog_mode_locked = true;
+               break;
+         }
+         command_phase = -1;
+         break;
 
-  case 0x4501:
-	transmit_buffer[0] = 0x02;
-	transmit_buffer[1] = analog_mode ? 0x01 : 0x00;
-	transmit_buffer[2] = 0x02;
-	transmit_buffer[3] = 0x01;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
+         /************************/
+         /* MMMode 1, Command 0x45 */
+         /************************/
+      case 0x4500:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0x01; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
 
-
-  /************************/
-  /* MMMode 1, Command 0x46 */
-  /************************/
-  case 0x4600:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4601:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x01;
-	 transmit_buffer[2] = 0x02;
-	 transmit_buffer[3] = 0x00;
-	 transmit_buffer[4] = 0x0A;
-	}
-	else if(receive_buffer == 0x01)
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x01;
-	 transmit_buffer[2] = 0x01;
-	 transmit_buffer[3] = 0x01;
-	 transmit_buffer[4] = 0x14;
-	}
-	else
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x00;
-	 transmit_buffer[3] = 0x00;
-	 transmit_buffer[4] = 0x00;
-	}
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x47 */
-  /************************/
-  case 0x4700:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4701:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x02;
-	 transmit_buffer[2] = 0x00;
-	 transmit_buffer[3] = 0x01;
-	 transmit_buffer[4] = 0x00;
-	}
-	else
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x00;
-	 transmit_buffer[3] = 0x00;
-	 transmit_buffer[4] = 0x00;
-	}
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x48 */
-  /************************/
-  case 0x4800:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4801:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x00;
-	 transmit_buffer[3] = 0x01;
-	 transmit_buffer[4] = rumble_param[0];
-	}
-	else if(receive_buffer == 0x01)
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x00;
-	 transmit_buffer[3] = 0x01;
-	 transmit_buffer[4] = rumble_param[1];
-	}
-	else
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x00;
-	 transmit_buffer[3] = 0x00;
-	 transmit_buffer[4] = 0x00;
-	}
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x49 */
-  /************************/
-  case 0x4900:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4901:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x4A */
-  /************************/
-  case 0x4A00:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4A01:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x4B */
-  /************************/
-  case 0x4B00:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4B01:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x4C */
-  /************************/
-  case 0x4C00:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4C01:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x04;
-	 transmit_buffer[3] = 0x00;
-	 transmit_buffer[4] = 0x00;
-	}
-	else if(receive_buffer == 0x01)
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x07;
-	 transmit_buffer[3] = 0x00;
-	 transmit_buffer[4] = 0x00;
-	}
-	else
-	{
-	 transmit_buffer[0] = 0x00;
-	 transmit_buffer[1] = 0x00;
-	 transmit_buffer[2] = 0x00;
-	 transmit_buffer[3] = 0x00;
-	 transmit_buffer[4] = 0x00;
-	}
-
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x4D */
-  /************************/
-  case 0x4D00:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = rumble_magic[0]; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4D01:
-  case 0x4D02:
-  case 0x4D03:
-  case 0x4D04:
-  case 0x4D05:
-  case 0x4D06:
-	{
-	 unsigned index = command_phase - 0x4D01;
-
-	 if(index < 5)
-	 {
- 	  transmit_buffer[0] = rumble_magic[1 + index];
-	  transmit_pos = 0;
-	  transmit_count = 1;
-	  command_phase++;
-	 }
-	 else
-	  command_phase = -1;
-
- 	 rumble_magic[index] = receive_buffer;	 
-	}
-	break;
-
-  /************************/
-  /* MMMode 1, Command 0x4E */
-  /************************/
-  case 0x4E00:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
-
-  case 0x4E01:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
+      case 0x4501:
+         transmit_buffer[0] = 0x02;
+         transmit_buffer[1] = analog_mode ? 0x01 : 0x00;
+         transmit_buffer[2] = 0x02;
+         transmit_buffer[3] = 0x01;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
 
 
-  /************************/
-  /* MMMode 1, Command 0x4F */
-  /************************/
-  case 0x4F00:
-	if(receive_buffer == 0x00)
-	{
-	 transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
-	 command_phase++;
-	}
-	else
-	 command_phase = -1;
-	break;
+         /************************/
+         /* MMMode 1, Command 0x46 */
+         /************************/
+      case 0x4600:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
 
-  case 0x4F01:
-	transmit_buffer[0] = 0x00;
-	transmit_buffer[1] = 0x00;
-	transmit_buffer[2] = 0x00;
-	transmit_buffer[3] = 0x00;
-	transmit_buffer[4] = 0x00;
-	transmit_pos = 0;
-	transmit_count = 5;
-	command_phase = -1;
-	break;
-  }
- }
+      case 0x4601:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x01;
+            transmit_buffer[2] = 0x02;
+            transmit_buffer[3] = 0x00;
+            transmit_buffer[4] = 0x0A;
+         }
+         else if(receive_buffer == 0x01)
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x01;
+            transmit_buffer[2] = 0x01;
+            transmit_buffer[3] = 0x01;
+            transmit_buffer[4] = 0x14;
+         }
+         else
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x00;
+            transmit_buffer[3] = 0x00;
+            transmit_buffer[4] = 0x00;
+         }
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
 
- if(!bitpos && transmit_count)
-  dsr_pulse_delay = 0x40; //0x100;
+         /************************/
+         /* MMMode 1, Command 0x47 */
+         /************************/
+      case 0x4700:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
 
- return(ret);
+      case 0x4701:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x02;
+            transmit_buffer[2] = 0x00;
+            transmit_buffer[3] = 0x01;
+            transmit_buffer[4] = 0x00;
+         }
+         else
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x00;
+            transmit_buffer[3] = 0x00;
+            transmit_buffer[4] = 0x00;
+         }
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x48 */
+         /************************/
+      case 0x4800:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4801:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x00;
+            transmit_buffer[3] = 0x01;
+            transmit_buffer[4] = rumble_param[0];
+         }
+         else if(receive_buffer == 0x01)
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x00;
+            transmit_buffer[3] = 0x01;
+            transmit_buffer[4] = rumble_param[1];
+         }
+         else
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x00;
+            transmit_buffer[3] = 0x00;
+            transmit_buffer[4] = 0x00;
+         }
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x49 */
+         /************************/
+      case 0x4900:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4901:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x4A */
+         /************************/
+      case 0x4A00:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4A01:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x4B */
+         /************************/
+      case 0x4B00:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4B01:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x4C */
+         /************************/
+      case 0x4C00:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4C01:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x04;
+            transmit_buffer[3] = 0x00;
+            transmit_buffer[4] = 0x00;
+         }
+         else if(receive_buffer == 0x01)
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x07;
+            transmit_buffer[3] = 0x00;
+            transmit_buffer[4] = 0x00;
+         }
+         else
+         {
+            transmit_buffer[0] = 0x00;
+            transmit_buffer[1] = 0x00;
+            transmit_buffer[2] = 0x00;
+            transmit_buffer[3] = 0x00;
+            transmit_buffer[4] = 0x00;
+         }
+
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x4D */
+         /************************/
+      case 0x4D00:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = rumble_magic[0]; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4D01:
+      case 0x4D02:
+      case 0x4D03:
+      case 0x4D04:
+      case 0x4D05:
+      case 0x4D06:
+         {
+            unsigned index = command_phase - 0x4D01;
+
+            if(index < 5)
+            {
+               transmit_buffer[0] = rumble_magic[1 + index];
+               transmit_pos = 0;
+               transmit_count = 1;
+               command_phase++;
+            }
+            else
+               command_phase = -1;
+
+            rumble_magic[index] = receive_buffer;	 
+         }
+         break;
+
+         /************************/
+         /* MMMode 1, Command 0x4E */
+         /************************/
+      case 0x4E00:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4E01:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+
+
+         /************************/
+         /* MMMode 1, Command 0x4F */
+         /************************/
+      case 0x4F00:
+         if(receive_buffer == 0x00)
+         {
+            transmit_buffer[0] = 0; /**/ transmit_pos = 0; transmit_count = 1; /**/
+            command_phase++;
+         }
+         else
+            command_phase = -1;
+         break;
+
+      case 0x4F01:
+         transmit_buffer[0] = 0x00;
+         transmit_buffer[1] = 0x00;
+         transmit_buffer[2] = 0x00;
+         transmit_buffer[3] = 0x00;
+         transmit_buffer[4] = 0x00;
+         transmit_pos = 0;
+         transmit_count = 5;
+         command_phase = -1;
+         break;
+   }
+   if(transmit_count)
+      dsr_pulse_delay = 0x40; //0x100;
+
+   return(ret);
 }
 
 InputDeviceInputInfoStruct Device_DualShock_IDII[26] =
@@ -1602,80 +1601,79 @@ void InputDevice_Gamepad::SetDTR(bool new_dtr)
 
 bool InputDevice_Gamepad::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- bool ret = 1;
+   bool ret = 1;
 
- dsr_pulse_delay = 0;
+   dsr_pulse_delay = 0;
 
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- if(transmit_count)
-  ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
+   if(transmit_count)
+      ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
 
- receive_buffer &= ~(1 << bitpos);
- receive_buffer |= TxD << bitpos;
- bitpos = (bitpos + 1) & 0x7;
+   receive_buffer &= ~(1 << bitpos);
+   receive_buffer |= TxD << bitpos;
+   bitpos = (bitpos + 1) & 0x7;
 
- if(!bitpos)
- {
-  //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+   if(bitpos)
+      return ret;
 
-  if(transmit_count)
-  {
-   transmit_pos++;
-   transmit_count--;
-  }
+   //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+
+   if(transmit_count)
+   {
+      transmit_pos++;
+      transmit_count--;
+   }
 
 
-  switch(command_phase)
-  {
-   case 0:
- 	  if(receive_buffer != 0x01)
-	    command_phase = -1;
-	  else
-	  {
-	   transmit_buffer[0] = 0x41;
-	   transmit_pos = 0;
-	   transmit_count = 1;
-	   command_phase++;
-	  }
-	  break;
+   switch(command_phase)
+   {
+      case 0:
+         if(receive_buffer != 0x01)
+            command_phase = -1;
+         else
+         {
+            transmit_buffer[0] = 0x41;
+            transmit_pos = 0;
+            transmit_count = 1;
+            command_phase++;
+         }
+         break;
 
-   case 1:
-	command = receive_buffer;
-	command_phase++;
+      case 1:
+         command = receive_buffer;
+         command_phase++;
 
-	transmit_buffer[0] = 0x5A;
+         transmit_buffer[0] = 0x5A;
 
-	//if(command != 0x42)
-	// fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
-	//assert(command == 0x42);
-	if(command == 0x42)
-	{
-	 //printf("PAD COmmand 0x42, sl=%u\n", GPU->GetScanlineNum());
+         //if(command != 0x42)
+         // fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
+         //assert(command == 0x42);
+         if(command == 0x42)
+         {
+            //printf("PAD COmmand 0x42, sl=%u\n", GPU->GetScanlineNum());
 
-	 transmit_buffer[1] = 0xFF ^ buttons[0];
-	 transmit_buffer[2] = 0xFF ^ buttons[1];
-         transmit_pos = 0;
-         transmit_count = 3;
-	}
-	else
-	{
-	 command_phase = -1;
-	 transmit_buffer[1] = 0;
-	 transmit_buffer[2] = 0;
-         transmit_pos = 0;
-         transmit_count = 0;
-	}
-	break;
+            transmit_buffer[1] = 0xFF ^ buttons[0];
+            transmit_buffer[2] = 0xFF ^ buttons[1];
+            transmit_pos = 0;
+            transmit_count = 3;
+         }
+         else
+         {
+            command_phase = -1;
+            transmit_buffer[1] = 0;
+            transmit_buffer[2] = 0;
+            transmit_pos = 0;
+            transmit_count = 0;
+         }
+         break;
 
-  }
- }
+   }
+   if(transmit_count)
+      dsr_pulse_delay = 0x40; //0x100;
 
- if(!bitpos && transmit_count)
-  dsr_pulse_delay = 0x40; //0x100;
-
- return(ret);
+   return(ret);
 }
 
 InputDeviceInputInfoStruct Device_Gamepad_IDII[16] =
@@ -1880,104 +1878,103 @@ void InputDevice_GunCon::SetDTR(bool new_dtr)
 
 bool InputDevice_GunCon::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- bool ret = 1;
+   bool ret = 1;
 
- dsr_pulse_delay = 0;
+   dsr_pulse_delay = 0;
 
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- if(transmit_count)
-  ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
+   if(transmit_count)
+      ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
 
- receive_buffer &= ~(1 << bitpos);
- receive_buffer |= TxD << bitpos;
- bitpos = (bitpos + 1) & 0x7;
+   receive_buffer &= ~(1 << bitpos);
+   receive_buffer |= TxD << bitpos;
+   bitpos = (bitpos + 1) & 0x7;
 
- if(!bitpos)
- {
-  //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+   if(bitpos)
+      return ret;
 
-  if(transmit_count)
-  {
-   transmit_pos++;
-   transmit_count--;
-  }
+   //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+
+   if(transmit_count)
+   {
+      transmit_pos++;
+      transmit_count--;
+   }
 
 
-  switch(command_phase)
-  {
-   case 0:
- 	  if(receive_buffer != 0x01)
-	    command_phase = -1;
-	  else
-	  {
-	   transmit_buffer[0] = 0x63;
-	   transmit_pos = 0;
-	   transmit_count = 1;
-	   command_phase++;
-	  }
-	  break;
+   switch(command_phase)
+   {
+      case 0:
+         if(receive_buffer != 0x01)
+            command_phase = -1;
+         else
+         {
+            transmit_buffer[0] = 0x63;
+            transmit_pos = 0;
+            transmit_count = 1;
+            command_phase++;
+         }
+         break;
 
-   case 2:
-	//if(receive_buffer)
-	// printf("%02x\n", receive_buffer);
-	break;
+      case 2:
+         //if(receive_buffer)
+         // printf("%02x\n", receive_buffer);
+         break;
 
-   case 1:
-	command = receive_buffer;
-	command_phase++;
+      case 1:
+         command = receive_buffer;
+         command_phase++;
 
-	transmit_buffer[0] = 0x5A;
+         transmit_buffer[0] = 0x5A;
 
-	//puts("MOO");
-	//if(command != 0x42)
-	// fprintf(stderr, "GunCon unhandled command: 0x%02x\n", command);
-	//assert(command == 0x42);
-	if(command == 0x42)
-	{
-	 transmit_buffer[1] = 0xFF ^ ((buttons & 0x01) << 3);
-	 transmit_buffer[2] = 0xFF ^ (trigger_eff << 5) ^ ((buttons & 0x02) << 5);
+         //puts("MOO");
+         //if(command != 0x42)
+         // fprintf(stderr, "GunCon unhandled command: 0x%02x\n", command);
+         //assert(command == 0x42);
+         if(command == 0x42)
+         {
+            transmit_buffer[1] = 0xFF ^ ((buttons & 0x01) << 3);
+            transmit_buffer[2] = 0xFF ^ (trigger_eff << 5) ^ ((buttons & 0x02) << 5);
 
-	 if(os_shot_counter > 0)
-	 {
-	  hit_x = 0x01;
-	  hit_y = 0x0A;
-	  transmit_buffer[2] |= (1 << 5);
-	  if(os_shot_counter == 2 || os_shot_counter == 3)
-	  {
-	   transmit_buffer[2] &= ~(1 << 5);
-	  }
-	 }
+            if(os_shot_counter > 0)
+            {
+               hit_x = 0x01;
+               hit_y = 0x0A;
+               transmit_buffer[2] |= (1 << 5);
+               if(os_shot_counter == 2 || os_shot_counter == 3)
+               {
+                  transmit_buffer[2] &= ~(1 << 5);
+               }
+            }
 
-	 MDFN_en16lsb(&transmit_buffer[3], hit_x);
-	 MDFN_en16lsb(&transmit_buffer[5], hit_y);
+            MDFN_en16lsb(&transmit_buffer[3], hit_x);
+            MDFN_en16lsb(&transmit_buffer[5], hit_y);
 
-	 hit_x = 0x01;
-	 hit_y = 0x0A;
+            hit_x = 0x01;
+            hit_y = 0x0A;
 
-         transmit_pos = 0;
-         transmit_count = 7;
+            transmit_pos = 0;
+            transmit_count = 7;
 
-	 trigger_eff = trigger_noclear;
-	}
-	else
-	{
-	 command_phase = -1;
-	 transmit_buffer[1] = 0;
-	 transmit_buffer[2] = 0;
-         transmit_pos = 0;
-         transmit_count = 0;
-	}
-	break;
+            trigger_eff = trigger_noclear;
+         }
+         else
+         {
+            command_phase = -1;
+            transmit_buffer[1] = 0;
+            transmit_buffer[2] = 0;
+            transmit_pos = 0;
+            transmit_count = 0;
+         }
+         break;
 
-  }
- }
+   }
+   if(transmit_count)
+      dsr_pulse_delay = 100; //0x80; //0x40;
 
- if(!bitpos && transmit_count)
-  dsr_pulse_delay = 100; //0x80; //0x40;
-
- return(ret);
+   return(ret);
 }
 
 InputDeviceInputInfoStruct Device_GunCon_IDII[6] =
@@ -2455,246 +2452,245 @@ void InputDevice_Memcard::SetDTR(bool new_dtr)
 
 bool InputDevice_Memcard::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- bool ret = 1;
+   bool ret = 1;
 
- dsr_pulse_delay = 0;
+   dsr_pulse_delay = 0;
 
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- if(transmit_count)
-  ret = (transmit_buffer >> bitpos) & 1;
+   if(transmit_count)
+      ret = (transmit_buffer >> bitpos) & 1;
 
- receive_buffer &= ~(1 << bitpos);
- receive_buffer |= TxD << bitpos;
- bitpos = (bitpos + 1) & 0x7;
+   receive_buffer &= ~(1 << bitpos);
+   receive_buffer |= TxD << bitpos;
+   bitpos = (bitpos + 1) & 0x7;
 
- if(!bitpos)
- {
-  //if(command_phase > 0 || transmit_count)
-  // printf("[MCRDATA] Received_data=0x%02x, Sent_data=0x%02x\n", receive_buffer, transmit_buffer);
+   if(bitpos)
+      return ret;
 
-  if(transmit_count)
-  {
-   transmit_count--;
-  }
+   //if(command_phase > 0 || transmit_count)
+   // printf("[MCRDATA] Received_data=0x%02x, Sent_data=0x%02x\n", receive_buffer, transmit_buffer);
 
-  if (command_phase >= 1024 && command_phase <= 1151)
-  {
-  // Transmit actual 128 bytes data
-	transmit_buffer = card_data[(addr << 7) + (command_phase - 1024)];
-	calced_xor ^= transmit_buffer;
-	transmit_count = 1;
-	command_phase++;
-  }
-  else if (command_phase >= 2048 && command_phase <= 2175)
-  {
-  	calced_xor ^= receive_buffer;
-	rw_buffer[command_phase - 2048] = receive_buffer;
+   if(transmit_count)
+   {
+      transmit_count--;
+   }
 
-        transmit_buffer = receive_buffer;
-        transmit_count = 1;
-        command_phase++;
-  }
-  else
-  switch(command_phase)
-  {
-   case 0:
-          if(receive_buffer != 0x81)
-            command_phase = -1;
-          else
-          {
-	   //printf("[MCR] Device selected\n");
-           transmit_buffer = presence_new ? 0x08 : 0x00;
-           transmit_count = 1;
-           command_phase++;
-          }
-          break;
+   if (command_phase >= 1024 && command_phase <= 1151)
+   {
+      // Transmit actual 128 bytes data
+      transmit_buffer = card_data[(addr << 7) + (command_phase - 1024)];
+      calced_xor ^= transmit_buffer;
+      transmit_count = 1;
+      command_phase++;
+   }
+   else if (command_phase >= 2048 && command_phase <= 2175)
+   {
+      calced_xor ^= receive_buffer;
+      rw_buffer[command_phase - 2048] = receive_buffer;
 
-   case 1:
-        command = receive_buffer;
-	//printf("[MCR] Command received: %c\n", command);
-	if(command == 'R' || command == 'W')
-	{
-	 command_phase++;
-         transmit_buffer = 0x5A;
-         transmit_count = 1;
-	}
-	else
-	{
+      transmit_buffer = receive_buffer;
+      transmit_count = 1;
+      command_phase++;
+   }
+   else
+      switch(command_phase)
+      {
+         case 0:
+            if(receive_buffer != 0x81)
+               command_phase = -1;
+            else
+            {
+               //printf("[MCR] Device selected\n");
+               transmit_buffer = presence_new ? 0x08 : 0x00;
+               transmit_count = 1;
+               command_phase++;
+            }
+            break;
+
+         case 1:
+            command = receive_buffer;
+            //printf("[MCR] Command received: %c\n", command);
+            if(command == 'R' || command == 'W')
+            {
+               command_phase++;
+               transmit_buffer = 0x5A;
+               transmit_count = 1;
+            }
+            else
+            {
 #if 0
-	 if(command == 'S')
-	 {
-	  PSX_WARNING("[MCR] Memcard S command unsupported.");
-	 }
+               if(command == 'S')
+               {
+                  PSX_WARNING("[MCR] Memcard S command unsupported.");
+               }
 #endif
 
-	 command_phase = -1;
-	 transmit_buffer = 0;
-	 transmit_count = 0;
-	}
-        break;
+               command_phase = -1;
+               transmit_buffer = 0;
+               transmit_count = 0;
+            }
+            break;
 
-   case 2:
-	transmit_buffer = 0x5D;
-	transmit_count = 1;
-	command_phase++;
-	break;
+         case 2:
+            transmit_buffer = 0x5D;
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-   case 3:
-	transmit_buffer = 0x00;
-	transmit_count = 1;
-	if(command == 'R')
-	 command_phase = 1000;
-	else if(command == 'W')
-	 command_phase = 2000;
-	break;
+         case 3:
+            transmit_buffer = 0x00;
+            transmit_count = 1;
+            if(command == 'R')
+               command_phase = 1000;
+            else if(command == 'W')
+               command_phase = 2000;
+            break;
 
-  //
-  // Read
-  //
-  case 1000:
-	addr = receive_buffer << 8;
-	transmit_buffer = receive_buffer;
-	transmit_count = 1;
-	command_phase++;
-	break;
+            //
+            // Read
+            //
+         case 1000:
+            addr = receive_buffer << 8;
+            transmit_buffer = receive_buffer;
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-  case 1001:
-	addr |= receive_buffer & 0xFF;
-	transmit_buffer = '\\';
-	transmit_count = 1;
-	command_phase++;
-	break;
+         case 1001:
+            addr |= receive_buffer & 0xFF;
+            transmit_buffer = '\\';
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-  case 1002:
-	//printf("[MCR]   READ ADDR=0x%04x\n", addr);
-	if(addr >= (sizeof(card_data) >> 7))
-	 addr = 0xFFFF;
+         case 1002:
+            //printf("[MCR]   READ ADDR=0x%04x\n", addr);
+            if(addr >= (sizeof(card_data) >> 7))
+               addr = 0xFFFF;
 
-	calced_xor = 0;
-	transmit_buffer = ']';
-	transmit_count = 1;
-	command_phase++;
+            calced_xor = 0;
+            transmit_buffer = ']';
+            transmit_count = 1;
+            command_phase++;
 
-	// TODO: enable this code(or something like it) when CPU instruction timing is a bit better.
-	//
-	//dsr_pulse_delay = 32000;
-	//goto SkipDPD;
-	//
+            // TODO: enable this code(or something like it) when CPU instruction timing is a bit better.
+            //
+            //dsr_pulse_delay = 32000;
+            //goto SkipDPD;
+            //
 
-	break;
+            break;
 
-  case 1003:
-	transmit_buffer = addr >> 8;
-	calced_xor ^= transmit_buffer;
-	transmit_count = 1;
-	command_phase++;
-	break;
+         case 1003:
+            transmit_buffer = addr >> 8;
+            calced_xor ^= transmit_buffer;
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-  case 1004:
-	transmit_buffer = addr & 0xFF;
-	calced_xor ^= transmit_buffer;
+         case 1004:
+            transmit_buffer = addr & 0xFF;
+            calced_xor ^= transmit_buffer;
 
-	if(addr == 0xFFFF)
-	{
-	 transmit_count = 1;
-	 command_phase = -1;
-	}
-	else
-	{
-	 transmit_count = 1;
-	 command_phase = 1024;
-	}
-	break;
+            if(addr == 0xFFFF)
+            {
+               transmit_count = 1;
+               command_phase = -1;
+            }
+            else
+            {
+               transmit_count = 1;
+               command_phase = 1024;
+            }
+            break;
 
 
 
-  // XOR
-  case (1024 + 128):
-	transmit_buffer = calced_xor;
-	transmit_count = 1;
-	command_phase++;
-	break;
+            // XOR
+         case (1024 + 128):
+            transmit_buffer = calced_xor;
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-  // End flag
-  case (1024 + 129):
-	transmit_buffer = 'G';
-	transmit_count = 1;
-	command_phase = -1;
-	break;
+            // End flag
+         case (1024 + 129):
+            transmit_buffer = 'G';
+            transmit_count = 1;
+            command_phase = -1;
+            break;
 
-  //
-  // Write
-  //
-  case 2000:
-	calced_xor = receive_buffer;
-        addr = receive_buffer << 8;
-        transmit_buffer = receive_buffer;
-        transmit_count = 1;
-        command_phase++;
-	break;
+            //
+            // Write
+            //
+         case 2000:
+            calced_xor = receive_buffer;
+            addr = receive_buffer << 8;
+            transmit_buffer = receive_buffer;
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-  case 2001:
-	calced_xor ^= receive_buffer;
-        addr |= receive_buffer & 0xFF;
-	//printf("[MCR]   WRITE ADDR=0x%04x\n", addr);
-        transmit_buffer = receive_buffer;
-        transmit_count = 1;
-        command_phase = 2048;
-        break;
-  case (2048 + 128):	// XOR
-	write_xor = receive_buffer;
-	transmit_buffer = '\\';
-	transmit_count = 1;
-	command_phase++;
-	break;
+         case 2001:
+            calced_xor ^= receive_buffer;
+            addr |= receive_buffer & 0xFF;
+            //printf("[MCR]   WRITE ADDR=0x%04x\n", addr);
+            transmit_buffer = receive_buffer;
+            transmit_count = 1;
+            command_phase = 2048;
+            break;
+         case (2048 + 128):	// XOR
+            write_xor = receive_buffer;
+            transmit_buffer = '\\';
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-  case (2048 + 129):
-	transmit_buffer = ']';
-	transmit_count = 1;
-	command_phase++;
-	break;
+         case (2048 + 129):
+            transmit_buffer = ']';
+            transmit_count = 1;
+            command_phase++;
+            break;
 
-  case (2048 + 130):	// End flag
-	//MDFN_DispMessage("%02x %02x", calced_xor, write_xor);
-	//printf("[MCR] Write End.  Actual_XOR=0x%02x, CW_XOR=0x%02x\n", calced_xor, write_xor);
+         case (2048 + 130):	// End flag
+            //MDFN_DispMessage("%02x %02x", calced_xor, write_xor);
+            //printf("[MCR] Write End.  Actual_XOR=0x%02x, CW_XOR=0x%02x\n", calced_xor, write_xor);
 
-	if(calced_xor != write_xor)
- 	 transmit_buffer = 'N';
-	else if(addr >= (sizeof(card_data) >> 7))
-	 transmit_buffer = 0xFF;
-	else
-	{
-	 transmit_buffer = 'G';
-	 presence_new = false;
+            if(calced_xor != write_xor)
+               transmit_buffer = 'N';
+            else if(addr >= (sizeof(card_data) >> 7))
+               transmit_buffer = 0xFF;
+            else
+            {
+               transmit_buffer = 'G';
+               presence_new = false;
 
-	 // If the current data is different from the data to be written, increment the dirty count.
-	 // memcpy()'ing over to card_data is also conditionalized here for a slight optimization.
-         if(memcmp(&card_data[addr << 7], rw_buffer, 128))
-	 {
-	  memcpy(&card_data[addr << 7], rw_buffer, 128);
-	  dirty_count++;
-     data_used = true;
-	 }
-	}
+               // If the current data is different from the data to be written, increment the dirty count.
+               // memcpy()'ing over to card_data is also conditionalized here for a slight optimization.
+               if(memcmp(&card_data[addr << 7], rw_buffer, 128))
+               {
+                  memcpy(&card_data[addr << 7], rw_buffer, 128);
+                  dirty_count++;
+                  data_used = true;
+               }
+            }
 
-	transmit_count = 1;
-	command_phase = -1;
-	break;
+            transmit_count = 1;
+            command_phase = -1;
+            break;
 
-  }
+      }
 
-  //if(command_phase != -1 || transmit_count)
-  // printf("[MCR] Receive: 0x%02x, Send: 0x%02x -- %d\n", receive_buffer, transmit_buffer, command_phase);
- }
+   //if(command_phase != -1 || transmit_count)
+   // printf("[MCR] Receive: 0x%02x, Send: 0x%02x -- %d\n", receive_buffer, transmit_buffer, command_phase);
+   if(transmit_count)
+      dsr_pulse_delay = 0x100;
 
- if(!bitpos && transmit_count)
-  dsr_pulse_delay = 0x100;
+   //SkipDPD: ;
 
- //SkipDPD: ;
-
- return(ret);
+   return(ret);
 }
 
 uint32 InputDevice_Memcard::GetNVSize(void)
@@ -2894,92 +2890,91 @@ void InputDevice_Mouse::SetDTR(bool new_dtr)
 
 bool InputDevice_Mouse::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- bool ret = 1;
+   bool ret = 1;
 
- dsr_pulse_delay = 0;
+   dsr_pulse_delay = 0;
 
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- if(transmit_count)
-  ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
+   if(transmit_count)
+      ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
 
- receive_buffer &= ~(1 << bitpos);
- receive_buffer |= TxD << bitpos;
- bitpos = (bitpos + 1) & 0x7;
+   receive_buffer &= ~(1 << bitpos);
+   receive_buffer |= TxD << bitpos;
+   bitpos = (bitpos + 1) & 0x7;
 
- if(!bitpos)
- {
-  //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+   if(bitpos)
+      return ret;
 
-  if(transmit_count)
-  {
-   transmit_pos++;
-   transmit_count--;
-  }
+   //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+
+   if(transmit_count)
+   {
+      transmit_pos++;
+      transmit_count--;
+   }
 
 
-  switch(command_phase)
-  {
-   case 0:
- 	  if(receive_buffer != 0x01)
-	    command_phase = -1;
-	  else
-	  {
-	   transmit_buffer[0] = 0x12;
-	   transmit_pos = 0;
-	   transmit_count = 1;
-	   command_phase++;
-	  }
-	  break;
+   switch(command_phase)
+   {
+      case 0:
+         if(receive_buffer != 0x01)
+            command_phase = -1;
+         else
+         {
+            transmit_buffer[0] = 0x12;
+            transmit_pos = 0;
+            transmit_count = 1;
+            command_phase++;
+         }
+         break;
 
-   case 1:
-	command = receive_buffer;
-	command_phase++;
+      case 1:
+         command = receive_buffer;
+         command_phase++;
 
-	transmit_buffer[0] = 0x5A;
+         transmit_buffer[0] = 0x5A;
 
-	if(command == 0x42)
-	{
-	 int32 xdelta = accum_xdelta;
-	 int32 ydelta = accum_ydelta;
+         if(command == 0x42)
+         {
+            int32 xdelta = accum_xdelta;
+            int32 ydelta = accum_ydelta;
 
-	 if(xdelta < -128) xdelta = -128;
-	 if(xdelta > 127) xdelta = 127;
+            if(xdelta < -128) xdelta = -128;
+            if(xdelta > 127) xdelta = 127;
 
-	 if(ydelta < -128) ydelta = -128;
-	 if(ydelta > 127) ydelta = 127;
+            if(ydelta < -128) ydelta = -128;
+            if(ydelta > 127) ydelta = 127;
 
-	 transmit_buffer[1] = 0xFF;
-	 transmit_buffer[2] = 0xFC ^ (button << 2);
-	 transmit_buffer[3] = xdelta;
-         transmit_buffer[4] = ydelta;
+            transmit_buffer[1] = 0xFF;
+            transmit_buffer[2] = 0xFC ^ (button << 2);
+            transmit_buffer[3] = xdelta;
+            transmit_buffer[4] = ydelta;
 
-	 accum_xdelta -= xdelta;
-	 accum_ydelta -= ydelta;
+            accum_xdelta -= xdelta;
+            accum_ydelta -= ydelta;
 
-	 button &= button_post_mask;
+            button &= button_post_mask;
 
-         transmit_pos = 0;
-         transmit_count = 5;
+            transmit_pos = 0;
+            transmit_count = 5;
 
-	 clear_timeout = 0;
-	}
-	else
-	{
-	 command_phase = -1;
-         transmit_pos = 0;
-         transmit_count = 0;
-	}
-	break;
+            clear_timeout = 0;
+         }
+         else
+         {
+            command_phase = -1;
+            transmit_pos = 0;
+            transmit_count = 0;
+         }
+         break;
 
-  }
- }
+   }
+   if(transmit_count)
+      dsr_pulse_delay = 0x40; //0x100;
 
- if(!bitpos && transmit_count)
-  dsr_pulse_delay = 0x40; //0x100;
-
- return(ret);
+   return(ret);
 }
 
 InputDeviceInputInfoStruct Device_Mouse_IDII[4] =
@@ -3188,211 +3183,208 @@ void InputDevice_Multitap::SetDTR(bool new_dtr)
 
 bool InputDevice_Multitap::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- bool ret = 1;
- int32 tmp_pulse_delay[2][4] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
+   bool ret = 1;
+   int32 tmp_pulse_delay[2][4] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
 
- //printf("Receive bit: %d\n", TxD);
- //printf("TxD %d\n", TxD);
+   //printf("Receive bit: %d\n", TxD);
+   //printf("TxD %d\n", TxD);
 
- receive_buffer &= ~ (1 << bit_counter);
- receive_buffer |= TxD << bit_counter;
+   receive_buffer &= ~ (1 << bit_counter);
+   receive_buffer |= TxD << bit_counter;
 
- if(1)
- {
-  if(byte_counter == 0)
-  {
-   bool mangled_txd = TxD;
-
-   if(bit_counter < 4)
-    mangled_txd = (0x01 >> bit_counter) & 1;
-
-   for(unsigned i = 0; i < 4; i++)
+   if(byte_counter == 0)
    {
-    pad_devices[i]->Clock(mangled_txd, tmp_pulse_delay[0][i]);
-    mc_devices[i]->Clock(mangled_txd, tmp_pulse_delay[1][i]);
-   }
-  }
-  else
-  {
-   if(full_mode)
-   {
-    if(byte_counter == 1)
-    {
-     ret = (0x80 >> bit_counter) & 1;
+      bool mangled_txd = TxD;
 
-     for(unsigned i = 0; i < 4; i++)
-     { 
-      fm_buffer[i][0] &= (pad_devices[i]->Clock(TxD, tmp_pulse_delay[0][i]) << bit_counter) | (~(1U << bit_counter));
-     }
-    }
-    else if(byte_counter == 2)
-    {
-     ret = (0x5A >> bit_counter) & 1;
-    }
-    // || byte_counter == (0x03 + 0x08 * 1) || byte_counter == (0x03 + 0x08 * 2) || byte_counter == (0x03 + 0x08 * 3))
-    else if(byte_counter >= 0x03 && byte_counter < 0x03 + 0x08 * 4)
-    {
-     if(!fm_command_error && byte_counter >= (0x03 + 1) && byte_counter < (0x03 + 0x08))
-     {
+      if(bit_counter < 4)
+         mangled_txd = (0x01 >> bit_counter) & 1;
+
       for(unsigned i = 0; i < 4; i++)
-      { 
-       fm_buffer[i][byte_counter - 0x03] &= (pad_devices[i]->Clock(0, tmp_pulse_delay[0][i]) << bit_counter) | (~(1U << bit_counter));
+      {
+         pad_devices[i]->Clock(mangled_txd, tmp_pulse_delay[0][i]);
+         mc_devices[i]->Clock(mangled_txd, tmp_pulse_delay[1][i]);
       }
-     }
-     ret &= ((&fm_buffer[0][0])[byte_counter - 0x03] >> bit_counter) & 1;
-    }
-   }
-   else // to if(full_mode)
-   {
-    if((unsigned)selected_device < 4)
-    {
-     ret &= pad_devices[selected_device]->Clock(TxD, tmp_pulse_delay[0][selected_device]);
-     ret &= mc_devices[selected_device]->Clock(TxD, tmp_pulse_delay[1][selected_device]);
-    }
-   }
-  } // end else to if(byte_counter == 0)
- }
-
- //
- //
- //
-
- bit_counter = (bit_counter + 1) & 0x7;
- if(bit_counter == 0)
- {
-  //printf("Receive: 0x%02x\n", receive_buffer);
-  if(byte_counter == 0)
-  {
-   mc_mode = (bool)(receive_buffer & 0xF0);
-   if(mc_mode)
-    full_mode = false;
-
-   //printf("Zoomba: 0x%02x\n", receive_buffer);
-   //printf("Full mode: %d %d %d\n", full_mode, bit_counter, byte_counter);
-
-   if(full_mode)
-   {
-    memset(fm_buffer, 0xFF, sizeof(fm_buffer));
-    selected_device = 0;
    }
    else
    {
-    //printf("Device select: %02x\n", receive_buffer);
-    fm_deferred_error = false;
-    selected_device = ((receive_buffer & 0xF) - 1) & 0xFF;
-   }
-  }
+      if(full_mode)
+      {
+         if(byte_counter == 1)
+         {
+            ret = (0x80 >> bit_counter) & 1;
 
-  if(byte_counter == 1)
-  {
-   command = receive_buffer;
+            for(unsigned i = 0; i < 4; i++)
+            { 
+               fm_buffer[i][0] &= (pad_devices[i]->Clock(TxD, tmp_pulse_delay[0][i]) << bit_counter) | (~(1U << bit_counter));
+            }
+         }
+         else if(byte_counter == 2)
+         {
+            ret = (0x5A >> bit_counter) & 1;
+         }
+         // || byte_counter == (0x03 + 0x08 * 1) || byte_counter == (0x03 + 0x08 * 2) || byte_counter == (0x03 + 0x08 * 3))
+         else if(byte_counter >= 0x03 && byte_counter < 0x03 + 0x08 * 4)
+         {
+            if(!fm_command_error && byte_counter >= (0x03 + 1) && byte_counter < (0x03 + 0x08))
+            {
+               for(unsigned i = 0; i < 4; i++)
+               { 
+                  fm_buffer[i][byte_counter - 0x03] &= (pad_devices[i]->Clock(0, tmp_pulse_delay[0][i]) << bit_counter) | (~(1U << bit_counter));
+               }
+            }
+            ret &= ((&fm_buffer[0][0])[byte_counter - 0x03] >> bit_counter) & 1;
+         }
+      }
+      else // to if(full_mode)
+      {
+         if((unsigned)selected_device < 4)
+         {
+            ret &= pad_devices[selected_device]->Clock(TxD, tmp_pulse_delay[0][selected_device]);
+            ret &= mc_devices[selected_device]->Clock(TxD, tmp_pulse_delay[1][selected_device]);
+         }
+      }
+   } // end else to if(byte_counter == 0)
 
-   //printf("Multitap sub-command: %02x\n", command);
+   //
+   //
+   //
 
-   if(full_mode)
+   bit_counter = (bit_counter + 1) & 0x7;
+   if(bit_counter == 0)
    {
-    if(command != 0x42)
-     fm_command_error = true;
-    else
-     fm_command_error = fm_deferred_error;
+      //printf("Receive: 0x%02x\n", receive_buffer);
+      if(byte_counter == 0)
+      {
+         mc_mode = (bool)(receive_buffer & 0xF0);
+         if(mc_mode)
+            full_mode = false;
+
+         //printf("Zoomba: 0x%02x\n", receive_buffer);
+         //printf("Full mode: %d %d %d\n", full_mode, bit_counter, byte_counter);
+
+         if(full_mode)
+         {
+            memset(fm_buffer, 0xFF, sizeof(fm_buffer));
+            selected_device = 0;
+         }
+         else
+         {
+            //printf("Device select: %02x\n", receive_buffer);
+            fm_deferred_error = false;
+            selected_device = ((receive_buffer & 0xF) - 1) & 0xFF;
+         }
+      }
+
+      if(byte_counter == 1)
+      {
+         command = receive_buffer;
+
+         //printf("Multitap sub-command: %02x\n", command);
+
+         if(full_mode)
+         {
+            if(command != 0x42)
+               fm_command_error = true;
+            else
+               fm_command_error = fm_deferred_error;
+         }
+         else
+         {
+            fm_command_error = false;
+         }
+         fm_deferred_error = false;
+      }
+
+      if((!mc_mode || full_mode) && byte_counter == 2)
+      {
+         //printf("Full mode setting: %02x\n", receive_buffer);
+         full_mode_setting = receive_buffer & 0x01;
+      }
+
+      if(full_mode)
+      {
+         if(byte_counter == (3 + 8 * 0) || byte_counter == (3 + 8 * 1) || byte_counter == (3 + 8 * 2) || byte_counter == (3 + 8 * 3))
+         {
+            unsigned index = (byte_counter - 3) >> 3;
+            assert(index < 4);
+
+            if(index == 0)
+               fm_deferred_error_temp = false;     
+
+            if((fm_dp & (1U << index)) && receive_buffer != 0x42)
+            {
+               //printf("Multitap command check failed: %u, 0x%02x\n", byte_counter, receive_buffer);
+               fm_deferred_error_temp = true;
+            }
+         }
+
+         if(byte_counter == 33)
+            fm_deferred_error = fm_deferred_error_temp;
+      }
+
+      // Handle DSR stuff
+      if(full_mode)
+      {
+         if(byte_counter == 0)	// Next byte: 0x80
+         {
+            dsr_pulse_delay = 1000;
+
+            fm_dp = 0;
+            for(unsigned i = 0; i < 4; i++)
+               fm_dp |= (((bool)(tmp_pulse_delay[0][i])) << i);
+         }
+         else if(byte_counter == 1)	// Next byte: 0x5A
+            dsr_pulse_delay = 0x40;
+         else if(byte_counter == 2)	// Next byte(typically, controller-dependent): 0x41
+         {
+            if(fm_dp)
+               dsr_pulse_delay = 0x40;
+            else
+               dsr_pulse_delay = 0;
+         }
+         else if(byte_counter >= 3 && byte_counter < 34)	// Next byte when byte_counter==3 (typically, controller-dependent): 0x5A
+         {
+            if(byte_counter < 10)
+            { 
+               int d = 0x40;
+
+               for(unsigned i = 0; i < 4; i++)
+                  if(tmp_pulse_delay[0][i] > d)
+                     d = tmp_pulse_delay[0][i];
+
+               dsr_pulse_delay = d;
+            }
+            else
+               dsr_pulse_delay = 0x20;
+
+            if(byte_counter == 3 && fm_command_error)
+               dsr_pulse_delay = 0;
+         }
+      } // end if(full_mode)
+      else
+      {
+         if((unsigned)selected_device < 4)
+         {
+            dsr_pulse_delay = std::max<int32>(tmp_pulse_delay[0][selected_device], tmp_pulse_delay[1][selected_device]);
+         }
+      }
+
+
+      //
+      //
+      //
+
+      //printf("Byte Counter Increment\n");
+      if(byte_counter < 255)
+         byte_counter++;
    }
-   else
-   {
-    fm_command_error = false;
-   }
-   fm_deferred_error = false;
-  }
-
-  if((!mc_mode || full_mode) && byte_counter == 2)
-  {
-   //printf("Full mode setting: %02x\n", receive_buffer);
-   full_mode_setting = receive_buffer & 0x01;
-  }
-
-  if(full_mode)
-  {
-   if(byte_counter == (3 + 8 * 0) || byte_counter == (3 + 8 * 1) || byte_counter == (3 + 8 * 2) || byte_counter == (3 + 8 * 3))
-   {
-    unsigned index = (byte_counter - 3) >> 3;
-    assert(index < 4);
-
-    if(index == 0)
-     fm_deferred_error_temp = false;     
-
-    if((fm_dp & (1U << index)) && receive_buffer != 0x42)
-    {
-     //printf("Multitap command check failed: %u, 0x%02x\n", byte_counter, receive_buffer);
-     fm_deferred_error_temp = true;
-    }
-   }
-
-   if(byte_counter == 33)
-    fm_deferred_error = fm_deferred_error_temp;
-  }
-
-  // Handle DSR stuff
-  if(full_mode)
-  {
-   if(byte_counter == 0)	// Next byte: 0x80
-   {
-    dsr_pulse_delay = 1000;
-
-    fm_dp = 0;
-    for(unsigned i = 0; i < 4; i++)
-     fm_dp |= (((bool)(tmp_pulse_delay[0][i])) << i);
-   }
-   else if(byte_counter == 1)	// Next byte: 0x5A
-    dsr_pulse_delay = 0x40;
-   else if(byte_counter == 2)	// Next byte(typically, controller-dependent): 0x41
-   {
-    if(fm_dp)
-     dsr_pulse_delay = 0x40;
-    else
-     dsr_pulse_delay = 0;
-   }
-   else if(byte_counter >= 3 && byte_counter < 34)	// Next byte when byte_counter==3 (typically, controller-dependent): 0x5A
-   {
-    if(byte_counter < 10)
-    { 
-     int d = 0x40;
-
-     for(unsigned i = 0; i < 4; i++)
-      if(tmp_pulse_delay[0][i] > d)
-       d = tmp_pulse_delay[0][i];
-
-     dsr_pulse_delay = d;
-    }
-    else
-     dsr_pulse_delay = 0x20;
-
-    if(byte_counter == 3 && fm_command_error)
-     dsr_pulse_delay = 0;
-   }
-  } // end if(full_mode)
-  else
-  {
-   if((unsigned)selected_device < 4)
-   {
-    dsr_pulse_delay = std::max<int32>(tmp_pulse_delay[0][selected_device], tmp_pulse_delay[1][selected_device]);
-   }
-  }
-
-
-  //
-  //
-  //
-
-  //printf("Byte Counter Increment\n");
-  if(byte_counter < 255)
-   byte_counter++;
- }
 
 
 
- return(ret);
+   return(ret);
 }
 
 
@@ -3452,85 +3444,85 @@ void InputDevice_neGcon::SetDTR(bool new_dtr)
 
 bool InputDevice_neGcon::Clock(bool TxD, int32 &dsr_pulse_delay)
 {
- bool ret = 1;
+   bool ret = 1;
 
- dsr_pulse_delay = 0;
+   dsr_pulse_delay = 0;
 
- if(!dtr)
-  return(1);
+   if(!dtr)
+      return(1);
 
- if(transmit_count)
-  ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
+   if(transmit_count)
+      ret = (transmit_buffer[transmit_pos] >> bitpos) & 1;
 
- receive_buffer &= ~(1 << bitpos);
- receive_buffer |= TxD << bitpos;
- bitpos = (bitpos + 1) & 0x7;
+   receive_buffer &= ~(1 << bitpos);
+   receive_buffer |= TxD << bitpos;
+   bitpos = (bitpos + 1) & 0x7;
 
- if(!bitpos)
- {
-  //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+   if(bitpos)
+      return ret;
 
-  if(transmit_count)
-  {
-   transmit_pos++;
-   transmit_count--;
-  }
+   //printf("[PAD] Receive: %02x -- command_phase=%d\n", receive_buffer, command_phase);
+
+   if(transmit_count)
+   {
+      transmit_pos++;
+      transmit_count--;
+   }
 
 
-  switch(command_phase)
-  {
-   case 0:
- 	  if(receive_buffer != 0x01)
-	    command_phase = -1;
-	  else
-	  {
-	   transmit_buffer[0] = 0x23;
-	   transmit_pos = 0;
-	   transmit_count = 1;
-	   command_phase++;
-	   dsr_pulse_delay = 256;
-	  }
-	  break;
+   switch(command_phase)
+   {
+      case 0:
+         if(receive_buffer != 0x01)
+            command_phase = -1;
+         else
+         {
+            transmit_buffer[0] = 0x23;
+            transmit_pos = 0;
+            transmit_count = 1;
+            command_phase++;
+            dsr_pulse_delay = 256;
+         }
+         break;
 
-   case 1:
-	command = receive_buffer;
-	command_phase++;
+      case 1:
+         command = receive_buffer;
+         command_phase++;
 
-	transmit_buffer[0] = 0x5A;
+         transmit_buffer[0] = 0x5A;
 
-	//if(command != 0x42)
-	// fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
+         //if(command != 0x42)
+         // fprintf(stderr, "Gamepad unhandled command: 0x%02x\n", command);
 
-	if(command == 0x42)
-	{
-	 transmit_buffer[1] = 0xFF ^ buttons[0];
-	 transmit_buffer[2] = 0xFF ^ buttons[1];
-	 transmit_buffer[3] = twist;			// Twist, 0x00 through 0xFF, 0x80 center.
-	 transmit_buffer[4] = anabuttons[0];		// Analog button I, 0x00 through 0xFF, 0x00 = no pressing, 0xFF = max.
-	 transmit_buffer[5] = anabuttons[1];		// Analog button II, ""
-	 transmit_buffer[6] = anabuttons[2];		// Left shoulder analog button, ""
-         transmit_pos = 0;
-         transmit_count = 7;
-	 dsr_pulse_delay = 256;
-	}
-	else
-	{
-	 command_phase = -1;
-	 transmit_buffer[1] = 0;
-	 transmit_buffer[2] = 0;
-         transmit_pos = 0;
-         transmit_count = 0;
-	}
-	break;
+         if(command == 0x42)
+         {
+            transmit_buffer[1] = 0xFF ^ buttons[0];
+            transmit_buffer[2] = 0xFF ^ buttons[1];
+            transmit_buffer[3] = twist;			// Twist, 0x00 through 0xFF, 0x80 center.
+            transmit_buffer[4] = anabuttons[0];		// Analog button I, 0x00 through 0xFF, 0x00 = no pressing, 0xFF = max.
+            transmit_buffer[5] = anabuttons[1];		// Analog button II, ""
+            transmit_buffer[6] = anabuttons[2];		// Left shoulder analog button, ""
+            transmit_pos = 0;
+            transmit_count = 7;
+            dsr_pulse_delay = 256;
+         }
+         else
+         {
+            command_phase = -1;
+            transmit_buffer[1] = 0;
+            transmit_buffer[2] = 0;
+            transmit_pos = 0;
+            transmit_count = 0;
+         }
+         break;
 
-   case 2:
-	if(transmit_count > 0)
-	 dsr_pulse_delay = 128;
-	break;
-  }
- }
+      case 2:
+         if(transmit_count > 0)
+            dsr_pulse_delay = 128;
+         break;
+   }
 
- return(ret);
+   return(ret);
 }
 
 InputDeviceInputInfoStruct Device_neGcon_IDII[21] =
