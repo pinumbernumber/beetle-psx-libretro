@@ -34,6 +34,9 @@
 #define INPUTDEVICE_JUSTIFIER       8
 #define INPUTDEVICE_DANCEPAD        9
 
+#define INPUTDEVICE_MULTITAP        10
+#define INPUTDEVICE_MEMCARD         11
+
 //#define PSX_FIODBGINFO(format, ...) { /* printf(format " -- timestamp=%d -- PAD temp\n", ## __VA_ARGS__, timestamp); */  }
 static void PSX_FIODBGINFO(const char *format, ...)
 {
@@ -44,7 +47,9 @@ static bool emulate_memcards[8];
 static bool emulate_multitap[2];
 
 static InputDevice *Ports[2];
+static unsigned     PortsType[2];
 static InputDevice *MCPorts[2];
+static unsigned     MCPortsType[2];
 
 static InputDevice *DummyDevice;
 static InputDevice_Multitap *DevicesTap[2];
@@ -411,11 +416,13 @@ void InputDevice_DualAnalog::SetDTR(bool new_dtr)
   transmit_pos = 0;
   transmit_count = 0;
  }
+#if 0
  else if(dtr && !new_dtr)
  {
   //if(bitpos || transmit_count)
   // printf("[PAD] Abort communication!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
  }
+#endif
 
  dtr = new_dtr;
 }
@@ -1860,11 +1867,13 @@ void InputDevice_GunCon::SetDTR(bool new_dtr)
   transmit_pos = 0;
   transmit_count = 0;
  }
+#if 0
  else if(dtr && !new_dtr)
  {
   //if(bitpos || transmit_count)
   // printf("[PAD] Abort communication!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
  }
+#endif
 
  dtr = new_dtr;
 }
@@ -2175,11 +2184,13 @@ void InputDevice_Justifier::SetDTR(bool new_dtr)
   transmit_pos = 0;
   transmit_count = 0;
  }
+#if 0
  else if(dtr && !new_dtr)
  {
   //if(bitpos || transmit_count)
   // printf("[PAD] Abort communication!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
  }
+#endif
 
  dtr = new_dtr;
 }
@@ -2870,11 +2881,13 @@ void InputDevice_Mouse::SetDTR(bool new_dtr)
   transmit_pos = 0;
   transmit_count = 0;
  }
+#if 0
  else if(dtr && !new_dtr)
  {
   //if(bitpos || transmit_count)
   // printf("[PAD] Abort communication!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
  }
+#endif
 
  dtr = new_dtr;
 }
@@ -3142,10 +3155,12 @@ void InputDevice_Multitap::SetDTR(bool new_dtr)
 
  if(!dtr)
  {
+#if 0
   if(old_dtr)
   {
    //printf("Multitap stop.\n");
   }
+#endif
 
   bit_counter = 0;
   receive_buffer = 0;
@@ -3424,11 +3439,13 @@ void InputDevice_neGcon::SetDTR(bool new_dtr)
   transmit_pos = 0;
   transmit_count = 0;
  }
+#if 0
  else if(dtr && !new_dtr)
  {
   //if(bitpos || transmit_count)
   // printf("[PAD] Abort communication!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
  }
+#endif
 
  dtr = new_dtr;
 }
@@ -3791,30 +3808,43 @@ static void FrontIO_MapDevicesToPorts(void)
       {
          Ports[i] = DevicesTap[i];
          MCPorts[i] = DummyDevice;
+
+         PortsType[i]   = INPUTDEVICE_MULTITAP;
+         MCPortsType[i] = INPUTDEVICE_NONE;
       }
    }
    else if(!emulate_multitap[0] && emulate_multitap[1])
    {
       Ports[0] = Devices[0];
+      PortsType[0] = DevicesType[0];
       MCPorts[0] = emulate_memcards[0] ? DevicesMC[0] : DummyDevice;
+      MCPortsType[0] = emulate_memcards[0] ? INPUTDEVICE_MEMCARD : INPUTDEVICE_NONE;
 
-      Ports[1] = DevicesTap[1];
-      MCPorts[1] = DummyDevice;
+      Ports[1]       = DevicesTap[1];
+      MCPorts[1]     = DummyDevice;
+      PortsType[1]   = INPUTDEVICE_MULTITAP;
+      MCPortsType[1] = INPUTDEVICE_NONE;
    }
    else if(emulate_multitap[0] && !emulate_multitap[1])
    {
       Ports[0] = DevicesTap[0];
+      PortsType[0] = INPUTDEVICE_MULTITAP;
       MCPorts[0] = DummyDevice;
+      MCPortsType[0] = INPUTDEVICE_NONE;
 
       Ports[1] = Devices[4];
+      PortsType[1] = DevicesType[4];
       MCPorts[1] = emulate_memcards[4] ? DevicesMC[4] : DummyDevice;
+      MCPortsType[1] = emulate_memcards[4] ? INPUTDEVICE_MEMCARD : INPUTDEVICE_NONE;
    }
    else
    {
       for(i = 0; i < 2; i++)
       {
          Ports[i] = Devices[i];
+         PortsType[0] = DevicesType[i];
          MCPorts[i] = emulate_memcards[i] ? DevicesMC[i] : DummyDevice;
+         MCPortsType[i] = emulate_memcards[i] ? INPUTDEVICE_MEMCARD : INPUTDEVICE_NONE;
       }
    }
 
@@ -4584,14 +4614,14 @@ void FrontIO_LoadMemcard(unsigned int which, const char *path)
    {
       FILE *fp = fopen(path, "rb");
 
-      if (fp != NULL)
-      {
-         InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
-         fread(device->card_data, 1, 1 << 17, fp);
-         fclose(fp);
-         device->WriteNV(device->card_data, 0, (1 << 17));
-         device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
-      }
+      if (!fp)
+         return;
+
+      InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
+      fread(device->card_data, 1, 1 << 17, fp);
+      fclose(fp);
+      device->WriteNV(device->card_data, 0, (1 << 17));
+      device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
    }
 }
 
@@ -4615,14 +4645,14 @@ void FrontIO_SaveMemcard(unsigned int which, const char *path)
    {
       FILE *fp = fopen(path, "rb");
 
-      if (fp)
-      {
-         InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
-         device->ReadNV(device->card_data, 0, (1 << 17));
-         fwrite(device->card_data, 1, (1 << 17), fp);
-         fclose(fp);
-         device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
-      }
+      if (!fp)
+         return;
+
+      InputDevice_Memcard *device = (InputDevice_Memcard*)DevicesMC[which];
+      device->ReadNV(device->card_data, 0, (1 << 17));
+      fwrite(device->card_data, 1, (1 << 17), fp);
+      fclose(fp);
+      device->dirty_count = 0;		// There's no need to rewrite the file if it's the same data.
    }
 }
 
@@ -4667,9 +4697,7 @@ void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
    if(pixels && pix_clock)
    {
       for(unsigned i = 0; i < 8; i++)
-      {
          Devices[i]->DrawCrosshairs(pixels, format, width, pix_clock);
-      }
    }
 
    PSX_SetEventNT(MDFN_IEN_PSX::PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
