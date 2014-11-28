@@ -1029,24 +1029,22 @@ static INLINE void GPU_DrawSpan(bool shaded, bool textured, int BlendMode, bool 
    }
 }
 
-static INLINE void GPU_LinePointToFXPCoord(bool shaded, const line_point &point,
-      const line_fxp_step &step, line_fxp_coord &coord)
-{
-   coord.x = ((int64)point.x << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1));
-   coord.y = ((int64)point.y << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1));
+#define GPU_LinePointToFXPCoord_Shaded(shaded, point, step, coord) \
+ coord.x = ((int64)point.x << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1)); \
+ coord.y = ((int64)point.y << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1)); \
+ coord.x -= 1024; \
+ if(step.dy_dk < 0) \
+ coord.y -= 1024; \
+ coord.r = (point.r << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1)); \
+ coord.g = (point.g << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1)); \
+ coord.b = (point.b << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1))
 
-   coord.x -= 1024;
-
-   if(step.dy_dk < 0)
-      coord.y -= 1024;
-
-   if(shaded)
-   {
-      coord.r = (point.r << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1));
-      coord.g = (point.g << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1));
-      coord.b = (point.b << Line_RGB_FractBits) | (1 << (Line_RGB_FractBits - 1));
-   }
-}
+#define GPU_LinePointToFXPCoord_NoShaded(shaded, point, step, coord) \
+ coord.x = ((int64)point.x << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1)); \
+ coord.y = ((int64)point.y << Line_XY_FractBits) | (1LL << (Line_XY_FractBits - 1)); \
+ coord.x -= 1024; \
+ if(step.dy_dk < 0) \
+ coord.y -= 1024
 
 static INLINE int64 GPU_LineDivide(unsigned bits, int64 delta, int32 dk)
 {
@@ -1060,7 +1058,7 @@ static INLINE int64 GPU_LineDivide(unsigned bits, int64 delta, int32 dk)
    return (delta / dk);
 }
 
-static INLINE void GPU_LinePointsToFXPStep(bool shaded,
+static INLINE void GPU_LinePointsToFXPStep_Shaded(bool shaded,
       const line_point &point0, const line_point &point1, const int32 dk, line_fxp_step &step)
 {
    if(!dk)
@@ -1068,24 +1066,32 @@ static INLINE void GPU_LinePointsToFXPStep(bool shaded,
       step.dx_dk = 0;
       step.dy_dk = 0;
 
-      if(shaded)
-      {
-         step.dr_dk = 0;
-         step.dg_dk = 0;
-         step.db_dk = 0;
-      }
+      step.dr_dk = 0;
+      step.dg_dk = 0;
+      step.db_dk = 0;
       return;
    }
 
    step.dx_dk = GPU_LineDivide(Line_XY_FractBits, point1.x - point0.x, dk);
    step.dy_dk = GPU_LineDivide(Line_XY_FractBits, point1.y - point0.y, dk);
 
-   if(shaded)
+   step.dr_dk = ((point1.r - point0.r) << Line_RGB_FractBits) / dk;
+   step.dg_dk = ((point1.g - point0.g) << Line_RGB_FractBits) / dk;
+   step.db_dk = ((point1.b - point0.b) << Line_RGB_FractBits) / dk;
+}
+
+static INLINE void GPU_LinePointsToFXPStep_NoShaded(bool shaded,
+      const line_point &point0, const line_point &point1, const int32 dk, line_fxp_step &step)
+{
+   if(!dk)
    {
-      step.dr_dk = ((point1.r - point0.r) << Line_RGB_FractBits) / dk;
-      step.dg_dk = ((point1.g - point0.g) << Line_RGB_FractBits) / dk;
-      step.db_dk = ((point1.b - point0.b) << Line_RGB_FractBits) / dk;
+      step.dx_dk = 0;
+      step.dy_dk = 0;
+      return;
    }
+
+   step.dx_dk = GPU_LineDivide(Line_XY_FractBits, point1.x - point0.x, dk);
+   step.dy_dk = GPU_LineDivide(Line_XY_FractBits, point1.y - point0.y, dk);
 }
 
 static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool textured, int BlendMode,
@@ -1549,7 +1555,7 @@ static INLINE void G_Command_DrawSprite(uint8 raw_size, bool textured, int Blend
    }
 }
 
-static INLINE void G_Command_DrawLine(line_point *points, int32 k, bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
+static INLINE void G_Command_DrawLine_Shaded(line_point *points, int32 k, bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
 {
    line_fxp_coord cur_point;
    line_fxp_step step;
@@ -1567,8 +1573,8 @@ static INLINE void G_Command_DrawLine(line_point *points, int32 k, bool polyline
 
    DrawTimeAvail -= k * ((BlendMode >= BLEND_MODE_AVERAGE) ? 2 : 1);
 
-   GPU_LinePointsToFXPStep(shaded, points[0], points[1], k, step);
-   GPU_LinePointToFXPCoord(shaded, points[0], step, cur_point);
+   GPU_LinePointsToFXPStep_Shaded(shaded, points[0], points[1], k, step);
+   GPU_LinePointToFXPCoord_Shaded(shaded, points[0], step, cur_point);
 
    for(int32 i = 0; i <= k; i++)	// <= is not a typo.
    {
@@ -1579,22 +1585,11 @@ static INLINE void G_Command_DrawLine(line_point *points, int32 k, bool polyline
 
       if(!LineSkipTest( y))
       {
-         uint8 r, g, b;
+         uint8 r = cur_point.r >> Line_RGB_FractBits;
+         uint8 g = cur_point.g >> Line_RGB_FractBits;
+         uint8 b = cur_point.b >> Line_RGB_FractBits;
 
-         if(shaded)
-         {
-            r = cur_point.r >> Line_RGB_FractBits;
-            g = cur_point.g >> Line_RGB_FractBits;
-            b = cur_point.b >> Line_RGB_FractBits;
-         }
-         else
-         {
-            r = points[0].r;
-            g = points[0].g;
-            b = points[0].b;
-         }
-
-         if(shaded && dtd)
+         if(dtd)
          {
             pix |= DitherLUT[y & 3][x & 3][r] << 0;
             pix |= DitherLUT[y & 3][x & 3][g] << 5;
@@ -1616,12 +1611,61 @@ static INLINE void G_Command_DrawLine(line_point *points, int32 k, bool polyline
 
       cur_point.x += step.dx_dk;
       cur_point.y += step.dy_dk;
-      if(shaded)
+      cur_point.r += step.dr_dk;
+      cur_point.g += step.dg_dk;
+      cur_point.b += step.db_dk;
+   }
+}
+
+static INLINE void G_Command_DrawLine_NoShaded(line_point *points, int32 k, bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
+{
+   line_fxp_coord cur_point;
+   line_fxp_step step;
+   const uint8 cc = cb[0] >> 24; // For pline handling later.
+   DrawTimeAvail -= 16;	// FIXME, correct time.
+
+   // May not be correct(do tests for the case of k == i_dy on real thing.
+   if(points[0].x > points[1].x)
+   {
+      line_point tmp = points[1];
+
+      points[1] = points[0];
+      points[0] = tmp;  
+   }
+
+   DrawTimeAvail -= k * ((BlendMode >= BLEND_MODE_AVERAGE) ? 2 : 1);
+
+   GPU_LinePointsToFXPStep_NoShaded(shaded, points[0], points[1], k, step);
+   GPU_LinePointToFXPCoord_NoShaded(shaded, points[0], step, cur_point);
+
+   for(int32 i = 0; i <= k; i++)	// <= is not a typo.
+   {
+      // Sign extension is not necessary here for x and y, due to the maximum values that ClipX1 and ClipY1 can contain.
+      const int32 x = (cur_point.x >> Line_XY_FractBits) & 2047;
+      const int32 y = (cur_point.y >> Line_XY_FractBits) & 2047;
+      uint16 pix = 0x8000;
+
+      if(!LineSkipTest( y))
       {
-         cur_point.r += step.dr_dk;
-         cur_point.g += step.dg_dk;
-         cur_point.b += step.db_dk;
+         uint8 r, g, b;
+
+         r = points[0].r;
+         g = points[0].g;
+         b = points[0].b;
+
+         pix |= (r >> 3) << 0;
+         pix |= (g >> 3) << 5;
+         pix |= (b >> 3) << 10;
+
+         // FIXME: There has to be a faster way than checking for being inside the drawing area for each pixel.
+         if(x >= ClipX0 && x <= ClipX1 && y >= ClipY0 && y <= ClipY1)
+            GPU_PlotPixel(BlendMode, MaskEval_TA, false, x, y, pix);
       }
+
+      /* Add Line Step */
+
+      cur_point.x += step.dx_dk;
+      cur_point.y += step.dy_dk;
    }
 }
 
@@ -2100,7 +2144,7 @@ static void GPU_ProcessFIFO(void)
 
          if(i_dx >= 1024 || i_dy >= 512)
             return;
-         G_Command_DrawLine(&points[0], k, 0, 0, -1, MaskEvalAND, CB);
+         G_Command_DrawLine_NoShaded(&points[0], k, 0, 0, -1, MaskEvalAND, CB);
       }
       break;
    case 0x42: case 0x43: case 0x46: case 0x47:
@@ -2127,7 +2171,7 @@ static void GPU_ProcessFIFO(void)
 
          if(i_dx >= 1024 || i_dy >= 512)
             return;
-         G_Command_DrawLine(&points[0], k, 0, 0, abr, MaskEvalAND, CB);
+         G_Command_DrawLine_NoShaded(&points[0], k, 0, 0, abr, MaskEvalAND, CB);
       }
       break;
    case 0x48: case 0x49: case 0x4C: case 0x4D:
@@ -2171,7 +2215,7 @@ static void GPU_ProcessFIFO(void)
 
          if(i_dx >= 1024 || i_dy >= 512)
             return;
-         G_Command_DrawLine(&points[0], k, 1, 0, -1, MaskEvalAND, CB);
+         G_Command_DrawLine_NoShaded(&points[0], k, 1, 0, -1, MaskEvalAND, CB);
       }
       break;
    case 0x4A: case 0x4B: case 0x4E: case 0x4F:
@@ -2206,7 +2250,7 @@ static void GPU_ProcessFIFO(void)
 
          if(i_dx >= 1024 || i_dy >= 512)
             return;
-         G_Command_DrawLine(&points[0], k, 1, 0, abr, MaskEvalAND, CB);
+         G_Command_DrawLine_NoShaded(&points[0], k, 1, 0, abr, MaskEvalAND, CB);
       }
       break;
    case 0x50: case 0x51: case 0x54: case 0x55:
@@ -2227,7 +2271,7 @@ static void GPU_ProcessFIFO(void)
 
          points[1].x = sign_x_to_s32(11, ((CB[3] >> 0) & 0xFFFF)) + OffsX;
          points[1].y = sign_x_to_s32(11, ((CB[3] >> 16) & 0xFFFF)) + OffsY;
-         G_Command_DrawLine(&points[0], k, 0, 1, -1, MaskEvalAND, CB);
+         G_Command_DrawLine_Shaded(&points[0], k, 0, 1, -1, MaskEvalAND, CB);
       }
       break;
    case 0x52: case 0x53: case 0x56: case 0x57:
@@ -2255,7 +2299,7 @@ static void GPU_ProcessFIFO(void)
 
          if(i_dx >= 1024 || i_dy >= 512)
             return;
-         G_Command_DrawLine(&points[0], k, 0, 1, abr, MaskEvalAND, CB);
+         G_Command_DrawLine_Shaded(&points[0], k, 0, 1, abr, MaskEvalAND, CB);
       }
       break;
    case 0x58: case 0x59: case 0x5C: case 0x5D:
@@ -2306,7 +2350,7 @@ static void GPU_ProcessFIFO(void)
 
          if(i_dx >= 1024 || i_dy >= 512)
             return;
-         G_Command_DrawLine(&points[0], k, 1, 1, -1, MaskEvalAND, CB);
+         G_Command_DrawLine_Shaded(&points[0], k, 1, 1, -1, MaskEvalAND, CB);
       }
       break;
    case 0x5A: case 0x5B: case 0x5E: case 0x5F:
@@ -2356,7 +2400,7 @@ static void GPU_ProcessFIFO(void)
 
          if(i_dx >= 1024 || i_dy >= 512)
             return;
-         G_Command_DrawLine(&points[0], k, 1, 1, abr, MaskEvalAND, CB);
+         G_Command_DrawLine_Shaded(&points[0], k, 1, 1, abr, MaskEvalAND, CB);
       }
       break;
 
