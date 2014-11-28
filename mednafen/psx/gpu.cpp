@@ -1549,10 +1549,9 @@ static INLINE void G_Command_DrawSprite(uint8 raw_size, bool textured, int Blend
    }
 }
 
-static INLINE void G_Command_DrawLine(bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
+static INLINE void G_Command_DrawLine(line_point *points, bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
 {
    const uint8 cc = cb[0] >> 24; // For pline handling later.
-   line_point points[2];
 
    DrawTimeAvail -= 16;	// FIXME, correct time.
 
@@ -2146,28 +2145,52 @@ static void GPU_ProcessFIFO(void)
       */
 
    case 0x40: case 0x41: case 0x44: case 0x45:
-      G_Command_DrawLine(0, 0, -1, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 0, 0, -1, MaskEvalAND, CB);
+      }
       break;
    case 0x42: case 0x43: case 0x46: case 0x47:
-      G_Command_DrawLine(0, 0, abr, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 0, 0, abr, MaskEvalAND, CB);
+      }
       break;
    case 0x48: case 0x49: case 0x4C: case 0x4D:
-      G_Command_DrawLine(1, 0, -1, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 1, 0, -1, MaskEvalAND, CB);
+      }
       break;
    case 0x4A: case 0x4B: case 0x4E: case 0x4F:
-      G_Command_DrawLine(1, 0, abr, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 1, 0, abr, MaskEvalAND, CB);
+      }
       break;
    case 0x50: case 0x51: case 0x54: case 0x55:
-      G_Command_DrawLine(0, 1, -1, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 0, 1, -1, MaskEvalAND, CB);
+      }
       break;
    case 0x52: case 0x53: case 0x56: case 0x57:
-      G_Command_DrawLine(0, 1, abr, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 0, 1, abr, MaskEvalAND, CB);
+      }
       break;
    case 0x58: case 0x59: case 0x5C: case 0x5D:
-      G_Command_DrawLine(1, 1, -1, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 1, 1, -1, MaskEvalAND, CB);
+      }
       break;
    case 0x5A: case 0x5B: case 0x5E: case 0x5F:
-      G_Command_DrawLine(1, 1, abr, MaskEvalAND, CB);
+      {
+         line_point points[2];
+         G_Command_DrawLine(&points[0], 1, 1, abr, MaskEvalAND, CB);
+      }
       break;
 
 //      LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
