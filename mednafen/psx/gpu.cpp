@@ -1776,52 +1776,6 @@ static void G_Command_FBCopy(const uint32 *cb)
    }
 }
 
-static void G_Command_FBWrite(const uint32 *cb)
-{
-   //assert(InCmd == INCMD_NONE);
-
-   FBRW_X = (cb[1] >>  0) & 0x3FF;
-   FBRW_Y = (cb[1] >> 16) & 0x3FF;
-
-   FBRW_W = (cb[2] >>  0) & 0x7FF;
-   FBRW_H = (cb[2] >> 16) & 0x3FF;
-
-   if(FBRW_W > 0x400)
-      FBRW_W &= 0x3FF;
-
-   if(FBRW_H > 0x200)
-      FBRW_H &= 0x1FF;
-
-   FBRW_CurX = FBRW_X;
-   FBRW_CurY = FBRW_Y;
-
-   if(FBRW_W != 0 && FBRW_H != 0)
-      InCmd = INCMD_FBWRITE;
-}
-
-static void G_Command_FBRead(const uint32 *cb)
-{
-   //assert(InCmd == INCMD_NONE);
-
-   FBRW_X = (cb[1] >>  0) & 0x3FF;
-   FBRW_Y = (cb[1] >> 16) & 0x3FF;
-
-   FBRW_W = (cb[2] >>  0) & 0x7FF;
-   FBRW_H = (cb[2] >> 16) & 0x3FF;
-
-   if(FBRW_W > 0x400)
-      FBRW_W &= 0x3FF;
-
-   if(FBRW_H > 0x200)
-      FBRW_H &= 0x1FF;
-
-   FBRW_CurX = FBRW_X;
-   FBRW_CurY = FBRW_Y;
-
-   if(FBRW_W != 0 && FBRW_H != 0)
-      InCmd = INCMD_FBREAD;
-}
-
 #define POLY_HELPER(cv)														\
 { 															\
    1 + (3 /*+ ((cv & 0x8) >> 3)*/) * ( 1 + ((cv & 0x4) >> 2) + ((cv & 0x10) >> 4) ) - ((cv & 0x10) >> 4),			\
@@ -1866,8 +1820,6 @@ static void G_Command_FBRead(const uint32 *cb)
 //
 static void Command_FBFill(const uint32 *cb);
 static void Command_FBCopy(const uint32 *cb);
-static void Command_FBWrite(const uint32 *cb);
-static void Command_FBRead(const uint32 *cb);
 
 static void Command_Null(const uint32 *cb);
 
@@ -2272,18 +2224,38 @@ static void GPU_ProcessFIFO(void)
    case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
    case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
    case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
-
-      LOG_GPU_FIFO("CC #%d : FBWrite.\n", cc);
-      G_Command_FBWrite(CB);
-      break;
+   /* FBWrite */
 
    case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
    case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
    case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
    case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
+   /* FBRead */
 
-      LOG_GPU_FIFO("CC #%d : FBRead.\n", cc);
-      G_Command_FBRead(CB);
+      //assert(InCmd == INCMD_NONE);
+
+      FBRW_X = (cb[1] >>  0) & 0x3FF;
+      FBRW_Y = (cb[1] >> 16) & 0x3FF;
+
+      FBRW_W = (cb[2] >>  0) & 0x7FF;
+      FBRW_H = (cb[2] >> 16) & 0x3FF;
+
+      if(FBRW_W > 0x400)
+         FBRW_W &= 0x3FF;
+
+      if(FBRW_H > 0x200)
+         FBRW_H &= 0x1FF;
+
+      FBRW_CurX = FBRW_X;
+      FBRW_CurY = FBRW_Y;
+
+      if(FBRW_W != 0 && FBRW_H != 0)
+      {
+         if (cc >= 0xC0 && cc <= 0xDF)
+            InCmd = INCMD_FBREAD;
+         else if (cc >= 0xA0 && cc <= 0xBF)
+            InCmd = INCMD_FBWRITE;
+      }
       break;
 
    case 0xE1:
