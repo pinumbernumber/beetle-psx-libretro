@@ -2115,14 +2115,10 @@ static void GPU_ProcessFIFO(void)
       */
 
    case 0x20: case 0x28: case 0x30: case 0x38:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
-      break;
    case 0x21: case 0x29: case 0x31: case 0x39:
       G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
       break;
    case 0x22: case 0x2A: case 0x32: case 0x3A:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
-      break;
    case 0x23: case 0x2B: case 0x33: case 0x3B:
       G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
       break;
@@ -2187,14 +2183,10 @@ static void GPU_ProcessFIFO(void)
       */
 
    case 0x60: case 0x68: case 0x70: case 0x78:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 0, -1, 0, 0, MaskEvalAND, CB);
-     break;
    case 0x61: case 0x69: case 0x71: case 0x79:
      G_Command_DrawSprite((cc >> 3) & 0x3, 0, -1, 0, 0, MaskEvalAND, CB);
      break;
    case 0x62: case 0x6A: case 0x72: case 0x7A:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 0, abr, 0, 0, MaskEvalAND, CB);
-     break;
    case 0x63: case 0x6B: case 0x73: case 0x7B:
      G_Command_DrawSprite((cc >> 3) & 0x3, 0, abr, 0, 0, MaskEvalAND, CB);
      break;
