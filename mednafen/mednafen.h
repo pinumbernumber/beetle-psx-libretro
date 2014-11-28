@@ -11,7 +11,6 @@
 
 #define _(String) (String)
 
-#include "math_ops.h"
 #include "git.h"
 
 #ifdef _WIN32
