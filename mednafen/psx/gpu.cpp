@@ -1386,16 +1386,15 @@ static INLINE void G_Command_DrawSprite(uint8 raw_size, bool textured, int Blend
 {
    int32 x, y;
    int32 w, h;
-   bool FlipX = false;
-   bool FlipY = false;
-   bool tex_multiply = true;
    uint8 u = 0, v = 0;
-   uint32 color = 0;
+   uint32 color = *cb & 0x00FFFFFF;
    uint32 clut = 0;
+   bool FlipX = SpriteFlip & 0x1000;
+   bool FlipY = SpriteFlip & 0x2000;
+   bool tex_multiply = (!TexMult || color == 0x808080) ? false : true;
 
    DrawTimeAvail -= 16;	// FIXME, correct time.
 
-   color = *cb & 0x00FFFFFF;
    cb++;
 
    x = sign_extend_11bit((*cb & 0xFFFF));
@@ -1435,12 +1434,6 @@ static INLINE void G_Command_DrawSprite(uint8 raw_size, bool textured, int Blend
 
    x = sign_extend_11bit(x + OffsX);
    y = sign_extend_11bit(y + OffsY);
-
-   if(!TexMult || color == 0x808080)
-      tex_multiply = false;
-
-   FlipX = SpriteFlip & 0x1000;
-   FlipY = SpriteFlip & 0x2000;
 
    {
       const int32 r = color & 0xFF;
