@@ -2201,22 +2201,26 @@ static void check_variables(void)
    struct retro_variable var = {0};
 
    extern void PSXDitherApply(bool);
+   bool apply_dither = false;
+   static bool old_apply_dither = false;
 
    var.key = "beetle_psx_dithering";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      static bool old_apply_dither = false;
-      bool apply_dither = true;
       if (strcmp(var.value, "enabled") == 0)
          apply_dither = true;
       else if (strcmp(var.value, "disabled") == 0)
          apply_dither = false;
-      if (apply_dither != old_apply_dither)
-      {
-         PSXDitherApply(apply_dither);
-         old_apply_dither = apply_dither;
-      }
+   }
+   else
+      apply_dither = true;
+
+   if (apply_dither != old_apply_dither)
+   {
+      /* dither changed */
+      PSXDitherApply(apply_dither);
+      old_apply_dither = apply_dither;
    }
  
    var.key = "beetle_psx_analog_toggle";

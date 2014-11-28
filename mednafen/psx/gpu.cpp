@@ -192,6 +192,7 @@ static int32 OffsX;
 static int32 OffsY;
 
 static bool dtd;
+static bool dtd_enable;
 static bool dfe;
 
 static uint32 MaskSetOR;
@@ -364,6 +365,7 @@ void PSXDitherApply(bool enable)
 
             DitherLUT[y][x][v] = value;
          }
+   dtd_enable = enable;
 }
 
 /* 0x10 on actual PS1 GPU, 0x20 here(see comment at top of gpu.h) */
