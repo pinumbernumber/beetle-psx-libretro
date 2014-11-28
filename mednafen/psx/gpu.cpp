@@ -931,10 +931,6 @@ static INLINE void GPU_AddIDeltas_DY(bool shaded, bool textured, i_group &ig, co
    }
 }
 
-static INLINE void GPU_DrawSpan(int y, uint32 clut_offset, const int32 x_start, const int32 x_bound, i_group ig, const i_deltas &idl)
-{
-}
-
 static INLINE void GPU_DrawSpan(bool shaded, bool textured, int BlendMode, bool TexMult,
       uint32 TexMode_TA, bool MaskEval_TA, int y, uint32 clut_offset, const int32 x_start,
       const int32 x_bound, i_group ig, const i_deltas &idl)
@@ -2568,9 +2564,7 @@ static INLINE void GPU_ReorderRGB_Var(uint32_t out_Rshift, uint32_t out_Gshift,
    {
       for(int32 x = dx_start; x < dx_end; x++)
       {
-         uint32_t srcpix;
-
-         srcpix = src[(fb_x >> 1) + 0] | (src[((fb_x >> 1) + 1) & 0x7FF] << 16);
+         uint32_t srcpix = src[(fb_x >> 1)] | (src[((fb_x >> 1) + 1) & 0x7FF] << 16);
          srcpix >>= (fb_x & 1) * 8;
 
          dest[x] = (((srcpix >> 0) << RED_SHIFT) & (0xFF << RED_SHIFT)) | (((srcpix >> 8) << GREEN_SHIFT) & (0xFF << GREEN_SHIFT)) |
@@ -2860,8 +2854,6 @@ int32_t GPU_Update(const int32_t sys_timestamp)
                {
                   uint32_t x;
                   const uint16_t *src = GPURAM[DisplayFB_CurLineYReadout];
-
-                  memset(dest, 0, dx_start * sizeof(int32));
 
                   //printf("%d %d %d - %d %d\n", scanline, dx_start, dx_end, HorizStart, HorizEnd);
                   GPU_ReorderRGB_Var(RED_SHIFT, GREEN_SHIFT, BLUE_SHIFT, DisplayMode & 0x10, src, dest, dx_start, dx_end, fb_x);
