@@ -1555,52 +1555,6 @@ static INLINE void G_Command_DrawLine(line_point *points, bool polyline, bool sh
 
    DrawTimeAvail -= 16;	// FIXME, correct time.
 
-   if(polyline && InCmd == INCMD_PLINE)
-   {
-      //printf("PLINE N\n");
-      points[0] = InPLine_PrevPoint;
-   }
-   else
-   {
-      points[0].r = (*cb >> 0) & 0xFF;
-      points[0].g = (*cb >> 8) & 0xFF;
-      points[0].b = (*cb >> 16) & 0xFF;
-      cb++;
-
-      points[0].x = sign_x_to_s32(11, ((*cb >> 0) & 0xFFFF)) + OffsX;
-      points[0].y = sign_x_to_s32(11, ((*cb >> 16) & 0xFFFF)) + OffsY;
-      cb++;
-   }
-
-   if(shaded)
-   {
-      points[1].r = (*cb >> 0) & 0xFF;
-      points[1].g = (*cb >> 8) & 0xFF;
-      points[1].b = (*cb >> 16) & 0xFF;
-      cb++;
-   }
-   else
-   {
-      points[1].r = points[0].r;
-      points[1].g = points[0].g;
-      points[1].b = points[0].b;
-   }
-
-   points[1].x = sign_x_to_s32(11, ((*cb >> 0) & 0xFFFF)) + OffsX;
-   points[1].y = sign_x_to_s32(11, ((*cb >> 16) & 0xFFFF)) + OffsY;
-   cb++;
-
-   if(polyline)
-   {
-      InPLine_PrevPoint = points[1];
-
-      if(InCmd != INCMD_PLINE)
-      {
-         InCmd = INCMD_PLINE;
-         InCmd_CC = cc;
-      }
-   }
-
    int32 i_dx;
    int32 i_dy;
    int32 k;
@@ -2147,48 +2101,228 @@ static void GPU_ProcessFIFO(void)
    case 0x40: case 0x41: case 0x44: case 0x45:
       {
          line_point points[2];
+         points[0].r = (CB[0] >> 0) & 0xFF;
+         points[0].g = (CB[0] >> 8) & 0xFF;
+         points[0].b = (CB[0] >> 16) & 0xFF;
+
+         points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+         points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+
+         points[1].r = points[0].r;
+         points[1].g = points[0].g;
+         points[1].b = points[0].b;
+
+         points[1].x = sign_x_to_s32(11, ((CB[2] >> 0) & 0xFFFF)) + OffsX;
+         points[1].y = sign_x_to_s32(11, ((CB[2] >> 16) & 0xFFFF)) + OffsY;
          G_Command_DrawLine(&points[0], 0, 0, -1, MaskEvalAND, CB);
       }
       break;
    case 0x42: case 0x43: case 0x46: case 0x47:
       {
          line_point points[2];
+         points[0].r = (CB[0] >> 0) & 0xFF;
+         points[0].g = (CB[0] >> 8) & 0xFF;
+         points[0].b = (CB[0] >> 16) & 0xFF;
+
+         points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+         points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+
+         points[1].r = points[0].r;
+         points[1].g = points[0].g;
+         points[1].b = points[0].b;
+
+         points[1].x = sign_x_to_s32(11, ((CB[2] >> 0) & 0xFFFF)) + OffsX;
+         points[1].y = sign_x_to_s32(11, ((CB[2] >> 16) & 0xFFFF)) + OffsY;
          G_Command_DrawLine(&points[0], 0, 0, abr, MaskEvalAND, CB);
       }
       break;
    case 0x48: case 0x49: case 0x4C: case 0x4D:
       {
          line_point points[2];
+         if(InCmd == INCMD_PLINE)
+         {
+            //printf("PLINE N\n");
+            points[0] = InPLine_PrevPoint;
+            points[1].x = sign_x_to_s32(11, ((CB[0] >> 0) & 0xFFFF)) + OffsX;
+            points[1].y = sign_x_to_s32(11, ((CB[0] >> 16) & 0xFFFF)) + OffsY;
+         }
+         else
+         {
+            points[0].r = (CB[0] >> 0) & 0xFF;
+            points[0].g = (CB[0] >> 8) & 0xFF;
+            points[0].b = (CB[0] >> 16) & 0xFF;
+
+            points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+            points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+            points[1].x = sign_x_to_s32(11, ((CB[2] >> 0) & 0xFFFF)) + OffsX;
+            points[1].y = sign_x_to_s32(11, ((CB[2] >> 16) & 0xFFFF)) + OffsY;
+         }
+
+         points[1].r = points[0].r;
+         points[1].g = points[0].g;
+         points[1].b = points[0].b;
+
+         InPLine_PrevPoint = points[1];
+
+         if(InCmd != INCMD_PLINE)
+         {
+            InCmd = INCMD_PLINE;
+            InCmd_CC = cc;
+         }
+
          G_Command_DrawLine(&points[0], 1, 0, -1, MaskEvalAND, CB);
       }
       break;
    case 0x4A: case 0x4B: case 0x4E: case 0x4F:
       {
          line_point points[2];
+         points[0].r = (CB[0] >> 0) & 0xFF;
+         points[0].g = (CB[0] >> 8) & 0xFF;
+         points[0].b = (CB[0] >> 16) & 0xFF;
+
+         points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+         points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+
+         points[1].r = points[0].r;
+         points[1].g = points[0].g;
+         points[1].b = points[0].b;
+
+         points[1].x = sign_x_to_s32(11, ((CB[2] >> 0) & 0xFFFF)) + OffsX;
+         points[1].y = sign_x_to_s32(11, ((CB[2] >> 16) & 0xFFFF)) + OffsY;
+
+         InPLine_PrevPoint = points[1];
+
+         if(InCmd != INCMD_PLINE)
+         {
+            InCmd = INCMD_PLINE;
+            InCmd_CC = cc;
+         }
+
          G_Command_DrawLine(&points[0], 1, 0, abr, MaskEvalAND, CB);
       }
       break;
    case 0x50: case 0x51: case 0x54: case 0x55:
       {
          line_point points[2];
+
+         points[0].r = (CB[0] >> 0) & 0xFF;
+         points[0].g = (CB[0] >> 8) & 0xFF;
+         points[0].b = (CB[0] >> 16) & 0xFF;
+
+         points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+         points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+
+         points[1].r = (CB[2] >> 0) & 0xFF;
+         points[1].g = (CB[2] >> 8) & 0xFF;
+         points[1].b = (CB[2] >> 16) & 0xFF;
+
+         points[1].x = sign_x_to_s32(11, ((CB[3] >> 0) & 0xFFFF)) + OffsX;
+         points[1].y = sign_x_to_s32(11, ((CB[3] >> 16) & 0xFFFF)) + OffsY;
          G_Command_DrawLine(&points[0], 0, 1, -1, MaskEvalAND, CB);
       }
       break;
    case 0x52: case 0x53: case 0x56: case 0x57:
       {
          line_point points[2];
+
+         points[0].r = (CB[0] >> 0) & 0xFF;
+         points[0].g = (CB[0] >> 8) & 0xFF;
+         points[0].b = (CB[0] >> 16) & 0xFF;
+
+         points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+         points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+
+         points[1].r = (CB[2] >> 0) & 0xFF;
+         points[1].g = (CB[2] >> 8) & 0xFF;
+         points[1].b = (CB[2] >> 16) & 0xFF;
+
+         points[1].x = sign_x_to_s32(11, ((CB[3] >> 0) & 0xFFFF)) + OffsX;
+         points[1].y = sign_x_to_s32(11, ((CB[3] >> 16) & 0xFFFF)) + OffsY;
          G_Command_DrawLine(&points[0], 0, 1, abr, MaskEvalAND, CB);
       }
       break;
    case 0x58: case 0x59: case 0x5C: case 0x5D:
       {
          line_point points[2];
+
+         if(InCmd == INCMD_PLINE)
+         {
+            //printf("PLINE N\n");
+            points[0] = InPLine_PrevPoint;
+
+            points[1].r = (CB[0] >> 0) & 0xFF;
+            points[1].g = (CB[0] >> 8) & 0xFF;
+            points[1].b = (CB[0] >> 16) & 0xFF;
+
+            points[1].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+            points[1].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+         }
+         else
+         {
+            points[0].r = (CB[0] >> 0) & 0xFF;
+            points[0].g = (CB[0] >> 8) & 0xFF;
+            points[0].b = (CB[0] >> 16) & 0xFF;
+
+            points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+            points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+
+            points[1].r = (CB[2] >> 0) & 0xFF;
+            points[1].g = (CB[2] >> 8) & 0xFF;
+            points[1].b = (CB[2] >> 16) & 0xFF;
+
+            points[1].x = sign_x_to_s32(11, ((CB[3] >> 0) & 0xFFFF)) + OffsX;
+            points[1].y = sign_x_to_s32(11, ((CB[3] >> 16) & 0xFFFF)) + OffsY;
+         }
+
+         InPLine_PrevPoint = points[1];
+
+         if(InCmd != INCMD_PLINE)
+         {
+            InCmd = INCMD_PLINE;
+            InCmd_CC = cc;
+         }
          G_Command_DrawLine(&points[0], 1, 1, -1, MaskEvalAND, CB);
       }
       break;
    case 0x5A: case 0x5B: case 0x5E: case 0x5F:
       {
          line_point points[2];
+         if(InCmd == INCMD_PLINE)
+         {
+            //printf("PLINE N\n");
+            points[0] = InPLine_PrevPoint;
+
+            points[1].r = (CB[0] >> 0) & 0xFF;
+            points[1].g = (CB[0] >> 8) & 0xFF;
+            points[1].b = (CB[0] >> 16) & 0xFF;
+
+            points[1].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+            points[1].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+         }
+         else
+         {
+            points[0].r = (CB[0] >> 0) & 0xFF;
+            points[0].g = (CB[0] >> 8) & 0xFF;
+            points[0].b = (CB[0] >> 16) & 0xFF;
+
+            points[0].x = sign_x_to_s32(11, ((CB[1] >> 0) & 0xFFFF)) + OffsX;
+            points[0].y = sign_x_to_s32(11, ((CB[1] >> 16) & 0xFFFF)) + OffsY;
+
+            points[1].r = (CB[2] >> 0) & 0xFF;
+            points[1].g = (CB[2] >> 8) & 0xFF;
+            points[1].b = (CB[2] >> 16) & 0xFF;
+
+            points[1].x = sign_x_to_s32(11, ((CB[3] >> 0) & 0xFFFF)) + OffsX;
+            points[1].y = sign_x_to_s32(11, ((CB[3] >> 16) & 0xFFFF)) + OffsY;
+         }
+
+         InPLine_PrevPoint = points[1];
+
+         if(InCmd != INCMD_PLINE)
+         {
+            InCmd = INCMD_PLINE;
+            InCmd_CC = cc;
+         }
          G_Command_DrawLine(&points[0], 1, 1, abr, MaskEvalAND, CB);
       }
       break;
