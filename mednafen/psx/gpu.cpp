@@ -1942,6 +1942,13 @@ static GPU_CTEntry GPU_Commands[256] =
 
 };
 
+#define set_texture(tpage) \
+ TexPageX = (tpage & 0xF) * 64; \
+ TexPageY = (tpage & 0x10) * 16; \
+ SpriteFlip = (tpage & 0x3000); \
+ abr = (tpage >> 5) & 0x3; \
+ TexMode = (tpage >> 7) & 0x3
+
 static void GPU_ProcessFIFO(void)
 {
    unsigned vl, i;
@@ -2052,13 +2059,7 @@ static void GPU_ProcessFIFO(void)
    {
       uint32 tpage = CB[4 + ((cc >> 4) & 0x1)] >> 16;
 
-      TexPageX = (tpage & 0xF) * 64;
-      TexPageY = (tpage & 0x10) * 16;
-
-      SpriteFlip = tpage & 0x3000;
-
-      abr = (tpage >> 5) & 0x3;
-      TexMode = (tpage >> 7) & 0x3;
+      set_texture(tpage);
    }
 
    int TexModeLut[4]={0,1,2,2};
@@ -2482,13 +2483,7 @@ static void GPU_ProcessFIFO(void)
    case 0xE1:
       LOG_GPU_FIFO("CC #%d : DrawMode.\n", cc);
 
-      TexPageX = (*cb & 0xF) * 64;
-      TexPageY = (*cb & 0x10) * 16;
-
-      SpriteFlip = *cb & 0x3000;
-
-      abr = (*cb >> 5) & 0x3;
-      TexMode = (*cb >> 7) & 0x3;
+      set_texture(CB[0]);
 
       dtd = (*cb >> 9) & 1;
       dfe = (*cb >> 10) & 1;
