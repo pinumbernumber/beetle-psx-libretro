@@ -711,17 +711,15 @@ static INLINE uint16_t GPU_GetTexel(uint32_t TexMode_TA, const uint32_t clut_off
    uint32_t fbtex_y = TexPageY + v;
    uint16_t fbw = GPURAM[fbtex_y][fbtex_x & 1023];
 
-   if(TexMode_TA != 2)
-   {
-      if(TexMode_TA == 0)
-         fbw = (fbw >> ((u & 3) * 4)) & 0xF;
-      else
-         fbw = (fbw >> ((u & 1) * 8)) & 0xFF;
+   if(TexMode_TA == 2)
+      return fbw;
 
-      fbw = GPURAM[(clut_offset >> 10) & 511][(clut_offset + fbw) & 1023];
-   }
+   if(TexMode_TA == 0)
+      fbw = (fbw >> ((u & 3) * 4)) & 0xF;
+   else
+      fbw = (fbw >> ((u & 1) * 8)) & 0xFF;
 
-   return(fbw);
+   return GPURAM[(clut_offset >> 10) & 511][(clut_offset + fbw) & 1023];
 }
 
 static INLINE bool LineSkipTest(unsigned y)
