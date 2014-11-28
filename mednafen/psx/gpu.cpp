@@ -1822,10 +1822,6 @@ static void G_Command_FBRead(const uint32 *cb)
       InCmd = INCMD_FBREAD;
 }
 
-static void G_Command_Null(const uint32 *cb)
-{
-}
-
 #define POLY_HELPER(cv)														\
 { 															\
    1 + (3 /*+ ((cv & 0x8) >> 3)*/) * ( 1 + ((cv & 0x4) >> 2) + ((cv & 0x10) >> 4) ) - ((cv & 0x10) >> 4),			\
@@ -1857,12 +1853,12 @@ static void G_Command_Null(const uint32 *cb)
 //
 
 
-#define OTHER_HELPER(arg_cs, arg_fbcs, arg_ss, arg_ptr) { arg_cs, arg_fbcs, arg_ss }
-#define OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER(arg_cs, arg_fbcs, arg_ss, arg_ptr)
-#define OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss, arg_ptr)
-#define OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss, arg_ptr)
-#define OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss, arg_ptr)
-#define OTHER_HELPER_X32(arg_cs, arg_fbcs, arg_ss, arg_ptr)	OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss, arg_ptr), OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss, arg_ptr)
+#define OTHER_HELPER(arg_cs, arg_fbcs, arg_ss) { arg_cs, arg_fbcs, arg_ss }
+#define OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss)	OTHER_HELPER(arg_cs, arg_fbcs, arg_ss), OTHER_HELPER(arg_cs, arg_fbcs, arg_ss)
+#define OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss)	OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss), OTHER_HELPER_X2(arg_cs, arg_fbcs, arg_ss)
+#define OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss)	OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss), OTHER_HELPER_X4(arg_cs, arg_fbcs, arg_ss)
+#define OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss)	OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss), OTHER_HELPER_X8(arg_cs, arg_fbcs, arg_ss)
+#define OTHER_HELPER_X32(arg_cs, arg_fbcs, arg_ss)	OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss), OTHER_HELPER_X16(arg_cs, arg_fbcs, arg_ss)
 
 #define NULLCMD() { 1, 1, true }
 
@@ -1879,8 +1875,8 @@ static GPU_CTEntry GPU_Commands[256] =
 {
    /* 0x00 */
    NULLCMD(),
-   OTHER_HELPER(1, 2, false, G_Command_Null),
-   OTHER_HELPER(3, 3, false, G_Command_FBFill),
+   OTHER_HELPER(1, 2, false),
+   OTHER_HELPER(3, 3, false),
 
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
@@ -1889,7 +1885,7 @@ static GPU_CTEntry GPU_Commands[256] =
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
 
-   OTHER_HELPER(1, 1, false,  G_Command_Null),
+   OTHER_HELPER(1, 1, false),
 
    /* 0x20 */
    POLY_HELPER(0x20),
@@ -1992,23 +1988,23 @@ static GPU_CTEntry GPU_Commands[256] =
    SPR_HELPER(0x7f),
 
    /* 0x80 ... 0x9F */
-   OTHER_HELPER_X32(4, 2, false, G_Command_FBCopy),
+   OTHER_HELPER_X32(4, 2, false),
 
    /* 0xA0 ... 0xBF */
-   OTHER_HELPER_X32(3, 2, false, G_Command_FBWrite),
+   OTHER_HELPER_X32(3, 2, false),
 
    /* 0xC0 ... 0xDF */
-   OTHER_HELPER_X32(3, 2, false, G_Command_FBRead),
+   OTHER_HELPER_X32(3, 2, false),
 
    /* 0xE0 */
 
    NULLCMD(),
-   OTHER_HELPER(1, 2, false, G_Command_Null),
-   OTHER_HELPER(1, 2, false, G_Command_Null),
-   OTHER_HELPER(1, 1, true,  G_Command_Null),
-   OTHER_HELPER(1, 1, true,  G_Command_Null),
-   OTHER_HELPER(1, 1, true,  G_Command_Null),
-   OTHER_HELPER(1, 2, false, G_Command_Null),
+   OTHER_HELPER(1, 2, false),
+   OTHER_HELPER(1, 2, false),
+   OTHER_HELPER(1, 1, true),
+   OTHER_HELPER(1, 1, true),
+   OTHER_HELPER(1, 1, true),
+   OTHER_HELPER(1, 2, false),
 
    NULLCMD(),
    NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(), NULLCMD(),
