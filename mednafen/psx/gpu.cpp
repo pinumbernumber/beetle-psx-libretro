@@ -1549,27 +1549,12 @@ static INLINE void G_Command_DrawSprite(uint8 raw_size, bool textured, int Blend
    }
 }
 
-static INLINE void G_Command_DrawLine(line_point *points, bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
+static INLINE void G_Command_DrawLine(line_point *points, int32 k, bool polyline, bool shaded, int BlendMode, bool MaskEval_TA, const uint32 *cb)
 {
-   const uint8 cc = cb[0] >> 24; // For pline handling later.
-
-   DrawTimeAvail -= 16;	// FIXME, correct time.
-
-   int32 i_dx;
-   int32 i_dy;
-   int32 k;
    line_fxp_coord cur_point;
    line_fxp_step step;
-
-   i_dx = abs(points[1].x - points[0].x);
-   i_dy = abs(points[1].y - points[0].y);
-   k = (i_dx > i_dy) ? i_dx : i_dy;
-
-   if(i_dx >= 1024 || i_dy >= 512)
-   {
-      //PSX_DBG(PSX_DBG_WARNING, "[GPU] Line too long: i_dx=%d, i_dy=%d\n", i_dx, i_dy);
-      return;
-   }
+   const uint8 cc = cb[0] >> 24; // For pline handling later.
+   DrawTimeAvail -= 16;	// FIXME, correct time.
 
    // May not be correct(do tests for the case of k == i_dy on real thing.
    if(points[0].x > points[1].x)
@@ -1582,16 +1567,9 @@ static INLINE void G_Command_DrawLine(line_point *points, bool polyline, bool sh
 
    DrawTimeAvail -= k * ((BlendMode >= BLEND_MODE_AVERAGE) ? 2 : 1);
 
-   //
-   //
-   //
-
    GPU_LinePointsToFXPStep(shaded, points[0], points[1], k, step);
    GPU_LinePointToFXPCoord(shaded, points[0], step, cur_point);
 
-   //
-   //
-   //
    for(int32 i = 0; i <= k; i++)	// <= is not a typo.
    {
       // Sign extension is not necessary here for x and y, due to the maximum values that ClipX1 and ClipY1 can contain.
@@ -2100,6 +2078,7 @@ static void GPU_ProcessFIFO(void)
 
    case 0x40: case 0x41: case 0x44: case 0x45:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
          points[0].r = (CB[0] >> 0) & 0xFF;
          points[0].g = (CB[0] >> 8) & 0xFF;
@@ -2114,11 +2093,19 @@ static void GPU_ProcessFIFO(void)
 
          points[1].x = sign_x_to_s32(11, ((CB[2] >> 0) & 0xFFFF)) + OffsX;
          points[1].y = sign_x_to_s32(11, ((CB[2] >> 16) & 0xFFFF)) + OffsY;
-         G_Command_DrawLine(&points[0], 0, 0, -1, MaskEvalAND, CB);
+
+         i_dx = abs(points[1].x - points[0].x);
+         i_dy = abs(points[1].y - points[0].y);
+         k = (i_dx > i_dy) ? i_dx : i_dy;
+
+         if(i_dx >= 1024 || i_dy >= 512)
+            return;
+         G_Command_DrawLine(&points[0], k, 0, 0, -1, MaskEvalAND, CB);
       }
       break;
    case 0x42: case 0x43: case 0x46: case 0x47:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
          points[0].r = (CB[0] >> 0) & 0xFF;
          points[0].g = (CB[0] >> 8) & 0xFF;
@@ -2133,11 +2120,19 @@ static void GPU_ProcessFIFO(void)
 
          points[1].x = sign_x_to_s32(11, ((CB[2] >> 0) & 0xFFFF)) + OffsX;
          points[1].y = sign_x_to_s32(11, ((CB[2] >> 16) & 0xFFFF)) + OffsY;
-         G_Command_DrawLine(&points[0], 0, 0, abr, MaskEvalAND, CB);
+
+         i_dx = abs(points[1].x - points[0].x);
+         i_dy = abs(points[1].y - points[0].y);
+         k = (i_dx > i_dy) ? i_dx : i_dy;
+
+         if(i_dx >= 1024 || i_dy >= 512)
+            return;
+         G_Command_DrawLine(&points[0], k, 0, 0, abr, MaskEvalAND, CB);
       }
       break;
    case 0x48: case 0x49: case 0x4C: case 0x4D:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
          if(InCmd == INCMD_PLINE)
          {
@@ -2170,11 +2165,18 @@ static void GPU_ProcessFIFO(void)
             InCmd_CC = cc;
          }
 
-         G_Command_DrawLine(&points[0], 1, 0, -1, MaskEvalAND, CB);
+         i_dx = abs(points[1].x - points[0].x);
+         i_dy = abs(points[1].y - points[0].y);
+         k = (i_dx > i_dy) ? i_dx : i_dy;
+
+         if(i_dx >= 1024 || i_dy >= 512)
+            return;
+         G_Command_DrawLine(&points[0], k, 1, 0, -1, MaskEvalAND, CB);
       }
       break;
    case 0x4A: case 0x4B: case 0x4E: case 0x4F:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
          points[0].r = (CB[0] >> 0) & 0xFF;
          points[0].g = (CB[0] >> 8) & 0xFF;
@@ -2198,11 +2200,18 @@ static void GPU_ProcessFIFO(void)
             InCmd_CC = cc;
          }
 
-         G_Command_DrawLine(&points[0], 1, 0, abr, MaskEvalAND, CB);
+         i_dx = abs(points[1].x - points[0].x);
+         i_dy = abs(points[1].y - points[0].y);
+         k = (i_dx > i_dy) ? i_dx : i_dy;
+
+         if(i_dx >= 1024 || i_dy >= 512)
+            return;
+         G_Command_DrawLine(&points[0], k, 1, 0, abr, MaskEvalAND, CB);
       }
       break;
    case 0x50: case 0x51: case 0x54: case 0x55:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
 
          points[0].r = (CB[0] >> 0) & 0xFF;
@@ -2218,11 +2227,12 @@ static void GPU_ProcessFIFO(void)
 
          points[1].x = sign_x_to_s32(11, ((CB[3] >> 0) & 0xFFFF)) + OffsX;
          points[1].y = sign_x_to_s32(11, ((CB[3] >> 16) & 0xFFFF)) + OffsY;
-         G_Command_DrawLine(&points[0], 0, 1, -1, MaskEvalAND, CB);
+         G_Command_DrawLine(&points[0], k, 0, 1, -1, MaskEvalAND, CB);
       }
       break;
    case 0x52: case 0x53: case 0x56: case 0x57:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
 
          points[0].r = (CB[0] >> 0) & 0xFF;
@@ -2238,11 +2248,19 @@ static void GPU_ProcessFIFO(void)
 
          points[1].x = sign_x_to_s32(11, ((CB[3] >> 0) & 0xFFFF)) + OffsX;
          points[1].y = sign_x_to_s32(11, ((CB[3] >> 16) & 0xFFFF)) + OffsY;
-         G_Command_DrawLine(&points[0], 0, 1, abr, MaskEvalAND, CB);
+
+         i_dx = abs(points[1].x - points[0].x);
+         i_dy = abs(points[1].y - points[0].y);
+         k = (i_dx > i_dy) ? i_dx : i_dy;
+
+         if(i_dx >= 1024 || i_dy >= 512)
+            return;
+         G_Command_DrawLine(&points[0], k, 0, 1, abr, MaskEvalAND, CB);
       }
       break;
    case 0x58: case 0x59: case 0x5C: case 0x5D:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
 
          if(InCmd == INCMD_PLINE)
@@ -2281,11 +2299,19 @@ static void GPU_ProcessFIFO(void)
             InCmd = INCMD_PLINE;
             InCmd_CC = cc;
          }
-         G_Command_DrawLine(&points[0], 1, 1, -1, MaskEvalAND, CB);
+
+         i_dx = abs(points[1].x - points[0].x);
+         i_dy = abs(points[1].y - points[0].y);
+         k = (i_dx > i_dy) ? i_dx : i_dy;
+
+         if(i_dx >= 1024 || i_dy >= 512)
+            return;
+         G_Command_DrawLine(&points[0], k, 1, 1, -1, MaskEvalAND, CB);
       }
       break;
    case 0x5A: case 0x5B: case 0x5E: case 0x5F:
       {
+         int32 i_dx, i_dy, k;
          line_point points[2];
          if(InCmd == INCMD_PLINE)
          {
@@ -2323,7 +2349,14 @@ static void GPU_ProcessFIFO(void)
             InCmd = INCMD_PLINE;
             InCmd_CC = cc;
          }
-         G_Command_DrawLine(&points[0], 1, 1, abr, MaskEvalAND, CB);
+
+         i_dx = abs(points[1].x - points[0].x);
+         i_dy = abs(points[1].y - points[0].y);
+         k = (i_dx > i_dy) ? i_dx : i_dy;
+
+         if(i_dx >= 1024 || i_dy >= 512)
+            return;
+         G_Command_DrawLine(&points[0], k, 1, 1, abr, MaskEvalAND, CB);
       }
       break;
 
