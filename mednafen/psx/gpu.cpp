@@ -1382,193 +1382,148 @@ static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool text
 #endif
 }
 
-static INLINE void G_Command_DrawSprite(uint8 raw_size, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
+static INLINE void G_Command_DrawSprite(uint32 color, uint32 clut, int32 x, int32 y, uint8 u, uint8 v, int32 w, int32 h, uint8 raw_size, bool textured, int BlendMode, bool TexMult, uint32 TexMode_TA, bool MaskEval_TA, const uint32 *cb)
 {
-   int32 x, y;
-   int32 w, h;
-   uint8 u = 0, v = 0;
-   uint32 color = *cb & 0x00FFFFFF;
-   uint32 clut = 0;
+   //printf("SPRITE: %d %d %d -- %d %d\n", raw_size, x, y, w, h);
+
    bool FlipX = SpriteFlip & 0x1000;
    bool FlipY = SpriteFlip & 0x2000;
    bool tex_multiply = (!TexMult || color == 0x808080) ? false : true;
 
+   const int32 r = color & 0xFF;
+   const int32 g = (color >> 8) & 0xFF;
+   const int32 b = (color >> 16) & 0xFF;
+   const uint16 fill_color = 0x8000 | ((r >> 3) << 0) | ((g >> 3) << 5) | ((b >> 3) << 10);
+
+   int v_inc = 1, u_inc = 1;
+
+   //printf("[GPU] Sprite: x=%d, y=%d, w=%d, h=%d\n", x, y, w, h);
+
+   int32 x_start = x;
+   int32 x_bound = x + w;
+
+   int32 y_start = y;
+   int32 y_bound = y + h;
+
    DrawTimeAvail -= 16;	// FIXME, correct time.
-
-   cb++;
-
-   x = sign_extend_11bit((*cb & 0xFFFF));
-   y = sign_extend_11bit((*cb >> 16));
-   cb++;
 
    if(textured)
    {
-      u = *cb & 0xFF;
-      v = (*cb >> 8) & 0xFF;
-      clut = ((*cb >> 16) & 0xFFFF) << 4;
-      cb++;
+      //if(FlipX || FlipY || (u & 1) || (v & 1) || ((TexMode_TA == 0) && ((u & 3) || (v & 3))))
+      // fprintf(stderr, "Flippy: %d %d 0x%02x 0x%02x\n", FlipX, FlipY, u, v);
+
+      if(FlipX)
+      {
+         u_inc = -1;
+         u |= 1;
+      }
+      // FIXME: Something weird happens when lower bit of u is set and we're not doing horizontal flip, but I'm not sure what it is exactly(needs testing)
+      // It may only happen to the first pixel, so look for that case too during testing.
+      //else
+      // u = (u + 1) & ~1;
+
+      if(FlipY)
+      {
+         v_inc = -1;
+      }
    }
 
-   switch(raw_size)
+   if(x_start < ClipX0)
    {
-      default:
-      case 0:
-         w = (*cb & 0x3FF);
-         h = (*cb >> 16) & 0x1FF;
-         cb++;
-         break;
+      if(textured)
+         u += (ClipX0 - x_start) * u_inc;
 
-      case 1:
-         w = 1;
-         h = 1;
-         break;
-
-      case 2:
-      case 3:
-         w = 1 << (raw_size + 1);
-         h = 1 << (raw_size + 1);
-         break;
+      x_start = ClipX0;
    }
 
-   //printf("SPRITE: %d %d %d -- %d %d\n", raw_size, x, y, w, h);
-
-   x = sign_extend_11bit(x + OffsX);
-   y = sign_extend_11bit(y + OffsY);
-
+   if(y_start < ClipY0)
    {
-      const int32 r = color & 0xFF;
-      const int32 g = (color >> 8) & 0xFF;
-      const int32 b = (color >> 16) & 0xFF;
-      const uint16 fill_color = 0x8000 | ((r >> 3) << 0) | ((g >> 3) << 5) | ((b >> 3) << 10);
+      if(textured)
+         v += (ClipY0 - y_start) * v_inc;
 
-      int v_inc = 1, u_inc = 1;
+      y_start = ClipY0;
+   }
 
-      //printf("[GPU] Sprite: x=%d, y=%d, w=%d, h=%d\n", x, y, w, h);
+   if(x_bound > (ClipX1 + 1))
+      x_bound = ClipX1 + 1;
 
-      int32 x_start = x;
-      int32 x_bound = x + w;
+   if(y_bound > (ClipY1 + 1))
+      y_bound = ClipY1 + 1;
 
-      int32 y_start = y;
-      int32 y_bound = y + h;
+   if(y_bound > y_start && x_bound > x_start)
+   {
+      //
+      // Note(TODO): From tests on a PS1, even a 0-width sprite takes up time to "draw" proportional to its height.
+      //
+      int32 suck_time = (x_bound - x_start) * (y_bound - y_start);
 
+      // Disabled until we can get it to take into account texture windowing, which can cause large sprites to be drawn entirely from cache(and not suffer from a texturing
+      // penalty); and disabled until we find a game that needs more accurate sprite draw timing. :b
+#if 0
       if(textured)
       {
-         //if(FlipX || FlipY || (u & 1) || (v & 1) || ((TexMode_TA == 0) && ((u & 3) || (v & 3))))
-         // fprintf(stderr, "Flippy: %d %d 0x%02x 0x%02x\n", FlipX, FlipY, u, v);
+         // Empirically-observed approximations of time(66MHz cycles) taken to draw large textured sprites in the various texture depths, when the texture data and CLUT data
+         // was zero(non-zero takes longer to draw, TODO test that more):
+         //  4bpp - area * 2
+         //  8bpp - area * 3
+         //  15/16bpp - area * 5
+         // (other factors come into more importance for smaller sprites)
+         static const int cw[4] = { 64, 32, 32, 32 };
+         static const int ch[4] = { 64, 64, 32, 32 };
+         static const int mm[4] = { 2 - 1, 3 - 1, 5 - 1, 5 - 1 };
 
-         if(FlipX)
-         {
-            u_inc = -1;
-            u |= 1;
-         }
-         // FIXME: Something weird happens when lower bit of u is set and we're not doing horizontal flip, but I'm not sure what it is exactly(needs testing)
-         // It may only happen to the first pixel, so look for that case too during testing.
-         //else
-         // u = (u + 1) & ~1;
+         // Parts of the first few(up to texture cache height) horizontal lines can be in cache, so assume they are.
+         suck_time += mm[TexMode_TA] * std::max<int>(0, (x_bound - x_start) - cw[TexMode_TA]) * std::min<int>(ch[TexMode_TA], y_bound - y_start);
 
-         if(FlipY)
-         {
-            v_inc = -1;
-         }
+         // The rest of the horizontal lines should not possibly have parts in the cache now.
+         suck_time += mm[TexMode_TA] * (x_bound - x_start) * std::max<int>(0, (y_bound - y_start) - ch[TexMode_TA]);
       }
-
-      if(x_start < ClipX0)
-      {
-         if(textured)
-            u += (ClipX0 - x_start) * u_inc;
-
-         x_start = ClipX0;
-      }
-
-      if(y_start < ClipY0)
-      {
-         if(textured)
-            v += (ClipY0 - y_start) * v_inc;
-
-         y_start = ClipY0;
-      }
-
-      if(x_bound > (ClipX1 + 1))
-         x_bound = ClipX1 + 1;
-
-      if(y_bound > (ClipY1 + 1))
-         y_bound = ClipY1 + 1;
-
-      if(y_bound > y_start && x_bound > x_start)
-      {
-         //
-         // Note(TODO): From tests on a PS1, even a 0-width sprite takes up time to "draw" proportional to its height.
-         //
-         int32 suck_time = (x_bound - x_start) * (y_bound - y_start);
-
-         // Disabled until we can get it to take into account texture windowing, which can cause large sprites to be drawn entirely from cache(and not suffer from a texturing
-         // penalty); and disabled until we find a game that needs more accurate sprite draw timing. :b
-#if 0
-         if(textured)
-         {
-            // Empirically-observed approximations of time(66MHz cycles) taken to draw large textured sprites in the various texture depths, when the texture data and CLUT data
-            // was zero(non-zero takes longer to draw, TODO test that more):
-            //  4bpp - area * 2
-            //  8bpp - area * 3
-            //  15/16bpp - area * 5
-            // (other factors come into more importance for smaller sprites)
-            static const int cw[4] = { 64, 32, 32, 32 };
-            static const int ch[4] = { 64, 64, 32, 32 };
-            static const int mm[4] = { 2 - 1, 3 - 1, 5 - 1, 5 - 1 };
-
-            // Parts of the first few(up to texture cache height) horizontal lines can be in cache, so assume they are.
-            suck_time += mm[TexMode_TA] * std::max<int>(0, (x_bound - x_start) - cw[TexMode_TA]) * std::min<int>(ch[TexMode_TA], y_bound - y_start);
-
-            // The rest of the horizontal lines should not possibly have parts in the cache now.
-            suck_time += mm[TexMode_TA] * (x_bound - x_start) * std::max<int>(0, (y_bound - y_start) - ch[TexMode_TA]);
-         }
-         else
+      else
 #endif
 
-            if((BlendMode >= BLEND_MODE_AVERAGE) || MaskEval_TA)
-            {
-               suck_time += ((((x_bound + 1) & ~1) - (x_start & ~1)) * (y_bound - y_start)) >> 1;
-            }
-
-         DrawTimeAvail -= suck_time;
-      }
-
-
-      //HeightMode && !dfe && ((y & 1) == ((DisplayFB_YStart + !field_atvs) & 1)) && !DisplayOff
-      //printf("%d:%d, %d, %d ---- heightmode=%d displayfb_ystart=%d field_atvs=%d displayoff=%d\n", w, h, scanline, dfe, HeightMode, DisplayFB_YStart, field_atvs, DisplayOff);
-
-      for(int32 y = y_start; MDFN_LIKELY(y < y_bound); y++)
-      {
-         uint8 u_r;
-
-         if(textured)
-            u_r = u;
-
-         if(!LineSkipTest( y))
+         if((BlendMode >= BLEND_MODE_AVERAGE) || MaskEval_TA)
          {
-            for(int32 x = x_start; MDFN_LIKELY(x < x_bound); x++)
-            {
-               if(textured)
-               {
-                  uint16 fbw = GPU_GetTexel(TexMode_TA, clut, u_r, v);
-
-                  if(fbw)
-                  {
-                     if(tex_multiply)
-                        fbw = ModTexel(fbw, r, g, b, 3, 2);
-                     GPU_PlotPixel(BlendMode, MaskEval_TA, true, x, y, fbw);
-                  }
-               }
-               else
-                  GPU_PlotPixel(BlendMode, MaskEval_TA, false, x, y, fill_color);
-
-               if(textured)
-                  u_r += u_inc;
-            }
+            suck_time += ((((x_bound + 1) & ~1) - (x_start & ~1)) * (y_bound - y_start)) >> 1;
          }
-         if(textured)
-            v += v_inc;
+
+      DrawTimeAvail -= suck_time;
+   }
+
+
+   //HeightMode && !dfe && ((y & 1) == ((DisplayFB_YStart + !field_atvs) & 1)) && !DisplayOff
+   //printf("%d:%d, %d, %d ---- heightmode=%d displayfb_ystart=%d field_atvs=%d displayoff=%d\n", w, h, scanline, dfe, HeightMode, DisplayFB_YStart, field_atvs, DisplayOff);
+
+   for(int32 y = y_start; MDFN_LIKELY(y < y_bound); y++)
+   {
+      uint8 u_r;
+
+      if(textured)
+         u_r = u;
+
+      if(!LineSkipTest( y))
+      {
+         for(int32 x = x_start; MDFN_LIKELY(x < x_bound); x++)
+         {
+            if(textured)
+            {
+               uint16 fbw = GPU_GetTexel(TexMode_TA, clut, u_r, v);
+
+               if(fbw)
+               {
+                  if(tex_multiply)
+                     fbw = ModTexel(fbw, r, g, b, 3, 2);
+                  GPU_PlotPixel(BlendMode, MaskEval_TA, true, x, y, fbw);
+               }
+            }
+            else
+               GPU_PlotPixel(BlendMode, MaskEval_TA, false, x, y, fill_color);
+
+            if(textured)
+               u_r += u_inc;
+         }
       }
+      if(textured)
+         v += v_inc;
    }
 }
 
@@ -2402,23 +2357,161 @@ static void GPU_ProcessFIFO(void)
 
    case 0x60: case 0x68: case 0x70: case 0x78:
    case 0x61: case 0x69: case 0x71: case 0x79:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 0, -1, 0, 0, MaskEvalAND, CB);
+      {
+         uint32 color = CB[0] & 0x00FFFFFF;
+         uint32 clut = 0;
+         uint8 u = 0;
+         uint8 v = 0;
+         int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+         int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+         uint8 raw_size = (cc >> 3) & 0x3;
+         int32 w = (CB[2] & 0x3FF);
+         int32 h = (CB[2] >> 16) & 0x1FF;
+         switch(raw_size)
+         {
+            case 1:
+               w = 1;
+               h = 1;
+               break;
+            case 2:
+            case 3:
+               w = 1 << (raw_size + 1);
+               h = 1 << (raw_size + 1);
+               break;
+         }
+         G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 0, -1, 0, 0, MaskEvalAND, CB);
+      }
      break;
    case 0x62: case 0x6A: case 0x72: case 0x7A:
    case 0x63: case 0x6B: case 0x73: case 0x7B:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 0, abr, 0, 0, MaskEvalAND, CB);
+     {
+        uint32 color = CB[0] & 0x00FFFFFF;
+        uint32 clut = 0;
+        uint8 u = 0;
+        uint8 v = 0;
+        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+        uint8 raw_size = (cc >> 3) & 0x3;
+        int32 w = (CB[2] & 0x3FF);
+        int32 h = (CB[2] >> 16) & 0x1FF;
+        switch(raw_size)
+        {
+           case 1:
+              w = 1;
+              h = 1;
+              break;
+           case 2:
+           case 3:
+              w = 1 << (raw_size + 1);
+              h = 1 << (raw_size + 1);
+              break;
+        }
+        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 0, abr, 0, 0, MaskEvalAND, CB);
+     }
      break;
    case 0x64: case 0x6C: case 0x74: case 0x7C:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+     {
+        uint32 color = CB[0] & 0x00FFFFFF;
+        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+        uint8 u = CB[2] & 0xFF;
+        uint8 v = (CB[2] >> 8) & 0xFF;
+        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+        uint8 raw_size = (cc >> 3) & 0x3;
+        int32 w = (CB[3] & 0x3FF);
+        int32 h = (CB[3] >> 16) & 0x1FF;
+        switch(raw_size)
+        {
+           case 1:
+              w = 1;
+              h = 1;
+              break;
+           case 2:
+           case 3:
+              w = 1 << (raw_size + 1);
+              h = 1 << (raw_size + 1);
+              break;
+        }
+        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+     }
      break;
    case 0x65: case 0x6D: case 0x75: case 0x7D:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+     {
+        uint32 color = CB[0] & 0x00FFFFFF;
+        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+        uint8 u = CB[2] & 0xFF;
+        uint8 v = (CB[2] >> 8) & 0xFF;
+        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+        uint8 raw_size = (cc >> 3) & 0x3;
+        int32 w = (CB[3] & 0x3FF);
+        int32 h = (CB[3] >> 16) & 0x1FF;
+        switch(raw_size)
+        {
+           case 1:
+              w = 1;
+              h = 1;
+              break;
+           case 2:
+           case 3:
+              w = 1 << (raw_size + 1);
+              h = 1 << (raw_size + 1);
+              break;
+        }
+        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+     }
      break;
    case 0x66: case 0x6E: case 0x76: case 0x7E:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+     {
+        uint32 color = CB[0] & 0x00FFFFFF;
+        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+        uint8 u = CB[2] & 0xFF;
+        uint8 v = (CB[2] >> 8) & 0xFF;
+        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+        uint8 raw_size = (cc >> 3) & 0x3;
+        int32 w = (CB[3] & 0x3FF);
+        int32 h = (CB[3] >> 16) & 0x1FF;
+        switch(raw_size)
+        {
+           case 1:
+              w = 1;
+              h = 1;
+              break;
+           case 2:
+           case 3:
+              w = 1 << (raw_size + 1);
+              h = 1 << (raw_size + 1);
+              break;
+        }
+        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+     }     
      break;
    case 0x67: case 0x6F: case 0x77: case 0x7F:
-     G_Command_DrawSprite((cc >> 3) & 0x3, 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+     {
+        uint32 color = CB[0] & 0x00FFFFFF;
+        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+        uint8 u = CB[2] & 0xFF;
+        uint8 v = (CB[2] >> 8) & 0xFF;
+        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+        uint8 raw_size = (cc >> 3) & 0x3;
+        int32 w = (CB[3] & 0x3FF);
+        int32 h = (CB[3] >> 16) & 0x1FF;
+        switch(raw_size)
+        {
+           case 1:
+              w = 1;
+              h = 1;
+              break;
+           case 2:
+           case 3:
+              w = 1 << (raw_size + 1);
+              h = 1 << (raw_size + 1);
+              break;
+        }
+        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+     }
      break;
 
    case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
