@@ -1001,19 +1001,15 @@ static INLINE void GPU_DrawSpan(bool shaded, bool textured, int BlendMode, bool 
 
       for(int32 x = xs; MDFN_LIKELY(x < xb); x++)
       {
-         uint32 r, g, b;
+         uint32 r = COORD_GET_INT(ig.r);
+         uint32 g = COORD_GET_INT(ig.g);
+         uint32 b = COORD_GET_INT(ig.b);
 
          if(shaded)
          {
-            r = RGB8SAT[COORD_GET_INT(ig.r)];
-            g = RGB8SAT[COORD_GET_INT(ig.g)];
-            b = RGB8SAT[COORD_GET_INT(ig.b)];
-         }
-         else
-         {
-            r = COORD_GET_INT(ig.r);
-            g = COORD_GET_INT(ig.g);
-            b = COORD_GET_INT(ig.b);
+            r = RGB8SAT[r];
+            g = RGB8SAT[g];
+            b = RGB8SAT[b];
          }
 
          if(textured)
