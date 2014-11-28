@@ -2432,12 +2432,7 @@ static void GPU_ProcessFIFO(void)
       FBRW_CurY = FBRW_Y;
 
       if(FBRW_W != 0 && FBRW_H != 0)
-      {
-         if (cc >= 0xC0 && cc <= 0xDF)
-            InCmd = INCMD_FBREAD;
-         else if (cc >= 0xA0 && cc <= 0xBF)
-            InCmd = INCMD_FBWRITE;
-      }
+         InCmd = ((cc >> 5) == 0x5) ? INCMD_FBWRITE : INCMD_FBREAD;
       break;
 
    case 0xE1:
