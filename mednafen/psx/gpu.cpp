@@ -2028,244 +2028,230 @@ static void GPU_ProcessFIFO(void)
 
    switch(cc)
    {
-   case 0x02:
-      LOG_GPU_FIFO("CC #%d : FBFill.\n", cc);
+      case 0x02: /* frame buffer rectangle draw */
+         LOG_GPU_FIFO("CC #%d : FBFill.\n", cc);
 
-      G_Command_FBFill(CB);
-      break;
-   case 0x1F:
-      LOG_GPU_FIFO("CC #%d : IRQ.\n", cc);
+         G_Command_FBFill(CB);
+         break;
+      case 0x1F:
+         LOG_GPU_FIFO("CC #%d : IRQ.\n", cc);
 
-      IRQPending = true;
-      IRQ_Assert(IRQ_GPU, IRQPending);
-      break;
+         IRQPending = true;
+         IRQ_Assert(IRQ_GPU, IRQPending);
+         break;
 
-//      LOG_GPU_FIFO("CC #%d : DrawPolygon.\n", cc);
-      /*
-         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3),
-                               ((cc & 0x10) >> 4),
-                               ((cc & 0x4) >> 2),
-                               ((cc & 0x2) >> 1) ? abr : -1,
-                               ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
-                               (cc&0x4)?TexModeLut[TexMode]:0,
-                               MaskEvalAND,
-                               cb);
-      */
+         //      LOG_GPU_FIFO("CC #%d : DrawPolygon.\n", cc);
+         /*
+            G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3),
+            ((cc & 0x10) >> 4),
+            ((cc & 0x4) >> 2),
+            ((cc & 0x2) >> 1) ? abr : -1,
+            ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+            (cc&0x4)?TexModeLut[TexMode]:0,
+            MaskEvalAND,
+            cb);
+            */
 
-   case 0x20: case 0x28: case 0x30: case 0x38:
-   case 0x21: case 0x29: case 0x31: case 0x39:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
-      break;
-   case 0x22: case 0x2A: case 0x32: case 0x3A:
-   case 0x23: case 0x2B: case 0x33: case 0x3B:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
-      break;
-   case 0x24: case 0x2C: case 0x34: case 0x3C:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
-      break;
-   case 0x25: case 0x2D: case 0x35: case 0x3D:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
-      break;
-   case 0x26: case 0x2E: case 0x36: case 0x3E:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
-      break;
-   case 0x27: case 0x2F: case 0x37: case 0x3F:
-      G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
-      break;
+      case 0x20: /* monochrome 3 point polygon */
+      case 0x28: /* monochrome 4 point polygon */
+      case 0x30: /* gradated 3 point polygon */
+      case 0x38: /* gradated 4 point polygon */
+      case 0x21:
+      case 0x29:
+      case 0x31:
+      case 0x39:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x22:
+      case 0x2A:
+      case 0x32:
+      case 0x3A:
+      case 0x23:
+      case 0x2B:
+      case 0x33:
+      case 0x3B:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
+         break;
+      case 0x24: 
+      case 0x2C: /* textured 3 point polygon */
+      case 0x34: /* shaded textured 3 point polygon */
+      case 0x3c: /* shaded textured 4 point polygon */
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x25:
+      case 0x2D:
+      case 0x35:
+      case 0x3D:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x26:
+      case 0x2E:
+      case 0x36:
+      case 0x3E:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
+      case 0x27:
+      case 0x2F:
+      case 0x37:
+      case 0x3F:
+         G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         break;
 
-//      LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
+         //      LOG_GPU_FIFO("CC #%d : DrawLine.\n", cc);
 
-      /*
-         G_Command_DrawLine(((cc & 0x08) >> 3),
-                            ((cc & 0x10) >> 4),
-                            ((cc & 0x2) >> 1) ? abr : -1,
-                            MaskEvalAND,
-                            CB);
-      */
+         /*
+            G_Command_DrawLine(((cc & 0x08) >> 3),
+            ((cc & 0x10) >> 4),
+            ((cc & 0x2) >> 1) ? abr : -1,
+            MaskEvalAND,
+            CB);
+            */
 
-   case 0x40: case 0x41: case 0x44: case 0x45:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-         set_vertex_color_constant(0, CB[0]);
-
-         points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
-         points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
-
-         points[1].r = points[0].r;
-         points[1].g = points[0].g;
-         points[1].b = points[0].b;
-
-         points[1].x = sign_extend_11bit(((CB[2] >> 0) & 0xFFFF) + OffsX);
-         points[1].y = sign_extend_11bit(((CB[2] >> 16) & 0xFFFF) + OffsY);
-
-         i_dx = abs(points[1].x - points[0].x);
-         i_dy = abs(points[1].y - points[0].y);
-         k = (i_dx > i_dy) ? i_dx : i_dy;
-
-         if(i_dx >= 1024 || i_dy >= 512)
-            return;
-         G_Command_DrawLine_NoShaded(&points[0], k, 0, 0, -1, MaskEvalAND, CB);
-      }
-      break;
-   case 0x42: case 0x43: case 0x46: case 0x47:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-         set_vertex_color_constant(0, CB[0]);
-
-         points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
-         points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
-
-         points[1].r = points[0].r;
-         points[1].g = points[0].g;
-         points[1].b = points[0].b;
-
-         points[1].x = sign_extend_11bit(((CB[2] >> 0) & 0xFFFF) + OffsX);
-         points[1].y = sign_extend_11bit(((CB[2] >> 16) & 0xFFFF) + OffsY);
-
-         i_dx = abs(points[1].x - points[0].x);
-         i_dy = abs(points[1].y - points[0].y);
-         k = (i_dx > i_dy) ? i_dx : i_dy;
-
-         if(i_dx >= 1024 || i_dy >= 512)
-            return;
-         G_Command_DrawLine_NoShaded(&points[0], k, 0, 0, abr, MaskEvalAND, CB);
-      }
-      break;
-   case 0x48: case 0x49: case 0x4C: case 0x4D:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-         if(InCmd == INCMD_PLINE)
+      case 0x40: /* monochrome line */
+      case 0x41:
+      case 0x44:
+      case 0x45:
          {
-            //printf("PLINE N\n");
-            points[0] = InPLine_PrevPoint;
-            points[1].x = sign_extend_11bit(((CB[0] >> 0) & 0xFFFF) + OffsX);
-            points[1].y = sign_extend_11bit(((CB[0] >> 16) & 0xFFFF) + OffsY);
-         }
-         else
-         {
+            int32 i_dx, i_dy, k;
+            line_point points[2];
             set_vertex_color_constant(0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
             points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+
+            points[1].r = points[0].r;
+            points[1].g = points[0].g;
+            points[1].b = points[0].b;
+
             points[1].x = sign_extend_11bit(((CB[2] >> 0) & 0xFFFF) + OffsX);
             points[1].y = sign_extend_11bit(((CB[2] >> 16) & 0xFFFF) + OffsY);
+
+            i_dx = abs(points[1].x - points[0].x);
+            i_dy = abs(points[1].y - points[0].y);
+            k = (i_dx > i_dy) ? i_dx : i_dy;
+
+            if(i_dx >= 1024 || i_dy >= 512)
+               return;
+            G_Command_DrawLine_NoShaded(&points[0], k, 0, 0, -1, MaskEvalAND, CB);
          }
-
-         points[1].r = points[0].r;
-         points[1].g = points[0].g;
-         points[1].b = points[0].b;
-
-         InPLine_PrevPoint = points[1];
-
-         if(InCmd != INCMD_PLINE)
+         break;
+      case 0x42:
+      case 0x43:
+      case 0x46:
+      case 0x47:
          {
-            InCmd = INCMD_PLINE;
-            InCmd_CC = cc;
+            int32 i_dx, i_dy, k;
+            line_point points[2];
+            set_vertex_color_constant(0, CB[0]);
+
+            points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
+            points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+
+            points[1].r = points[0].r;
+            points[1].g = points[0].g;
+            points[1].b = points[0].b;
+
+            points[1].x = sign_extend_11bit(((CB[2] >> 0) & 0xFFFF) + OffsX);
+            points[1].y = sign_extend_11bit(((CB[2] >> 16) & 0xFFFF) + OffsY);
+
+            i_dx = abs(points[1].x - points[0].x);
+            i_dy = abs(points[1].y - points[0].y);
+            k = (i_dx > i_dy) ? i_dx : i_dy;
+
+            if(i_dx >= 1024 || i_dy >= 512)
+               return;
+            G_Command_DrawLine_NoShaded(&points[0], k, 0, 0, abr, MaskEvalAND, CB);
          }
-
-         i_dx = abs(points[1].x - points[0].x);
-         i_dy = abs(points[1].y - points[0].y);
-         k = (i_dx > i_dy) ? i_dx : i_dy;
-
-         if(i_dx >= 1024 || i_dy >= 512)
-            return;
-         G_Command_DrawLine_NoShaded(&points[0], k, 1, 0, -1, MaskEvalAND, CB);
-      }
-      break;
-   case 0x4A: case 0x4B: case 0x4E: case 0x4F:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-         set_vertex_color_constant(0, CB[0]);
-
-         points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
-         points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
-
-         points[1].r = points[0].r;
-         points[1].g = points[0].g;
-         points[1].b = points[0].b;
-
-         points[1].x = sign_extend_11bit(((CB[2] >> 0) & 0xFFFF) + OffsX);
-         points[1].y = sign_extend_11bit(((CB[2] >> 16) & 0xFFFF) + OffsY);
-
-         InPLine_PrevPoint = points[1];
-
-         if(InCmd != INCMD_PLINE)
+         break;
+      case 0x48: /* single color polyline */
+      case 0x49:
+      case 0x4C:
+      case 0x4D:
          {
-            InCmd = INCMD_PLINE;
-            InCmd_CC = cc;
+            int32 i_dx, i_dy, k;
+            line_point points[2];
+            if(InCmd == INCMD_PLINE)
+            {
+               //printf("PLINE N\n");
+               points[0] = InPLine_PrevPoint;
+               points[1].x = sign_extend_11bit(((CB[0] >> 0) & 0xFFFF) + OffsX);
+               points[1].y = sign_extend_11bit(((CB[0] >> 16) & 0xFFFF) + OffsY);
+            }
+            else
+            {
+               set_vertex_color_constant(0, CB[0]);
+
+               points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
+               points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+               points[1].x = sign_extend_11bit(((CB[2] >> 0) & 0xFFFF) + OffsX);
+               points[1].y = sign_extend_11bit(((CB[2] >> 16) & 0xFFFF) + OffsY);
+            }
+
+            points[1].r = points[0].r;
+            points[1].g = points[0].g;
+            points[1].b = points[0].b;
+
+            InPLine_PrevPoint = points[1];
+
+            if(InCmd != INCMD_PLINE)
+            {
+               InCmd = INCMD_PLINE;
+               InCmd_CC = cc;
+            }
+
+            i_dx = abs(points[1].x - points[0].x);
+            i_dy = abs(points[1].y - points[0].y);
+            k = (i_dx > i_dy) ? i_dx : i_dy;
+
+            if(i_dx >= 1024 || i_dy >= 512)
+               return;
+            G_Command_DrawLine_NoShaded(&points[0], k, 1, 0, -1, MaskEvalAND, CB);
          }
-
-         i_dx = abs(points[1].x - points[0].x);
-         i_dy = abs(points[1].y - points[0].y);
-         k = (i_dx > i_dy) ? i_dx : i_dy;
-
-         if(i_dx >= 1024 || i_dy >= 512)
-            return;
-         G_Command_DrawLine_NoShaded(&points[0], k, 1, 0, abr, MaskEvalAND, CB);
-      }
-      break;
-   case 0x50: case 0x51: case 0x54: case 0x55:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-
-         set_vertex_color_constant(0, CB[0]);
-
-         points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
-         points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
-
-         set_vertex_color_constant(1, CB[2]);
-
-         points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
-         points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
-         G_Command_DrawLine_Shaded(&points[0], k, 0, 1, -1, MaskEvalAND, CB);
-      }
-      break;
-   case 0x52: case 0x53: case 0x56: case 0x57:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-
-         set_vertex_color_constant(0, CB[0]);
-
-         points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
-         points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
-
-         set_vertex_color_constant(1, CB[2]);
-
-         points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
-         points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
-
-         i_dx = abs(points[1].x - points[0].x);
-         i_dy = abs(points[1].y - points[0].y);
-         k = (i_dx > i_dy) ? i_dx : i_dy;
-
-         if(i_dx >= 1024 || i_dy >= 512)
-            return;
-         G_Command_DrawLine_Shaded(&points[0], k, 0, 1, abr, MaskEvalAND, CB);
-      }
-      break;
-   case 0x58: case 0x59: case 0x5C: case 0x5D:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-
-         if(InCmd == INCMD_PLINE)
+         break;
+      case 0x4A:
+      case 0x4B:
+      case 0x4E:
+      case 0x4F:
          {
-            //printf("PLINE N\n");
-            points[0] = InPLine_PrevPoint;
+            int32 i_dx, i_dy, k;
+            line_point points[2];
+            set_vertex_color_constant(0, CB[0]);
 
-            set_vertex_color_constant(1, CB[0]);
+            points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
+            points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
 
-            points[1].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
-            points[1].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+            points[1].r = points[0].r;
+            points[1].g = points[0].g;
+            points[1].b = points[0].b;
+
+            points[1].x = sign_extend_11bit(((CB[2] >> 0) & 0xFFFF) + OffsX);
+            points[1].y = sign_extend_11bit(((CB[2] >> 16) & 0xFFFF) + OffsY);
+
+            InPLine_PrevPoint = points[1];
+
+            if(InCmd != INCMD_PLINE)
+            {
+               InCmd = INCMD_PLINE;
+               InCmd_CC = cc;
+            }
+
+            i_dx = abs(points[1].x - points[0].x);
+            i_dy = abs(points[1].y - points[0].y);
+            k = (i_dx > i_dy) ? i_dx : i_dy;
+
+            if(i_dx >= 1024 || i_dy >= 512)
+               return;
+            G_Command_DrawLine_NoShaded(&points[0], k, 1, 0, abr, MaskEvalAND, CB);
          }
-         else
+         break;
+      case 0x50: /* gradated line */
+      case 0x51:
+      case 0x54:
+      case 0x55:
          {
+            int32 i_dx, i_dy, k;
+            line_point points[2];
+
             set_vertex_color_constant(0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
@@ -2275,41 +2261,17 @@ static void GPU_ProcessFIFO(void)
 
             points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
             points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
+            G_Command_DrawLine_Shaded(&points[0], k, 0, 1, -1, MaskEvalAND, CB);
          }
-
-         InPLine_PrevPoint = points[1];
-
-         if(InCmd != INCMD_PLINE)
+         break;
+      case 0x52:
+      case 0x53:
+      case 0x56:
+      case 0x57:
          {
-            InCmd = INCMD_PLINE;
-            InCmd_CC = cc;
-         }
+            int32 i_dx, i_dy, k;
+            line_point points[2];
 
-         i_dx = abs(points[1].x - points[0].x);
-         i_dy = abs(points[1].y - points[0].y);
-         k = (i_dx > i_dy) ? i_dx : i_dy;
-
-         if(i_dx >= 1024 || i_dy >= 512)
-            return;
-         G_Command_DrawLine_Shaded(&points[0], k, 1, 1, -1, MaskEvalAND, CB);
-      }
-      break;
-   case 0x5A: case 0x5B: case 0x5E: case 0x5F:
-      {
-         int32 i_dx, i_dy, k;
-         line_point points[2];
-         if(InCmd == INCMD_PLINE)
-         {
-            //printf("PLINE N\n");
-            points[0] = InPLine_PrevPoint;
-
-            set_vertex_color_constant(1, CB[0]);
-
-            points[1].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
-            points[1].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
-         }
-         else
-         {
             set_vertex_color_constant(0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
@@ -2319,288 +2281,398 @@ static void GPU_ProcessFIFO(void)
 
             points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
             points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
+
+            i_dx = abs(points[1].x - points[0].x);
+            i_dy = abs(points[1].y - points[0].y);
+            k = (i_dx > i_dy) ? i_dx : i_dy;
+
+            if(i_dx >= 1024 || i_dy >= 512)
+               return;
+            G_Command_DrawLine_Shaded(&points[0], k, 0, 1, abr, MaskEvalAND, CB);
          }
-
-         InPLine_PrevPoint = points[1];
-
-         if(InCmd != INCMD_PLINE)
+         break;
+      case 0x58: /* gradated polyline */
+      case 0x59:
+      case 0x5C:
+      case 0x5D:
          {
-            InCmd = INCMD_PLINE;
-            InCmd_CC = cc;
+            int32 i_dx, i_dy, k;
+            line_point points[2];
+
+            if(InCmd == INCMD_PLINE)
+            {
+               //printf("PLINE N\n");
+               points[0] = InPLine_PrevPoint;
+
+               set_vertex_color_constant(1, CB[0]);
+
+               points[1].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
+               points[1].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+            }
+            else
+            {
+               set_vertex_color_constant(0, CB[0]);
+
+               points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
+               points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+
+               set_vertex_color_constant(1, CB[2]);
+
+               points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
+               points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
+            }
+
+            InPLine_PrevPoint = points[1];
+
+            if(InCmd != INCMD_PLINE)
+            {
+               InCmd = INCMD_PLINE;
+               InCmd_CC = cc;
+            }
+
+            i_dx = abs(points[1].x - points[0].x);
+            i_dy = abs(points[1].y - points[0].y);
+            k = (i_dx > i_dy) ? i_dx : i_dy;
+
+            if(i_dx >= 1024 || i_dy >= 512)
+               return;
+            G_Command_DrawLine_Shaded(&points[0], k, 1, 1, -1, MaskEvalAND, CB);
          }
-
-         i_dx = abs(points[1].x - points[0].x);
-         i_dy = abs(points[1].y - points[0].y);
-         k = (i_dx > i_dy) ? i_dx : i_dy;
-
-         if(i_dx >= 1024 || i_dy >= 512)
-            return;
-         G_Command_DrawLine_Shaded(&points[0], k, 1, 1, abr, MaskEvalAND, CB);
-      }
-      break;
-
-//      LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
-
-      /*
-         G_Command_DrawSprite((cc >> 3) & 0x3,
-                              ((cc & 0x4) >> 2),
-                              ((cc & 0x2) >> 1) ? abr : -1,
-                              ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
-                              (cc&0x4)?TexModeLut[TexMode]:0,
-                              MaskEvalAND,
-                              CB);
-      */
-
-   case 0x60: case 0x68: case 0x70: case 0x78:
-   case 0x61: case 0x69: case 0x71: case 0x79:
-      {
-         uint32 color = CB[0] & 0x00FFFFFF;
-         uint32 clut = 0;
-         uint8 u = 0;
-         uint8 v = 0;
-         int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
-         int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
-         uint8 raw_size = (cc >> 3) & 0x3;
-         int32 w = (CB[2] & 0x3FF);
-         int32 h = (CB[2] >> 16) & 0x1FF;
-         switch(raw_size)
+         break;
+      case 0x5A:
+      case 0x5B:
+      case 0x5E:
+      case 0x5F:
          {
-            case 1:
-               w = 1;
-               h = 1;
-               break;
-            case 2:
-            case 3:
-               w = 1 << (raw_size + 1);
-               h = 1 << (raw_size + 1);
-               break;
+            int32 i_dx, i_dy, k;
+            line_point points[2];
+            if(InCmd == INCMD_PLINE)
+            {
+               //printf("PLINE N\n");
+               points[0] = InPLine_PrevPoint;
+
+               set_vertex_color_constant(1, CB[0]);
+
+               points[1].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
+               points[1].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+            }
+            else
+            {
+               set_vertex_color_constant(0, CB[0]);
+
+               points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
+               points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
+
+               set_vertex_color_constant(1, CB[2]);
+
+               points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
+               points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
+            }
+
+            InPLine_PrevPoint = points[1];
+
+            if(InCmd != INCMD_PLINE)
+            {
+               InCmd = INCMD_PLINE;
+               InCmd_CC = cc;
+            }
+
+            i_dx = abs(points[1].x - points[0].x);
+            i_dy = abs(points[1].y - points[0].y);
+            k = (i_dx > i_dy) ? i_dx : i_dy;
+
+            if(i_dx >= 1024 || i_dy >= 512)
+               return;
+            G_Command_DrawLine_Shaded(&points[0], k, 1, 1, abr, MaskEvalAND, CB);
          }
-         G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 0, -1, 0, 0, MaskEvalAND, CB);
-      }
-     break;
-   case 0x62: case 0x6A: case 0x72: case 0x7A:
-   case 0x63: case 0x6B: case 0x73: case 0x7B:
-     {
-        uint32 color = CB[0] & 0x00FFFFFF;
-        uint32 clut = 0;
-        uint8 u = 0;
-        uint8 v = 0;
-        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
-        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
-        uint8 raw_size = (cc >> 3) & 0x3;
-        int32 w = (CB[2] & 0x3FF);
-        int32 h = (CB[2] >> 16) & 0x1FF;
-        switch(raw_size)
-        {
-           case 1:
-              w = 1;
-              h = 1;
-              break;
-           case 2:
-           case 3:
-              w = 1 << (raw_size + 1);
-              h = 1 << (raw_size + 1);
-              break;
-        }
-        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 0, abr, 0, 0, MaskEvalAND, CB);
-     }
-     break;
-   case 0x64: case 0x6C: case 0x74: case 0x7C:
-     {
-        uint32 color = CB[0] & 0x00FFFFFF;
-        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
-        uint8 u = CB[2] & 0xFF;
-        uint8 v = (CB[2] >> 8) & 0xFF;
-        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
-        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
-        uint8 raw_size = (cc >> 3) & 0x3;
-        int32 w = (CB[3] & 0x3FF);
-        int32 h = (CB[3] >> 16) & 0x1FF;
-        switch(raw_size)
-        {
-           case 1:
-              w = 1;
-              h = 1;
-              break;
-           case 2:
-           case 3:
-              w = 1 << (raw_size + 1);
-              h = 1 << (raw_size + 1);
-              break;
-        }
-        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
-     }
-     break;
-   case 0x65: case 0x6D: case 0x75: case 0x7D:
-     {
-        uint32 color = CB[0] & 0x00FFFFFF;
-        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
-        uint8 u = CB[2] & 0xFF;
-        uint8 v = (CB[2] >> 8) & 0xFF;
-        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
-        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
-        uint8 raw_size = (cc >> 3) & 0x3;
-        int32 w = (CB[3] & 0x3FF);
-        int32 h = (CB[3] >> 16) & 0x1FF;
-        switch(raw_size)
-        {
-           case 1:
-              w = 1;
-              h = 1;
-              break;
-           case 2:
-           case 3:
-              w = 1 << (raw_size + 1);
-              h = 1 << (raw_size + 1);
-              break;
-        }
-        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
-     }
-     break;
-   case 0x66: case 0x6E: case 0x76: case 0x7E:
-     {
-        uint32 color = CB[0] & 0x00FFFFFF;
-        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
-        uint8 u = CB[2] & 0xFF;
-        uint8 v = (CB[2] >> 8) & 0xFF;
-        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
-        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
-        uint8 raw_size = (cc >> 3) & 0x3;
-        int32 w = (CB[3] & 0x3FF);
-        int32 h = (CB[3] >> 16) & 0x1FF;
-        switch(raw_size)
-        {
-           case 1:
-              w = 1;
-              h = 1;
-              break;
-           case 2:
-           case 3:
-              w = 1 << (raw_size + 1);
-              h = 1 << (raw_size + 1);
-              break;
-        }
-        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
-     }     
-     break;
-   case 0x67: case 0x6F: case 0x77: case 0x7F:
-     {
-        uint32 color = CB[0] & 0x00FFFFFF;
-        uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
-        uint8 u = CB[2] & 0xFF;
-        uint8 v = (CB[2] >> 8) & 0xFF;
-        int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
-        int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
-        uint8 raw_size = (cc >> 3) & 0x3;
-        int32 w = (CB[3] & 0x3FF);
-        int32 h = (CB[3] >> 16) & 0x1FF;
-        switch(raw_size)
-        {
-           case 1:
-              w = 1;
-              h = 1;
-              break;
-           case 2:
-           case 3:
-              w = 1 << (raw_size + 1);
-              h = 1 << (raw_size + 1);
-              break;
-        }
-        G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
-     }
-     break;
+         break;
 
-   case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
-   case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F:
-   case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
-   case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
+         //      LOG_GPU_FIFO("CC #%d : DrawSprite.\n", cc);
 
-      LOG_GPU_FIFO("CC #%d : FBCopy.\n", cc);
-      G_Command_FBCopy(CB);
-      break;
+         /*
+            G_Command_DrawSprite((cc >> 3) & 0x3,
+            ((cc & 0x4) >> 2),
+            ((cc & 0x2) >> 1) ? abr : -1,
+            ((cc & 1) ^ 1) & ((cc & 0x4) >> 2),
+            (cc&0x4)?TexModeLut[TexMode]:0,
+            MaskEvalAND,
+            CB);
+            */
 
-   case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
-   case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
-   case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
-   case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
-   /* FBWrite */
+      case 0x60: /* rectangle */
+      case 0x68: /* dot */
+      case 0x70: /* 8x8   rectangle */
+      case 0x78: /* 16x16 rectangle */
+      case 0x61:
+      case 0x69:
+      case 0x71:
+      case 0x79:
+         {
+            uint32 color = CB[0] & 0x00FFFFFF;
+            uint32 clut = 0;
+            uint8 u = 0;
+            uint8 v = 0;
+            int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+            int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+            uint8 raw_size = (cc >> 3) & 0x3;
+            int32 w = (CB[2] & 0x3FF);
+            int32 h = (CB[2] >> 16) & 0x1FF;
+            switch(raw_size)
+            {
+               case 1:
+                  w = 1;
+                  h = 1;
+                  break;
+               case 2:
+               case 3:
+                  w = 1 << (raw_size + 1);
+                  h = 1 << (raw_size + 1);
+                  break;
+            }
+            G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 0, -1, 0, 0, MaskEvalAND, CB);
+         }
+         break;
+      case 0x62:
+      case 0x6A:
+      case 0x72:
+      case 0x7A:
+      case 0x63:
+      case 0x6B:
+      case 0x73:
+      case 0x7B:
+         {
+            uint32 color = CB[0] & 0x00FFFFFF;
+            uint32 clut = 0;
+            uint8 u = 0;
+            uint8 v = 0;
+            int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+            int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+            uint8 raw_size = (cc >> 3) & 0x3;
+            int32 w = (CB[2] & 0x3FF);
+            int32 h = (CB[2] >> 16) & 0x1FF;
+            switch(raw_size)
+            {
+               case 1:
+                  w = 1;
+                  h = 1;
+                  break;
+               case 2:
+               case 3:
+                  w = 1 << (raw_size + 1);
+                  h = 1 << (raw_size + 1);
+                  break;
+            }
+            G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 0, abr, 0, 0, MaskEvalAND, CB);
+         }
+         break;
+      case 0x64: /* sprite */
+      case 0x6C:
+      case 0x74: /* 8x8 sprite */
+      case 0x7c: /* 16x16 sprite */
+         {
+            uint32 color = CB[0] & 0x00FFFFFF;
+            uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+            uint8 u = CB[2] & 0xFF;
+            uint8 v = (CB[2] >> 8) & 0xFF;
+            int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+            int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+            uint8 raw_size = (cc >> 3) & 0x3;
+            int32 w = (CB[3] & 0x3FF);
+            int32 h = (CB[3] >> 16) & 0x1FF;
+            switch(raw_size)
+            {
+               case 1:
+                  w = 1;
+                  h = 1;
+                  break;
+               case 2:
+               case 3:
+                  w = 1 << (raw_size + 1);
+                  h = 1 << (raw_size + 1);
+                  break;
+            }
+            G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         }
+         break;
+      case 0x65:
+      case 0x6D:
+      case 0x75:
+      case 0x7D:
+         {
+            uint32 color = CB[0] & 0x00FFFFFF;
+            uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+            uint8 u = CB[2] & 0xFF;
+            uint8 v = (CB[2] >> 8) & 0xFF;
+            int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+            int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+            uint8 raw_size = (cc >> 3) & 0x3;
+            int32 w = (CB[3] & 0x3FF);
+            int32 h = (CB[3] >> 16) & 0x1FF;
+            switch(raw_size)
+            {
+               case 1:
+                  w = 1;
+                  h = 1;
+                  break;
+               case 2:
+               case 3:
+                  w = 1 << (raw_size + 1);
+                  h = 1 << (raw_size + 1);
+                  break;
+            }
+            G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         }
+         break;
+      case 0x66:
+      case 0x6E:
+      case 0x76:
+      case 0x7E:
+         {
+            uint32 color = CB[0] & 0x00FFFFFF;
+            uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+            uint8 u = CB[2] & 0xFF;
+            uint8 v = (CB[2] >> 8) & 0xFF;
+            int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+            int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+            uint8 raw_size = (cc >> 3) & 0x3;
+            int32 w = (CB[3] & 0x3FF);
+            int32 h = (CB[3] >> 16) & 0x1FF;
+            switch(raw_size)
+            {
+               case 1:
+                  w = 1;
+                  h = 1;
+                  break;
+               case 2:
+               case 3:
+                  w = 1 << (raw_size + 1);
+                  h = 1 << (raw_size + 1);
+                  break;
+            }
+            G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
+         }     
+         break;
+      case 0x67:
+      case 0x6F:
+      case 0x77:
+      case 0x7F:
+         {
+            uint32 color = CB[0] & 0x00FFFFFF;
+            uint32 clut = ((CB[2] >> 16) & 0xFFFF) << 4;
+            uint8 u = CB[2] & 0xFF;
+            uint8 v = (CB[2] >> 8) & 0xFF;
+            int32 x = sign_extend_11bit((CB[1] & 0xFFFF) + OffsX);
+            int32 y = sign_extend_11bit((CB[1] >> 16) + OffsY);
+            uint8 raw_size = (cc >> 3) & 0x3;
+            int32 w = (CB[3] & 0x3FF);
+            int32 h = (CB[3] >> 16) & 0x1FF;
+            switch(raw_size)
+            {
+               case 1:
+                  w = 1;
+                  h = 1;
+                  break;
+               case 2:
+               case 3:
+                  w = 1 << (raw_size + 1);
+                  h = 1 << (raw_size + 1);
+                  break;
+            }
+            G_Command_DrawSprite(color, clut, x, y, u, v, w, h, raw_size, 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
+         }
+         break;
 
-   case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
-   case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
-   case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
-   case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
-   /* FBRead */
+      case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
+      case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F:
+      case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
+      case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
 
-      //assert(InCmd == INCMD_NONE);
+         LOG_GPU_FIFO("CC #%d : FBCopy.\n", cc);
+         G_Command_FBCopy(CB);
+         break;
 
-      FBRW_X = (cb[1] >>  0) & 0x3FF;
-      FBRW_Y = (cb[1] >> 16) & 0x3FF;
+      case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
+      case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
+      case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
+      case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
+         /* FBWrite */
 
-      FBRW_W = (cb[2] >>  0) & 0x7FF;
-      FBRW_H = (cb[2] >> 16) & 0x3FF;
+      case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
+      case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
+      case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
+      case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
+         /* FBRead */
 
-      if(FBRW_W > 0x400)
-         FBRW_W &= 0x3FF;
+         //assert(InCmd == INCMD_NONE);
 
-      if(FBRW_H > 0x200)
-         FBRW_H &= 0x1FF;
+         FBRW_X = (cb[1] >>  0) & 0x3FF;
+         FBRW_Y = (cb[1] >> 16) & 0x3FF;
 
-      FBRW_CurX = FBRW_X;
-      FBRW_CurY = FBRW_Y;
+         FBRW_W = (cb[2] >>  0) & 0x7FF;
+         FBRW_H = (cb[2] >> 16) & 0x3FF;
 
-      if(FBRW_W != 0 && FBRW_H != 0)
-         InCmd = ((cc >> 5) == 0x5) ? INCMD_FBWRITE : INCMD_FBREAD;
-      break;
+         if(FBRW_W > 0x400)
+            FBRW_W &= 0x3FF;
 
-   case 0xE1:
-      LOG_GPU_FIFO("CC #%d : DrawMode.\n", cc);
+         if(FBRW_H > 0x200)
+            FBRW_H &= 0x1FF;
 
-      set_texture(CB[0]);
+         FBRW_CurX = FBRW_X;
+         FBRW_CurY = FBRW_Y;
 
-      dtd = (*cb >> 9) & 1;
-      dfe = (*cb >> 10) & 1;
-      //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
-      break;
-   case 0xE2:
-      LOG_GPU_FIFO("CC #%d : TexWindow.\n", cc);
+         if(FBRW_W != 0 && FBRW_H != 0)
+            InCmd = ((cc >> 5) == 0x5) ? INCMD_FBWRITE : INCMD_FBREAD;
+         break;
 
-      tww = (*cb & 0x1F);
-      twh = ((*cb >> 5) & 0x1F);
-      twx = ((*cb >> 10) & 0x1F);
-      twy = ((*cb >> 15) & 0x1F);
+      case 0xE1:
+         LOG_GPU_FIFO("CC #%d : DrawMode.\n", cc);
 
-      GPU_RecalcTexWindowLUT();
-      break;
-   case 0xE3:
-      LOG_GPU_FIFO("CC #%d : Clip0.\n", cc);
+         set_texture(CB[0]);
 
-      ClipX0 = *cb & 1023;
-      ClipY0 = (*cb >> 10) & 1023;
-      break;
-   case 0xE4:
-      LOG_GPU_FIFO("CC #%d : Clip1.\n", cc);
+         dtd = (*cb >> 9) & 1;
+         dfe = (*cb >> 10) & 1;
+         //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
+         break;
+      case 0xE2:
+         LOG_GPU_FIFO("CC #%d : TexWindow.\n", cc);
 
-      ClipX1 = *cb & 1023;
-      ClipY1 = (*cb >> 10) & 1023;
-      break;
-   case 0xE5:
-      LOG_GPU_FIFO("CC #%d : DrawingOffset.\n", cc);
+         tww = (*cb & 0x1F);
+         twh = ((*cb >> 5) & 0x1F);
+         twx = ((*cb >> 10) & 0x1F);
+         twy = ((*cb >> 15) & 0x1F);
 
-      OffsX = sign_extend_11bit((*cb & 2047));
-      OffsY = sign_extend_11bit(((*cb >> 11) & 2047));
+         GPU_RecalcTexWindowLUT();
+         break;
+      case 0xE3:
+         LOG_GPU_FIFO("CC #%d : Clip0.\n", cc);
 
-      //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
-      break;
-   case 0xE6:
-      LOG_GPU_FIFO("CC #%d : MaskSetting.\n", cc);
+         ClipX0 = *cb & 1023;
+         ClipY0 = (*cb >> 10) & 1023;
+         break;
+      case 0xE4:
+         LOG_GPU_FIFO("CC #%d : Clip1.\n", cc);
 
-      //printf("Mask setting: %08x\n", *cb);
-      MaskSetOR   = (*cb & 1) ? 0x8000 : 0x0000;
-      MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
-      break;
+         ClipX1 = *cb & 1023;
+         ClipY1 = (*cb >> 10) & 1023;
+         break;
+      case 0xE5:
+         LOG_GPU_FIFO("CC #%d : DrawingOffset.\n", cc);
 
-   default:
-      break;
+         OffsX = sign_extend_11bit((*cb & 2047));
+         OffsY = sign_extend_11bit(((*cb >> 11) & 2047));
+
+         //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
+         break;
+      case 0xE6:
+         LOG_GPU_FIFO("CC #%d : MaskSetting.\n", cc);
+
+         //printf("Mask setting: %08x\n", *cb);
+         MaskSetOR   = (*cb & 1) ? 0x8000 : 0x0000;
+         MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
+         break;
+
+      default:
+         break;
 
    }
 
