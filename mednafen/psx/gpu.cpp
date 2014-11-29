@@ -2758,28 +2758,33 @@ void GPU_Write(const int32_t timestamp, uint32_t A, uint32_t V)
             break;
 
          case 0x10:	// GPU info(?)
+            // DataReadBuffer must remain unchanged for any unhandled GPU info index.
             switch(V & 0xF)
             {
-               // DataReadBuffer must remain unchanged for any unhandled GPU info index.
-               default:  break;
-
-               case 0x2: DataReadBuffer = (tww << 0) | (twh << 5) | (twx << 10) | (twy << 15);
-                         break;
-
-               case 0x3: DataReadBuffer = (ClipY0 << 10) | ClipX0;
-                         break;
-
-               case 0x4: DataReadBuffer = (ClipY1 << 10) | ClipX1;
-                         break;
-
-               case 0x5: DataReadBuffer = (OffsX & 2047) | ((OffsY & 2047) << 11);
-                         break;
-
-               case 0x7: DataReadBuffer = 2;
-                         break;
-
-               case 0x8: DataReadBuffer = 0;
-                         break;
+               case 0x2:
+                  /* Read Texture Window setting */
+                  DataReadBuffer = (tww << 0) | (twh << 5) | (twx << 10) | (twy << 15);
+                  break;
+               case 0x3:
+                  /* Read Draw Area top left */
+                  DataReadBuffer = (ClipY0 << 10) | ClipX0;
+                  break;
+               case 0x4:
+                  /* Read Draw Area bottom right */
+                  DataReadBuffer = (ClipY1 << 10) | ClipX1;
+                  break;
+               case 0x5:
+                  /* Read Draw Offset */
+                  DataReadBuffer = (OffsX & 2047) | ((OffsY & 2047) << 11);
+                  break;
+               case 0x7:
+                  /* Read GPU Type (usually 2). */
+                  DataReadBuffer = 2;
+                  break;
+               case 0x8:
+                  /* Unknown (returns 00000000h) */
+                  DataReadBuffer = 0;
+                  break;
             }
             break;
 
