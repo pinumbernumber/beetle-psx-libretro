@@ -1338,37 +1338,30 @@ static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool text
          y_middle = y_bound;
    }
 
-   if(right_facing)
+   int64 *var1 = (int64*)&bound_coord_ul;
+   int64 *var2 = (int64*)&base_coord;
+   int64 *var3 = (int64*)&bound_coord_ll;
+   int64 *var4 = (int64*)&base_coord;
+   if (right_facing)
    {
-      for(int32 y = y_start; y < y_middle; y++)
-      {
-         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ul), ig, idl);
-         base_coord += base_step;
-         bound_coord_ul += bound_coord_us;
-      }
-
-      for(int32 y = y_middle; y < y_bound; y++)
-      {
-         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(base_coord), GetPolyXFP_Int(bound_coord_ll), ig, idl);
-         base_coord += base_step;
-         bound_coord_ll += bound_coord_ls;
-      }
+      var1 = (int64*)&base_coord;
+      var2 = (int64*)&bound_coord_ul;
+      var3 = (int64*)&base_coord;;
+      var4 = (int64*)&bound_coord_ll;
    }
-   else
-   {
-      for(int32 y = y_start; y < y_middle; y++)
-      {
-         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(bound_coord_ul), GetPolyXFP_Int(base_coord), ig, idl);
-         base_coord += base_step;
-         bound_coord_ul += bound_coord_us;
-      }
 
-      for(int32 y = y_middle; y < y_bound; y++)
-      {
-         GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(bound_coord_ll), GetPolyXFP_Int(base_coord), ig, idl);
-         base_coord += base_step;
-         bound_coord_ll += bound_coord_ls;
-      }
+   for(int32 y = y_start; y < y_middle; y++)
+   {
+      GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(*var1), GetPolyXFP_Int(*var2), ig, idl);
+      base_coord += base_step;
+      bound_coord_ul += bound_coord_us;
+   }
+
+   for(int32 y = y_middle; y < y_bound; y++)
+   {
+      GPU_DrawSpan(shaded, textured, BlendMode, TexMult, TexMode_TA, MaskEval_TA, y, clut, GetPolyXFP_Int(*var3), GetPolyXFP_Int(*var4), ig, idl);
+      base_coord += base_step;
+      bound_coord_ll += bound_coord_ls;
    }
 
 #if 0
