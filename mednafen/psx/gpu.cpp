@@ -1120,7 +1120,7 @@ static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool text
    const unsigned cb0 = cb[0];
    tri_vertex vertices[3];
    uint32 clut = 0;
-   unsigned sv = 0;
+   unsigned v, sv = 0;
    //uint32 tpage = 0;
 
    // Base timing is approximate, and could be improved.
@@ -1136,14 +1136,17 @@ static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool text
    else
       DrawTimeAvail -= (64 + 18);
 
-   if(shaded && textured)
-      DrawTimeAvail -= 150 * 3;
-   else if(shaded)
-      DrawTimeAvail -= 96 * 3;
+   if (shaded)
+   {
+      if (textured)
+         DrawTimeAvail -= 150 * 3;
+      else
+         DrawTimeAvail -= 96 * 3;
+   }
    else if(textured)
       DrawTimeAvail -= 60 * 3;
 
-   for(unsigned v = sv; v < 3; v++)
+   for(v = sv; v < 3; v++)
    {
       if(v == 0 || shaded)
       {
