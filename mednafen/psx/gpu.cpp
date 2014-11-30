@@ -1914,7 +1914,6 @@ static GPU_CTEntry GPU_Commands[256] =
 static void GPU_ProcessFIFO(void)
 {
    unsigned vl, i;
-   uint32 *cb = NULL;
    uint32_t CB[0x10];
    uint32_t cc;
    GPU_CTEntry *command = NULL;
@@ -2004,8 +2003,6 @@ static void GPU_ProcessFIFO(void)
 
    if(BlitterFIFO->in_count < vl)
       return;
-
-   cb = (uint32*)CB;
 
    for(i = 0; i < vl; i++)
    {
@@ -2605,11 +2602,11 @@ static void GPU_ProcessFIFO(void)
 
          //assert(InCmd == INCMD_NONE);
 
-         FBRW_X = (cb[1] >>  0) & 0x3FF;
-         FBRW_Y = (cb[1] >> 16) & 0x3FF;
+         FBRW_X = (CB[1] >>  0) & 0x3FF;
+         FBRW_Y = (CB[1] >> 16) & 0x3FF;
 
-         FBRW_W = (cb[2] >>  0) & 0x7FF;
-         FBRW_H = (cb[2] >> 16) & 0x3FF;
+         FBRW_W = (CB[2] >>  0) & 0x7FF;
+         FBRW_H = (CB[2] >> 16) & 0x3FF;
 
          if(FBRW_W > 0x400)
             FBRW_W &= 0x3FF;
@@ -2629,46 +2626,46 @@ static void GPU_ProcessFIFO(void)
 
          set_texture(CB[0]);
 
-         dtd = (*cb >> 9) & 1;
-         dfe = (*cb >> 10) & 1;
+         dtd = (CB[0] >> 9) & 1;
+         dfe = (CB[0] >> 10) & 1;
          //printf("*******************DFE: %d -- scanline=%d\n", dfe, scanline);
          break;
       case 0xE2:
          LOG_GPU_FIFO("CC #%d : TexWindow.\n", cc);
 
-         tww = (*cb & 0x1F);
-         twh = ((*cb >> 5) & 0x1F);
-         twx = ((*cb >> 10) & 0x1F);
-         twy = ((*cb >> 15) & 0x1F);
+         tww = (CB[0] & 0x1F);
+         twh = ((CB[0] >> 5) & 0x1F);
+         twx = ((CB[0] >> 10) & 0x1F);
+         twy = ((CB[0] >> 15) & 0x1F);
 
          GPU_RecalcTexWindowLUT();
          break;
       case 0xE3:
          LOG_GPU_FIFO("CC #%d : Clip0.\n", cc);
 
-         ClipX0 = *cb & 1023;
-         ClipY0 = (*cb >> 10) & 1023;
+         ClipX0 = CB[0] & 1023;
+         ClipY0 = (CB[0] >> 10) & 1023;
          break;
       case 0xE4:
          LOG_GPU_FIFO("CC #%d : Clip1.\n", cc);
 
-         ClipX1 = *cb & 1023;
-         ClipY1 = (*cb >> 10) & 1023;
+         ClipX1 = CB[0] & 1023;
+         ClipY1 = (CB[0] >> 10) & 1023;
          break;
       case 0xE5:
          LOG_GPU_FIFO("CC #%d : DrawingOffset.\n", cc);
 
-         OffsX = sign_extend_11bit((*cb & 2047));
-         OffsY = sign_extend_11bit(((*cb >> 11) & 2047));
+         OffsX = sign_extend_11bit((CB[0] & 2047));
+         OffsY = sign_extend_11bit(((CB[0] >> 11) & 2047));
 
-         //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, *cb, OffsY, *cb >> 11, scanline);
+         //fprintf(stderr, "[GPU] Drawing offset: %d(raw=%d) %d(raw=%d) -- %d\n", OffsX, CB[0], OffsY, CB[0] >> 11, scanline);
          break;
       case 0xE6:
          LOG_GPU_FIFO("CC #%d : MaskSetting.\n", cc);
 
-         //printf("Mask setting: %08x\n", *cb);
-         MaskSetOR   = (*cb & 1) ? 0x8000 : 0x0000;
-         MaskEvalAND = (*cb & 2) ? 0x8000 : 0x0000;
+         //printf("Mask setting: %08x\n", CB[0]);
+         MaskSetOR   = (CB[0] & 1) ? 0x8000 : 0x0000;
+         MaskEvalAND = (CB[0] & 2) ? 0x8000 : 0x0000;
          break;
 
       default:
