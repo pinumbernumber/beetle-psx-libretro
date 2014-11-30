@@ -87,7 +87,7 @@ static int32_t irq10_pulse_ts[2];
 
 static int32_t dsr_pulse_delay[4];
 static int32_t dsr_active_until_ts[4];
-static int32_t lastts;
+static int32_t FIO_lastts;
 
 static bool amct_enabled;
 static uint32_t chair_colors[8];
@@ -4168,7 +4168,7 @@ int32_t FrontIO_Update(int32_t timestamp)
    int32_t clocks, i;
    bool need_start_stop_check = false;
 
-   clocks = timestamp - lastts;
+   clocks = timestamp - FIO_lastts;
 
    for(i = 0; i < 4; i++)
       if(dsr_pulse_delay[i] > 0)
@@ -4254,7 +4254,7 @@ int32_t FrontIO_Update(int32_t timestamp)
    }
 
 
-   lastts = timestamp;
+   FIO_lastts = timestamp;
 
 
    if(need_start_stop_check)
@@ -4268,34 +4268,34 @@ void FrontIO_ResetTS(void)
    int i;
    for(i = 0; i < 8; i++)
    {
-      Devices[i]->Update(lastts);	// Maybe eventually call Update() from FrontIO_Update() and remove this(but would hurt speed)?
+      Devices[i]->Update(FIO_lastts);	// Maybe eventually call Update() from FrontIO_Update() and remove this(but would hurt speed)?
       Devices[i]->ResetTS();
 
-      DevicesMC[i]->Update(lastts);	// Maybe eventually call Update() from FrontIO_Update() and remove this(but would hurt speed)?
+      DevicesMC[i]->Update(FIO_lastts);	// Maybe eventually call Update() from FrontIO_Update() and remove this(but would hurt speed)?
       DevicesMC[i]->ResetTS();
    }
 
    for(i = 0; i < 2; i++)
    {
-      DevicesTap[i]->Update(lastts);
+      DevicesTap[i]->Update(FIO_lastts);
       DevicesTap[i]->ResetTS();
    }
 
    for(i = 0; i < 2; i++)
    {
       if(irq10_pulse_ts[i] != PSX_EVENT_MAXTS)
-         irq10_pulse_ts[i] -= lastts;
+         irq10_pulse_ts[i] -= FIO_lastts;
    }
 
    for(i = 0; i < 4; i++)
    {
       if(dsr_active_until_ts[i] >= 0)
       {
-         dsr_active_until_ts[i] -= lastts;
+         dsr_active_until_ts[i] -= FIO_lastts;
          //printf("SPOOONY: %d %d\n", i, dsr_active_until_ts[i]);
       }
    }
-   lastts = 0;
+   FIO_lastts = 0;
 }
 
 
@@ -4311,7 +4311,7 @@ void FrontIO_Power(void)
    for(i = 0; i < 2; i++)
       irq10_pulse_ts[i] = PSX_EVENT_MAXTS;
 
-   lastts = 0;
+   FIO_lastts = 0;
 
    //
    //

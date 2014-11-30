@@ -2062,7 +2062,7 @@ static void GPU_ProcessFIFO(void)
       case 0x23:
       case 0x2B:
       case 0x33:
-      case 0x3B:
+      case 0x3b:
          G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
          break;
       case 0x24: 

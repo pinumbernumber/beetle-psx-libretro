@@ -105,7 +105,7 @@ static int32 PendingCommandCounter;
 
 static int32 SPUCounter;
 
-static uint8 Mode;
+static uint8 CDC_Mode;
 
 static int DriveStatus;
 static int StatusAfterSeek;
@@ -125,7 +125,7 @@ static uint8 AsyncResultsPendingCount;
 
 static int32 SeekTarget;
 
-static int32_t lastts;
+static int32_t CDC_lastts;
 
 static CDUtility::TOC toc;
 static bool IsPSXDisc;
@@ -403,7 +403,7 @@ void CDC_SoftReset(void)
    PendingCommandPhase = 0;
    PendingCommandCounter = 0;
 
-   Mode = 0;
+   CDC_Mode = 0;
 
    HeaderBufValid = false;
    DriveStatus = DS_STOPPED;
@@ -439,7 +439,7 @@ void CDC_Power(void)
    DiscStartupDelay = 0;
 
    SPUCounter = SPU_UpdateFromCDC(0);
-   lastts = 0;
+   CDC_lastts = 0;
 }
 
 int CDC_StateAction(StateMem *sm, int load, int data_only)
@@ -516,7 +516,7 @@ int CDC_StateAction(StateMem *sm, int load, int data_only)
 
   { &((SPUCounter)), sizeof((SPUCounter)), 0x80000000 | 0, "SPUCounter" },
 
-  { &((Mode)), sizeof((Mode)), 0x80000000 | 0, "Mode" },
+  { &((CDC_Mode)), sizeof((CDC_Mode)), 0x80000000 | 0, "Mode" },
   { &((DriveStatus)), sizeof((DriveStatus)), 0x80000000 | 0, "DriveStatus" },
   { &((StatusAfterSeek)), sizeof((StatusAfterSeek)), 0x80000000 | 0, "StatusAfterSeek" },
   { &((Forward)), 1, 0x80000000 | 0x08000000, "Forward" },
@@ -567,7 +567,7 @@ int CDC_StateAction(StateMem *sm, int load, int data_only)
 
 void CDC_ResetTS(void)
 {
-   lastts = 0;
+   CDC_lastts = 0;
 }
 
 static uint8 CDC_MakeStatus(bool cmd_error)
@@ -774,7 +774,7 @@ static bool CDC_XA_Test(const uint8 *sdata)
 {
    const XA_Subheader *sh = (const XA_Subheader *)&sdata[12 + 4];
 
-   if(!(Mode & MODE_STRSND))
+   if(!(CDC_Mode & MODE_STRSND))
       return false;
 
    if(!(sh->submode & XA_SUBMODE_AUDIO))
@@ -782,10 +782,10 @@ static bool CDC_XA_Test(const uint8 *sdata)
 
    //printf("Test File: 0x%02x 0x%02x - Channel: 0x%02x 0x%02x - Submode: 0x%02x 0x%02x - Coding: 0x%02x 0x%02x - \n", sh->file, sh->file_dup, sh->channel, sh->channel_dup, sh->submode, sh->submode_dup, sh->coding, sh->coding_dup);
 
-   if((Mode & MODE_SF) && (sh->file != FilterFile || sh->channel != FilterChan))
+   if((CDC_Mode & MODE_SF) && (sh->file != FilterFile || sh->channel != FilterChan))
       return false;
 
-   if(!xa_cur_set || (Mode & MODE_SF))
+   if(!xa_cur_set || (CDC_Mode & MODE_SF))
    {
       xa_cur_set = true;
       xa_cur_file = sh->file;
@@ -968,7 +968,7 @@ static void CDC_EnbufferizeCDDASector(const uint8 *buf)
 {
    CD_Audio_Buffer *ab = &AudioBuffer;
 
-   ab->Freq = 7 * ((Mode & MODE_SPEED) ? 2 : 1);
+   ab->Freq = 7 * ((CDC_Mode & MODE_SPEED) ? 2 : 1);
    ab->Size = 588;
 
    if(SubQBuf_Safe[0] & 0x40)
@@ -1022,7 +1022,7 @@ static void CDC_HandlePlayRead(void)
    CDC_DecodeSubQ(read_buf + 2352);
 
 
-   if(SubQBuf_Safe[1] == 0xAA && (DriveStatus == DS_PLAYING || (!(SubQBuf_Safe[0] & 0x40) && (Mode & MODE_CDDA))))
+   if(SubQBuf_Safe[1] == 0xAA && (DriveStatus == DS_PLAYING || (!(SubQBuf_Safe[0] & 0x40) && (CDC_Mode & MODE_CDDA))))
    {
       HeaderBufValid = false;
 
@@ -1042,7 +1042,7 @@ static void CDC_HandlePlayRead(void)
       if(PlayTrackMatch == -1 && SubQChecksumOK)
          PlayTrackMatch = SubQBuf_Safe[0x1];
 
-      if((Mode & MODE_AUTOPAUSE) && PlayTrackMatch != -1 && SubQBuf_Safe[0x1] != PlayTrackMatch)
+      if((CDC_Mode & MODE_AUTOPAUSE) && PlayTrackMatch != -1 && SubQBuf_Safe[0x1] != PlayTrackMatch)
       {
          // Status needs to be taken before we're paused(IE it should still report playing).
          CDC_SetAIP2(CDCIRQ_DATA_END, CDC_MakeStatus(false));
@@ -1053,7 +1053,7 @@ static void CDC_HandlePlayRead(void)
          return;
       }
 
-      if((Mode & MODE_REPORT) && (((SubQBuf_Safe[0x9] >> 4) != ReportLastF) || Forward || Backward) && SubQChecksumOK)
+      if((CDC_Mode & MODE_REPORT) && (((SubQBuf_Safe[0x9] >> 4) != ReportLastF) || Forward || Backward) && SubQChecksumOK)
       {
          uint8 tr[8];
 #if 0
@@ -1103,7 +1103,7 @@ static void CDC_HandlePlayRead(void)
             memcpy(HeaderBuf, buf + 12, 12);
             HeaderBufValid = true;
 
-            if((Mode & MODE_STRSND) && (buf[12 + 3] == 0x2) && ((buf[12 + 6] & 0x64) == 0x64))
+            if((CDC_Mode & MODE_STRSND) && (buf[12 + 3] == 0x2) && ((buf[12 + 6] & 0x64) == 0x64))
             {
                if(CDC_XA_Test(buf))
                {
@@ -1118,7 +1118,7 @@ static void CDC_HandlePlayRead(void)
             else
             {
 #if 0
-               // maybe if(!(Mode & 0x30)) too?
+               // maybe if(!(CDC_Mode & 0x30)) too?
                if(!(buf[12 + 6] & 0x20))
                {
                   if(!edc_lec_check_and_correct(buf, true))
@@ -1127,14 +1127,14 @@ static void CDC_HandlePlayRead(void)
                   }
                }
 
-               if(!(Mode & 0x30) && (buf[12 + 6] & 0x20))
+               if(!(CDC_Mode & 0x30) && (buf[12 + 6] & 0x20))
                   PSX_WARNING("[CDC] BORK: %d", CurSector);
 #endif
 
-               int32 offs = (Mode & 0x20) ? 0 : 12;
-               int32 size = (Mode & 0x20) ? 2340 : 2048;
+               int32 offs = (CDC_Mode & 0x20) ? 0 : 12;
+               int32 size = (CDC_Mode & 0x20) ? 2340 : 2048;
 
-               if(Mode & 0x10)
+               if(CDC_Mode & 0x10)
                {
                   offs = 12;
                   size = 2328;
@@ -1147,7 +1147,7 @@ static void CDC_HandlePlayRead(void)
          }
       }
 
-      if(!(SubQBuf_Safe[0] & 0x40) && ((Mode & MODE_CDDA) || DriveStatus == DS_PLAYING))
+      if(!(SubQBuf_Safe[0] & 0x40) && ((CDC_Mode & MODE_CDDA) || DriveStatus == DS_PLAYING))
       {
          if(AudioBuffer.ReadPos < AudioBuffer.Size)
          {
@@ -1162,7 +1162,7 @@ static void CDC_HandlePlayRead(void)
    SectorPipe_Pos = (SectorPipe_Pos + 1) % SectorPipe_Count;
    SectorPipe_In++;
 
-   PSRCounter += 33868800 / (75 * ((Mode & MODE_SPEED) ? 2 : 1));
+   PSRCounter += 33868800 / (75 * ((CDC_Mode & MODE_SPEED) ? 2 : 1));
 
    if(DriveStatus == DS_PLAYING)
    {
@@ -1186,7 +1186,7 @@ static void CDC_HandlePlayRead(void)
 
 int32_t CDC_Update(const int32_t timestamp)
 {
-   int32 clocks = timestamp - lastts;
+   int32 clocks = timestamp - CDC_lastts;
 
    //doom_ts = timestamp;
 
@@ -1247,7 +1247,7 @@ int32_t CDC_Update(const int32_t timestamp)
                SB_In = 0;
                SectorPipe_Pos = SectorPipe_In = 0;
 
-               Mode = 0;
+               CDC_Mode = 0;
                CurSector = 0;
                CommandLoc = 0;
 
@@ -1263,7 +1263,7 @@ int32_t CDC_Update(const int32_t timestamp)
                DriveStatus = StatusAfterSeek;
 
                if(DriveStatus != DS_PAUSED && DriveStatus != DS_STANDBY)
-                  PSRCounter = 33868800 / (75 * ((Mode & MODE_SPEED) ? 2 : 1));
+                  PSRCounter = 33868800 / (75 * ((CDC_Mode & MODE_SPEED) ? 2 : 1));
             }
             else if(DriveStatus == DS_SEEKING_LOGICAL)
             {
@@ -1276,8 +1276,8 @@ int32_t CDC_Update(const int32_t timestamp)
 
                if(DriveStatus != DS_PAUSED && DriveStatus != DS_STANDBY)
                {
-                  // TODO: SetAIP(CDCIRQ_DISC_ERROR, CDC_MakeStatus(false) | 0x04, 0x04);  when !(Mode & MODE_CDDA) and the sector isn't a data sector.
-                  PSRCounter = 33868800 / (75 * ((Mode & MODE_SPEED) ? 2 : 1));
+                  // TODO: SetAIP(CDCIRQ_DISC_ERROR, CDC_MakeStatus(false) | 0x04, 0x04);  when !(CDC_Mode & MODE_CDDA) and the sector isn't a data sector.
+                  PSRCounter = 33868800 / (75 * ((CDC_Mode & MODE_SPEED) ? 2 : 1));
                }
             }
             else if(DriveStatus == DS_READING || DriveStatus == DS_PLAYING)
@@ -1399,7 +1399,7 @@ int32_t CDC_Update(const int32_t timestamp)
       clocks -= chunk_clocks;
    } // end while(clocks > 0)
 
-   lastts = timestamp;
+   CDC_lastts = timestamp;
 
    return(timestamp + CDC_CalcNextEvent());
 }
@@ -1739,7 +1739,7 @@ int32 CDC_CalcSeekTime(int32 initial, int32 target, bool motor_on, bool paused)
       //else
       {
          // Take twice as long for 1x mode.
-         ret += 1237952 * ((Mode & MODE_SPEED) ? 1 : 2);
+         ret += 1237952 * ((CDC_Mode & MODE_SPEED) ? 1 : 2);
       }
    }
 
@@ -2019,7 +2019,7 @@ static int32 Command_Pause(const int arg_count, const uint8 *args)
    DriveStatus = DS_PAUSED;
 
    // An approximation.
-   return((1124584 + ((int64)CurSector * 42596 / (75 * 60))) * ((Mode & MODE_SPEED) ? 1 : 2));
+   return((1124584 + ((int64)CurSector * 42596 / (75 * 60))) * ((CDC_Mode & MODE_SPEED) ? 1 : 2));
 }
 
 static int32 Command_Pause_Part2(void)
@@ -2082,7 +2082,7 @@ static int32 Command_Setfilter(const int arg_count, const uint8 *args)
 
 static int32 Command_Setmode(const int arg_count, const uint8 *args)
 {
-   Mode = args[0];
+   CDC_Mode = args[0];
 
    WriteResult(CDC_MakeStatus(false));
    WriteIRQ(CDCIRQ_ACKNOWLEDGE);
@@ -2093,7 +2093,7 @@ static int32 Command_Setmode(const int arg_count, const uint8 *args)
 static int32 Command_Getparam(const int arg_count, const uint8 *args)
 {
    WriteResult(CDC_MakeStatus(false));
-   WriteResult(Mode);
+   WriteResult(CDC_Mode);
    WriteResult(0x00);
    WriteResult(FilterFile);
    WriteResult(FilterChan);
