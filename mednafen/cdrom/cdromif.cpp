@@ -27,7 +27,9 @@
 
 extern retro_log_printf_t log_cb;
 
+#ifdef WANT_ECC
 using namespace CDUtility;
+#endif
 
 enum
 {
@@ -88,8 +90,10 @@ bool CDIF_ValidateRawSector(CDIF *cdif, uint8 *buf)
    if(mode != 0x1 && mode != 0x2)
       return(false);
 
+#ifdef WANT_ECC
    if(!edc_lec_check_and_correct(buf, mode == 2))
       return(false);
+#endif
 
    return(true);
 }
