@@ -4655,9 +4655,10 @@ void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
       const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock,
       const unsigned pix_clock_divider)
 {
+   unsigned i;
    FrontIO_Update(timestamp);
 
-   for(unsigned i = 0; i < 8; i++)
+   for(i = 0; i < 8; i++)
    {
       int32_t plts = PSX_EVENT_MAXTS;
 
@@ -4680,15 +4681,22 @@ void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
             IRQ_Assert(IRQ_PIO, false);
          }
       }
-   }
-
+   } 
    //
-   // Draw crosshairs in a separate pass so the crosshairs won't mess up the color evaluation of later lightun GPULineHook()s.
+   // Draw crosshairs in a separate pass so the crosshairs won't mess up the color evaluation of later lightgun GPULineHook()s.
    //
    if(pixels && pix_clock)
    {
-      for(unsigned i = 0; i < 8; i++)
-         Devices[i]->DrawCrosshairs(pixels, format, width, pix_clock);
+      for(i = 0; i < 8; i++)
+      {
+         switch (DevicesType[i])
+         {
+            case INPUTDEVICE_GUNCON:
+            case INPUTDEVICE_JUSTIFIER:
+               Devices[i]->DrawCrosshairs(pixels, format, width, pix_clock);
+               break;
+         }
+      }
    }
 
    PSX_SetEventNT(PSX_EVENT_FIO, FrontIO_CalcNextEventTS(timestamp, 0x10000000));
