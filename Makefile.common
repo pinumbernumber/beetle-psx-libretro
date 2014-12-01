@@ -1,6 +1,5 @@
 ifeq ($(HAVE_GRIFFIN),1)
-   CORE_SOURCES := beetle_psx_griffin.cpp \
-	$(CORE_DIR)/dma.cpp
+   CORE_SOURCES := beetle_psx_griffin.cpp
 else
    CORE_SOURCES := $(CORE_DIR)/dma.cpp \
 	$(CORE_DIR)/frontio.cpp \

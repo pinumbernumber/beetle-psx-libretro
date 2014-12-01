@@ -173,7 +173,7 @@ enum
  // Y, X
 static uint16 GPURAM[512][1024];
 
-static uint32 DMAControl;
+static uint32 GPU_DMAControl;
 
  //
  // Drawing stuff
@@ -277,7 +277,7 @@ static int32 LinePhase;
 
 static int32 DrawTimeAvail;
 
-static int32_t lastts;
+static int32_t GPU_lastts;
 
 static bool sl_zero_reached;
 
@@ -477,7 +477,7 @@ static void GPU_SoftReset(void)
 {
    IRQPending = false;
    IRQ_Assert(IRQ_GPU, IRQPending);
-   DMAControl = 0;
+   GPU_DMAControl = 0;
 
    if(DrawTimeAvail < 0)
       DrawTimeAvail = 0;
@@ -552,7 +552,7 @@ void GPU_Power(void)
 {
    memset(GPURAM, 0, sizeof(GPURAM));
 
-   DMAControl = 0;
+   GPU_DMAControl = 0;
 
    ClipX0 = 0;
    ClipY0 = 0;
@@ -631,7 +631,7 @@ void GPU_Power(void)
 
    DrawTimeAvail = 0;
 
-   lastts = 0;
+   GPU_lastts = 0;
 
    GPU_SoftReset();
 
@@ -641,7 +641,7 @@ void GPU_Power(void)
 
 void GPU_ResetTS(void)
 {
-   lastts = 0;
+   GPU_lastts = 0;
 }
 
 static INLINE void GPU_PlotPixel(int BlendMode, bool MaskEval_TA, bool textured, int32 x, int32 y, uint16_t fore_pix)
@@ -744,7 +744,7 @@ int GPU_StateAction(StateMem *sm, int load, int data_only)
    {
       { ((&GPURAM[0][0])), (uint32)(((sizeof(GPURAM) / sizeof(GPURAM[0][0]))) * sizeof(uint16)), 0x20000000 | 0, "&GPURAM[0][0]" },
 
-      { &((DMAControl)), sizeof((DMAControl)), 0x80000000 | 0, "DMAControl" },
+      { &((GPU_DMAControl)), sizeof((GPU_DMAControl)), 0x80000000 | 0, "DMAControl" },
 
       { &((ClipX0)), sizeof((ClipX0)), 0x80000000 | 0, "ClipX0" },
       { &((ClipY0)), sizeof((ClipY0)), 0x80000000 | 0, "ClipY0" },
@@ -2727,7 +2727,7 @@ void GPU_Write(const int32_t timestamp, uint32_t A, uint32_t V)
             break;
 
          case 0x04:	// DMA Setup
-            DMAControl = V & 0x3;
+            GPU_DMAControl = V & 0x3;
             break;
 
          case 0x05:	// Start of display area in framebuffer
@@ -2787,7 +2787,7 @@ void GPU_Write(const int32_t timestamp, uint32_t A, uint32_t V)
    {
       //uint32_t command = V >> 24;
       //printf("Meow command: %02x\n", command);
-      //assert(!(DMAControl & 2));
+      //assert(!(GPU_DMAControl & 2));
       GPU_WriteCB(V);
    }
 }
@@ -2832,13 +2832,13 @@ uint32_t GPU_Read(const int32_t timestamp, uint32_t A)
    {
       ret = (((DisplayMode << 1) & 0x7F) | ((DisplayMode >> 6) & 1)) << 16;
 
-      ret |= DMAControl << 29;
+      ret |= GPU_DMAControl << 29;
 
       ret |= (DisplayFB_CurLineYReadout & 1) << 31;
 
       ret |= (!field) << 13;
 
-      if(DMAControl & 0x02)
+      if(GPU_DMAControl & 0x02)
          ret |= 1 << 25;
 
       ret |= IRQPending << 24;
@@ -2873,7 +2873,7 @@ uint32_t GPU_Read(const int32_t timestamp, uint32_t A)
       ret = GPU_ReadDMA();
 
 #if 0
-   if(DMAControl & 2)
+   if(GPU_DMAControl & 2)
    {
       //PSX_WARNING("[GPU READ WHEN (DMACONTROL&2)] 0x%08x - ret=0x%08x, scanline=%d", A, ret, scanline);
    }
@@ -2918,10 +2918,10 @@ int32_t GPU_Update(const int32_t sys_timestamp)
    const uint32_t dmc = (DisplayMode & 0x40) ? 4 : (DisplayMode & 0x3);
    const uint32_t dmw = 2800 / DotClockRatios[dmc];	// Must be <= 768
 
-   int32 sys_clocks = sys_timestamp - lastts;
+   int32 sys_clocks = sys_timestamp - GPU_lastts;
    int32 gpu_clocks;
 
-   //printf("GPUISH: %d\n", sys_timestamp - lastts);
+   //printf("GPUISH: %d\n", sys_timestamp - GPU_lastts);
 
    if(!sys_clocks)
       goto TheEnd;
@@ -3207,7 +3207,7 @@ int32_t GPU_Update(const int32_t sys_timestamp)
    //puts("GPU Update End");
 
 TheEnd:
-   lastts = sys_timestamp;
+   GPU_lastts = sys_timestamp;
 
    {
       int32 next_dt = LineClockCounter;

@@ -1,6 +1,7 @@
 
 #include "mednafen/psx/frontio.cpp"
 #include "mednafen/psx/cpu.cpp"
+#include "mednafen/psx/dma.cpp"
 #include "mednafen/psx/dis.cpp"
 #include "mednafen/psx/cdc.cpp"
 #include "mednafen/psx/spu.cpp"
