@@ -3196,7 +3196,7 @@ int32_t GPU_Update(const int32_t sys_timestamp)
                pix_clock = (HardwarePALType ? 53203425 : 53693182) / DotClockRatios[dmc];
                pix_clock_div = DotClockRatios[dmc];
             }
-            PSX_GPULineHook(sys_timestamp, sys_timestamp - ((uint64)gpu_clocks * 65536) / GPUClockRatio, scanline == 0, dest, &surface->format, dmw_width, pix_clock_offset, pix_clock, pix_clock_div);
+            FrontIO_GPULineHook(sys_timestamp, sys_timestamp - ((uint64)gpu_clocks * 65536) / GPUClockRatio, scanline == 0, dest, &surface->format, dmw_width, pix_clock_offset, pix_clock, pix_clock_div);
 
             if(!InVBlank)
                DisplayFB_CurYOffset = (DisplayFB_CurYOffset + 1) & 0x1FF;

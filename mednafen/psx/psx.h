@@ -84,8 +84,6 @@
  #define PSX_EVENT_MAXTS       		0x20000000
  void PSX_SetEventNT(const int type, const int32_t next_timestamp);
 
- void PSX_GPULineHook(const int32_t timestamp, const int32_t line_timestamp, bool vsync, uint32_t *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divide);
-
  uint32_t PSX_GetRandU32(uint32_t mina, uint32_t maxa);
 
 

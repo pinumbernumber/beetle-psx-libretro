@@ -937,12 +937,6 @@ static void PSX_Power(void)
    PSX_ForceEventUpdates(0);
 }
 
-
-void PSX_GPULineHook(const int32_t timestamp, const int32_t line_timestamp, bool vsync, uint32_t *pixels, const MDFN_PixelFormat* const format, const unsigned width, const unsigned pix_clock_offset, const unsigned pix_clock, const unsigned pix_clock_divider)
-{
-   FrontIO_GPULineHook(timestamp, line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
-}
-
 static bool TestMagic(const char *name, MDFNFILE *fp)
 {
    if(GET_FSIZE_PTR(fp) < 0x800)
