@@ -37,8 +37,6 @@ class InputDevice
  //
  //
  virtual uint32_t GetNVSize(void);
- virtual void ReadNV(uint8_t *buffer, uint32_t offset, uint32_t count);
- virtual void WriteNV(const uint8_t *buffer, uint32_t offset, uint32_t count);
 
  //
  // Dirty count should be incremented on each call to a method this class that causes at least 1 write to occur to the
@@ -72,8 +70,6 @@ class InputDevice_Memcard : public InputDevice
  //
  //
  virtual uint32 GetNVSize(void);
- virtual void ReadNV(uint8 *buffer, uint32 offset, uint32 size);
- virtual void WriteNV(const uint8 *buffer, uint32 offset, uint32 size);
 
  virtual uint64 GetNVDirtyCount(void);
 
