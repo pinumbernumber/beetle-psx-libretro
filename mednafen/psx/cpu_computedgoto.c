@@ -379,8 +379,10 @@
                            break;
 
                         case CP0REG_SR:
+#if 0
                            if((CP0.SR ^ val) & 0x10000)
                               PSX_DBG(PSX_DBG_SPARSE, "[CPU] IsC %u->%u\n", (bool)(CP0.SR & (1U << 16)), (bool)(val & (1U << 16)));
+#endif
 
                            CP0.SR = val & ~( (0x3 << 26) | (0x3 << 23) | (0x3 << 6));
                            RecalcIPCache();
@@ -427,13 +429,13 @@
 
                      DO_LDS();
 
+                     LDAbsorb = 0;
+
                      if(timestamp < gte_ts_done)
                      {
                         LDAbsorb = gte_ts_done - timestamp;
                         timestamp = gte_ts_done;
                      }
-                     else
-                        LDAbsorb = 0;
 
                      LDWhich = rt;
                      LDValue = GTE_ReadDR(rd);
@@ -462,13 +464,13 @@
 
                      DO_LDS();
 
+                     LDAbsorb = 0;
+
                      if(timestamp < gte_ts_done)
                      {
                         LDAbsorb = gte_ts_done - timestamp;
                         timestamp = gte_ts_done;
                      }
-                     else
-                        LDAbsorb = 0;
 
                      LDWhich = rt;
                      LDValue = GTE_ReadCR(rd);
@@ -627,10 +629,9 @@
 
                if(!GPR[rt])
                {
+                  LO = 0xFFFFFFFF;
                   if(GPR[rs] & 0x80000000)
                      LO = 1;
-                  else
-                     LO = 0xFFFFFFFF;
 
                   HI = GPR[rs];
                }
