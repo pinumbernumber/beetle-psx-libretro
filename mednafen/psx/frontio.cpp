@@ -4659,7 +4659,15 @@ void FrontIO_GPULineHook(const int32_t timestamp, const int32_t line_timestamp,
 
    for(unsigned i = 0; i < 8; i++)
    {
-      int32_t plts = Devices[i]->GPULineHook(line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
+      int32_t plts = PSX_EVENT_MAXTS;
+
+      switch (DevicesType[i])
+      {
+         case INPUTDEVICE_GUNCON:
+         case INPUTDEVICE_JUSTIFIER:
+            plts = Devices[i]->GPULineHook(line_timestamp, vsync, pixels, format, width, pix_clock_offset, pix_clock, pix_clock_divider);
+            break;
+      }
 
       if(i < 2)
       {
