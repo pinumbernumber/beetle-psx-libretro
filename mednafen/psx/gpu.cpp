@@ -311,10 +311,10 @@ static int LineVisFirst, LineVisLast;
  abr = (tpage >> 5) & 0x3; \
  TexMode = (tpage >> 7) & 0x3
 
-#define set_vertex_color_constant(vertex_number, color) \
- points[vertex_number].r = (color >> 0) & 0xFF; \
- points[vertex_number].g = (color >> 8) & 0xFF; \
- points[vertex_number].b = (color >> 16) & 0xFF
+#define set_vertex_color_constant(varray, vertex_number, color) \
+ varray[vertex_number].r = (color >> 0) & 0xFF; \
+ varray[vertex_number].g = (color >> 8) & 0xFF; \
+ varray[vertex_number].b = (color >> 16) & 0xFF
 
 #ifndef sign_extend_12bit
 #define sign_extend_12bit(value) (((int32)((value) << 20)) >> 20)
@@ -1151,11 +1151,7 @@ static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool text
       if(v == 0 || shaded)
       {
          uint32 raw_color = (*cb & 0xFFFFFF);
-
-         vertices[v].r = raw_color & 0xFF;
-         vertices[v].g = (raw_color >> 8) & 0xFF;
-         vertices[v].b = (raw_color >> 16) & 0xFF;
-
+         set_vertex_color_constant(vertices, v, raw_color);
          cb++;
       }
       else
@@ -1175,9 +1171,7 @@ static INLINE void G_Command_DrawPolygon(int numvertices, bool shaded, bool text
          vertices[v].v = (*cb >> 8) & 0xFF;
 
          if(v == 0)
-         {
             clut = ((*cb >> 16) & 0xFFFF) << 4;
-         }
 
          cb++;
       }
@@ -2107,7 +2101,7 @@ static void GPU_ProcessFIFO(void)
          {
             int32 i_dx, i_dy, k;
             line_point points[2];
-            set_vertex_color_constant(0, CB[0]);
+            set_vertex_color_constant(points, 0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
             points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
@@ -2135,7 +2129,7 @@ static void GPU_ProcessFIFO(void)
          {
             int32 i_dx, i_dy, k;
             line_point points[2];
-            set_vertex_color_constant(0, CB[0]);
+            set_vertex_color_constant(points, 0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
             points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
@@ -2172,7 +2166,7 @@ static void GPU_ProcessFIFO(void)
             }
             else
             {
-               set_vertex_color_constant(0, CB[0]);
+               set_vertex_color_constant(points, 0, CB[0]);
 
                points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
                points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
@@ -2208,7 +2202,7 @@ static void GPU_ProcessFIFO(void)
          {
             int32 i_dx, i_dy, k;
             line_point points[2];
-            set_vertex_color_constant(0, CB[0]);
+            set_vertex_color_constant(points, 0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
             points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
@@ -2245,12 +2239,12 @@ static void GPU_ProcessFIFO(void)
             int32 i_dx, i_dy, k;
             line_point points[2];
 
-            set_vertex_color_constant(0, CB[0]);
+            set_vertex_color_constant(points, 0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
             points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
 
-            set_vertex_color_constant(1, CB[2]);
+            set_vertex_color_constant(points, 1, CB[2]);
 
             points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
             points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
@@ -2265,12 +2259,12 @@ static void GPU_ProcessFIFO(void)
             int32 i_dx, i_dy, k;
             line_point points[2];
 
-            set_vertex_color_constant(0, CB[0]);
+            set_vertex_color_constant(points, 0, CB[0]);
 
             points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
             points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
 
-            set_vertex_color_constant(1, CB[2]);
+            set_vertex_color_constant(points, 1, CB[2]);
 
             points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
             points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
@@ -2297,19 +2291,19 @@ static void GPU_ProcessFIFO(void)
                //printf("PLINE N\n");
                points[0] = InPLine_PrevPoint;
 
-               set_vertex_color_constant(1, CB[0]);
+               set_vertex_color_constant(points, 1, CB[0]);
 
                points[1].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
                points[1].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
             }
             else
             {
-               set_vertex_color_constant(0, CB[0]);
+               set_vertex_color_constant(points, 0, CB[0]);
 
                points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
                points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
 
-               set_vertex_color_constant(1, CB[2]);
+               set_vertex_color_constant(points, 1, CB[2]);
 
                points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
                points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
@@ -2344,19 +2338,19 @@ static void GPU_ProcessFIFO(void)
                //printf("PLINE N\n");
                points[0] = InPLine_PrevPoint;
 
-               set_vertex_color_constant(1, CB[0]);
+               set_vertex_color_constant(points, 1, CB[0]);
 
                points[1].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
                points[1].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
             }
             else
             {
-               set_vertex_color_constant(0, CB[0]);
+               set_vertex_color_constant(points, 0, CB[0]);
 
                points[0].x = sign_extend_11bit(((CB[1] >> 0) & 0xFFFF) + OffsX);
                points[0].y = sign_extend_11bit(((CB[1] >> 16) & 0xFFFF) + OffsY);
 
-               set_vertex_color_constant(1, CB[2]);
+               set_vertex_color_constant(points, 1, CB[2]);
 
                points[1].x = sign_extend_11bit(((CB[3] >> 0) & 0xFFFF) + OffsX);
                points[1].y = sign_extend_11bit(((CB[3] >> 16) & 0xFFFF) + OffsY);
