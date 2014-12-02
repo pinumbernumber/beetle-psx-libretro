@@ -2043,20 +2043,20 @@ static void GPU_ProcessFIFO(void)
       case 0x28: /* monochrome 4 point polygon      , opaque */
       case 0x30: /* shaded     3 point polygon      , opaque */
       case 0x38: /* shaded     4 point polygon      , opaque */
-      case 0x21: /* 3 point ???                     , ???    */
-      case 0x29: /* 4 point ???                     , ???    */
-      case 0x31: /* 3 point ???                     , ???    */
-      case 0x39: /* 4 point ???                     , ???    */
+      case 0x21: /*            3 point polygon      , ???    */
+      case 0x29: /*            4 point polygon      , ???    */
+      case 0x31: /* shaded     3 point polygon      , ???    */
+      case 0x39: /* shaded     4 point polygon      , ???    */
          G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, -1, 0, 0, MaskEvalAND, CB);
          break;
       case 0x22: /* monochrome 3 point polygon     , semi-transparent */
       case 0x2A: /* monochrome 4 point polygon     , semi-transparent */
-      case 0x32: /* shaded 3 point polygon         , semi-transparent */
-      case 0x3A: /* shaded 4 point polygon         , semi-transparent */
-      case 0x23: /* 3 point ???                    , ???              */
-      case 0x2B: /* 4 point ???                    , ???              */
-      case 0x33: /* 3 point ???                    , ???              */
-      case 0x3b: /* 4 point ???                    , ???              */
+      case 0x32: /* shaded     3 point polygon     , semi-transparent */
+      case 0x3A: /* shaded     4 point polygon     , semi-transparent */
+      case 0x23: /*            3 point polygon     , ???              */
+      case 0x2B: /*            4 point polygon     , ???              */
+      case 0x33: /* shaded     3 point polygon     , ???              */
+      case 0x3b: /* shaded     4 point polygon     , ???              */
          G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 0, abr, 0, 0, MaskEvalAND, CB);
          break;
       case 0x24: /* textured 3 point polygon       , opaque, texture-blending */
@@ -2065,22 +2065,22 @@ static void GPU_ProcessFIFO(void)
       case 0x3c: /* shaded textured 4 point polygon, opaque, texture-blending */
          G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 1, TexModeLut[TexMode], MaskEvalAND, CB);
          break;
-      case 0x25: /* textured 3 point polygon       , opaque, raw-texture */
-      case 0x2D: /* textured 4 point polygon       , opaque, raw-texture */
-      case 0x35: /* 3 point ???                    , ???                 */
-      case 0x3D: /* 4 point ???                    , ???                 */
+      case 0x25: /* textured          3 point polygon       , opaque, raw-texture */
+      case 0x2D: /* textured          4 point polygon       , opaque, raw-texture */
+      case 0x35: /* shaded textured   3 point polygon       , ???                 */
+      case 0x3D: /* shaded textured   4 point polygon       , ???                 */
          G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, -1, 0, TexModeLut[TexMode], MaskEvalAND, CB);
          break;
-      case 0x26: /* textured 3 point polygon       , semi-transparent, texture-blending */
-      case 0x2E: /* textured 4 point polygon       , semi-transparent, texture-blending */
+      case 0x26: /* textured        3 point polygon, semi-transparent, texture-blending */
+      case 0x2E: /* textured        4 point polygon, semi-transparent, texture-blending */
       case 0x36: /* shaded textured 3 point polygon, semi-transparent, texture-blending */
       case 0x3E: /* shaded textured 4 point polygon, semi-transparent, texture-blending */ 
          G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 1, TexModeLut[TexMode], MaskEvalAND, CB);
          break;
-      case 0x27: /* textured 3 point polygon       , semi-transparent, raw-texture */
-      case 0x2F: /* textured 4 point polygon       , semi-transparent, raw-texture */
-      case 0x37: /* 3 point ???                    , ???                           */
-      case 0x3F: /* 4 point ???                    , ???                           */
+      case 0x27: /* textured        3 point polygon       , semi-transparent, raw-texture */
+      case 0x2F: /* textured        4 point polygon       , semi-transparent, raw-texture */
+      case 0x37: /* shaded textured 3 point polygon       , ???                           */
+      case 0x3F: /* shaded textured 4 point polygon       , ???                           */
          G_Command_DrawPolygon(3 + ((cc & 0x8) >> 3), ((cc & 0x10) >> 4), 1, abr, 0, TexModeLut[TexMode], MaskEvalAND, CB);
          break;
 
