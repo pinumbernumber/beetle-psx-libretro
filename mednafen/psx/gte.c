@@ -23,6 +23,8 @@
 
 #include <string.h>
 
+extern bool widescreen_hack;
+
 static uint32_t ReciprocalTable[0x8000] =
 {
 0x00020000,
@@ -33767,7 +33769,7 @@ static INLINE uint32_t Divide(uint32_t dividend, uint32_t divisor)
 }
 
 #define TransformXY(_h_div_sz) \
-   MAC[0] = F((int64)OFX + IR1 * _h_div_sz) >> 16; \
+   MAC[0] = F((int64)OFX + IR1 * _h_div_sz * (widescreen_hack ? 0.75 : 1.00)) >> 16; \
    XY_FIFO[3].X = Lm_G(0, MAC[0]); \
    MAC[0] = F((int64)OFY + IR2 * _h_div_sz) >> 16; \
    XY_FIFO[3].Y = Lm_G(1, MAC[0]); \

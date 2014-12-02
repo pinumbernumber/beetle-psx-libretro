@@ -9,6 +9,16 @@
 #include "../general.h"
 #include "../FileStream.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern bool widescreen_hack;
+
+#ifdef __cplusplus
+}
+#endif
+
 //
 // Comment out these 2 defines for extra speeeeed.
 //

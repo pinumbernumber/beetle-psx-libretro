@@ -22,6 +22,16 @@ static retro_input_state_t input_state_cb;
 static retro_rumble_interface rumble;
 static unsigned players = 2;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+bool widescreen_hack;
+
+#ifdef __cplusplus
+}
+#endif
+
 
 /* start of Mednafen psx.cpp */
 
@@ -2216,6 +2226,19 @@ static void check_variables(void)
       PSXDitherApply(apply_dither);
       old_apply_dither = apply_dither;
    }
+
+   var.key = "beetle_psx_widescreen_hack";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "enabled") == 0)
+         widescreen_hack = true;
+      else if (strcmp(var.value, "disabled") == 0)
+         widescreen_hack = false;
+   }
+   else
+      widescreen_hack = false;
+
  
    var.key = "beetle_psx_analog_toggle";
 
@@ -3128,6 +3151,7 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_variable vars[] = {
       { "beetle_psx_dithering", "Dithering; enabled|disabled" },
+      { "beetle_psx_widescreen_hack", "Widescreen mode hack; disabled|enabled" },
       { "beetle_psx_use_mednafen_memcard0_method", "Memcard 0 method; libretro|mednafen" },
       { "beetle_psx_shared_memory_cards", "Shared memcards (restart); disabled|enabled" },
       { "beetle_psx_experimental_save_states", "Savestates (restart); disabled|enabled" },
