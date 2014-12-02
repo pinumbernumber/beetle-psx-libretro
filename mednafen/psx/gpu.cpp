@@ -17,6 +17,7 @@
 
 #include "psx.h"
 #include "timer.h"
+#include "frontio.h"
 #include "../../libretro.h"
 
 /*
