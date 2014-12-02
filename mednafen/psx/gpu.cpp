@@ -2041,8 +2041,8 @@ static void GPU_ProcessFIFO(void)
 
       case 0x20: /* monochrome 3 point polygon      , opaque */
       case 0x28: /* monochrome 4 point polygon      , opaque */
-      case 0x30: /* gradated 3 point polygon        , opaque */
-      case 0x38: /* gradated 4 point polygon        , opaque */
+      case 0x30: /* shaded     3 point polygon      , opaque */
+      case 0x38: /* shaded     4 point polygon      , opaque */
       case 0x21: /* 3 point ???                     , ???    */
       case 0x29: /* 4 point ???                     , ???    */
       case 0x31: /* 3 point ???                     , ???    */
