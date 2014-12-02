@@ -707,11 +707,14 @@ static INLINE void GPU_PlotPixel(int BlendMode, bool MaskEval_TA, bool textured,
 
 static INLINE uint16_t GPU_GetTexel(uint32_t TexMode_TA, const uint32_t clut_offset, int32 u_arg, int32 v_arg)
 {
-   uint32_t u = TexWindowXLUT[u_arg];
-   uint32_t v = TexWindowYLUT[v_arg];
-   uint32_t fbtex_x = TexPageX + (u >> (2 - TexMode_TA));
-   uint32_t fbtex_y = TexPageY + v;
-   uint16_t fbw = GPURAM[fbtex_y][fbtex_x & 1023];
+   uint32_t u, v, fbtex_x, fbtex_y;
+   uint16_t fbw;
+
+   u = TexWindowXLUT[u_arg];
+   v = TexWindowYLUT[v_arg];
+   fbtex_x = TexPageX + (u >> (2 - TexMode_TA));
+   fbtex_y = TexPageY + v;
+   fbw = GPURAM[fbtex_y][fbtex_x & 1023];
 
    if(TexMode_TA == 2)
       return fbw;
